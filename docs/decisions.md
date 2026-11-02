@@ -6,8 +6,8 @@ Choices the design doc ([design.md](design.md)) doesn't make. Each one is marked
 
 | Decision | Status | Where |
 | --- | --- | --- |
+| "Your name" stays hidden in the journal until late in the full game: the reveal should land as "even this can be spent", it must not be burned by accident early, and it mirrors Maren, who burned her name last. In the slice, the debug panel can reveal and burn it, to test what losing it does. | Decided by Daniel, 2026-11-02 | `content/data/keepsakes.ts` (`hiddenUntilLate`), debug panel |
 | "Why you left" exists from the start but can only be burned or used after it forms at the end of chapter 1. In the slice it never forms, so it can't be burned there. | Decided by Daniel, 2026-11-02 | `content/data/keepsakes.ts` (`formedLater`) |
-| "Your name" is hidden in the journal until late in the game. | Open, see below | `content/data/keepsakes.ts` (`hiddenUntilLate`) |
 | Spending uses refillable Power first, then the one-time reserve. | Draft | `src/state/actions.ts` |
 | Losing a Hearth member (hollowed or faith lost) lowers max Power at once. | Draft | `src/state/actions.ts` |
 | The boathouse Hollow was hollowed by someone else, so Signe carries no Echo of him. | Draft | `src/state/actions.ts` |

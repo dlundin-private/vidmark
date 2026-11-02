@@ -34,7 +34,7 @@ Protagonist: **Signe**. Sister: **Lilja**. Father: **Torvald**. Slice NPCs: **Eb
 - Craft actions: Strengthen, Weaken, Push, Mend.
 - Weave crafting: action + target + one modifier. Training for Mend and Weaken.
 - Two quests: *The net-mender's hands* and *The ice road*. One avoidable fight: starving wolves on the ice road.
-- All six Keepsakes in the journal and burnable; burning *the swim* makes Signe greet Lilja as a stranger.
+- Keepsakes: *the swim*, *the coat*, *the story* and *the shame* are in the journal and burnable; burning *the swim* makes Signe greet Lilja as a stranger. *Why you left* forms only at the end of chapter 1, so it can't be burned in the slice. *Your name* stays hidden until late in the full game; in the slice, the debug panel can reveal and burn it for testing. See `docs/decisions.md`.
 - Out of scope: Kin, Thought, cross-domain Weaves, Keystones, other regions.
 
 ## Tech stack
