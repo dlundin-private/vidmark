@@ -10,6 +10,8 @@ import { IsoProjection, depthOrder, roundPoint, type Footprint, type Tile } from
 import { TileWalker } from '../systems/movement';
 import { findPath, isWalkable } from '../systems/pathfinding';
 import { parseTiledMap, type IsoMap, type TiledJson } from '../systems/tiledMap';
+import { store } from '../game';
+import { setPosition } from '../state';
 import { TILESET_KEY } from './BootScene';
 import testMapJson from '../../assets/maps/test-map.json';
 
@@ -54,6 +56,10 @@ export class WorldScene extends Phaser.Scene {
   }
 
   create(): void {
+    // create() runs again on every restart of this same scene object.
+    this.sortables = [];
+    this.lastSortKey = '';
+    this.tapped = null;
     this.map = parseTiledMap(testMapJson as TiledJson);
     this.proj = IsoProjection.forMap(this.map.height, TILE_WIDTH, TILE_HEIGHT, WORLD_TOP_MARGIN);
     const world = this.proj.worldSize(this.map.width, this.map.height);
@@ -86,7 +92,9 @@ export class WorldScene extends Phaser.Scene {
       this.sortables.push({ sprite, footprint: () => fp });
     }
 
-    this.walker = new TileWalker(this.map.spawn, WALK_MS_PER_TILE, WALK_STEPS_PER_TILE);
+    const saved = store.state.position;
+    const start = saved && isWalkable(this.map, saved) ? saved : this.map.spawn;
+    this.walker = new TileWalker(start, WALK_MS_PER_TILE, WALK_STEPS_PER_TILE);
     this.signe = this.add.image(0, 0, SIGNE_SPRITE).setOrigin(0.5, 1);
     this.entityLayer.add(this.signe);
     this.sortables.push({ sprite: this.signe, footprint: () => this.walker.footprint });
@@ -100,14 +108,30 @@ export class WorldScene extends Phaser.Scene {
     this.input.on(Phaser.Input.Events.POINTER_DOWN, (pointer: Phaser.Input.Pointer) => this.onPointerDown(pointer));
     this.keys = this.createKeys();
     this.input.keyboard?.on('keydown-C', () => this.collisionOverlay.setVisible(!this.collisionOverlay.visible));
+
+    // A new game or a loaded save replaces the whole state: rebuild the scene from it.
+    const generation = store.generation;
+    const unsubscribe = store.subscribe(() => {
+      if (store.generation !== generation) this.scene.restart();
+    });
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, unsubscribe);
   }
 
   update(_time: number, delta: number): void {
     this.handleKeys();
-    this.walker.update(delta);
-    if (!this.walker.isMoving) this.marker.setVisible(false);
+    const entered = this.walker.update(delta);
+    if (!this.walker.isMoving) {
+      this.marker.setVisible(false);
+      if (entered.length > 0) this.autosave();
+    }
     this.placeSigne();
     this.sortDepth();
+  }
+
+  /** Saves whenever Signe comes to a stop. */
+  private autosave(): void {
+    store.update((s) => setPosition(s, this.walker.tile));
+    store.save();
   }
 
   /** Renders one tileset frame per map tile (frame -1 = nothing) into a static texture. */

@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { BACKGROUND_COLOUR, GAME_HEIGHT, GAME_WIDTH } from './config';
 import { fitToWindow } from './pixelScale';
 import { BootScene } from './scenes/BootScene';
+import { installDebugPanel } from './scenes/DebugPanel';
 import { WorldScene } from './scenes/WorldScene';
 
 function currentFit() {
@@ -33,6 +34,7 @@ function applyFit(): void {
 }
 
 game.events.once(Phaser.Core.Events.READY, applyFit);
+installDebugPanel();
 
 if (import.meta.env.DEV) {
   // For poking at the game from the browser console during development.
