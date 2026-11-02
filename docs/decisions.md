@@ -39,6 +39,29 @@ All in `content/data/tuning.ts`, changeable live in the debug panel.
 | Burn: shame / why you left / your name | 6 / 5 / 6 | Draft, following "pain pays best" |
 | Wounds before Signe falls | 3 | From the design |
 
+## Craft, Power and Weaves (step 4)
+
+The design gives the four actions, their costs and the Weave parts. Everything below fills gaps; all numbers are in `content/data/tuning.ts` and the debug panel.
+
+| Rule | Status |
+| --- | --- |
+| Signe reaches 3 tiles with Craft; the Range modifier makes it 8. | Draft |
+| Craft only works on made things: crates, sleds, net racks, boats, ice markers, houses, the statue. Not trees, people or mountains. | Draft, from the domain ("Made") |
+| **Strengthen** makes an object or ice resilient: it can't be weakened while the effect lasts. | Draft, from the design |
+| **Weaken** on an object makes it brittle: the next push breaks it. On ice it cracks the ice open to black water at once. It refuses the ice under Signe or under a person. | Draft. The design says ice "cracks under whoever stands on it"; breaking it under people waits for the wolf fight. |
+| **Push** moves an object straight away from Signe along one axis; she must stand in line with it. You tap where it should stop. 1 Power per 2 tiles, as designed. | Draft |
+| **Mend** repairs broken things. Nets need Mend I, a boat Mend II, a house Mend III. The Size modifier lets Mend repair one size bigger. | Draft |
+| A Weave's cost = the action's cost, +1 for an area target, +1 for a modifier. Trained skills make their Weaves 1 cheaper per level above I, never below 1. | Draft |
+| Targets: an object, a surface (one tile of ice), or an area (3 × 3). Size makes a surface 3 × 3 and an area 5 × 5. | Draft |
+| **Trigger** (Weaken on ice only): the ice looks whole and breaks under the next step. Signe sees her own traps as faint cracks, and tap-to-walk routes around them; the arrow keys can still walk onto them. Breaking through costs her a wound and she climbs back out where she came from. | Draft, from the design's example ("ice that breaks when a wolf steps on it") |
+| **Duration**: an effect lasts one rest longer. Ordinary effects fade at the next rest; broken ice refreezes after one rest. | Draft |
+| Only some modifiers fit each action: Trigger only for Weaken on ice, Size not for Push, and so on. The Weave screen shows only those that fit. | Draft |
+| **Training**: Mend and Weaken level up from use on distinct things (3 for level II, 7 for III). Using them on the same thing again teaches nothing. | Draft, from the design ("not grinding") |
+| An Offering from Ebbe raises Mend by one level; hollowing him would raise it by two. | Draft. **Question:** the design says Ebbe's memory teaches Mend, but the memory he offers is of his wife. Should that memory teach Mend, or should another memory of his do it? |
+| **Anchoring** consumes a memory into a Weave for good: its effects never fade. A Keepsake is lost as if burned; an Offering costs a point of max Power for good; an Echo lives on in the Weave. Anchored Weaves can't be deleted. "Your name" is never offered. | Draft, from the design |
+| **Resting** happens at Signe's home: tap the house. Power refills (the reserve doesn't), one wound heals, Craft effects tick down, broken ice refreezes. | Draft |
+| With 3 wounds outside a fight, Signe blacks out and wakes at home, rested. | Draft, being replaced: Daniel asked for 3 wounds to kill her |
+
 ## The Kallsjö map (step 1, rebuilt)
 
 Daniel asked for a much bigger world with roads, mountains and forest, and for people to stand where their dialogue puts them. Decided by Daniel: 256 × 256 tiles, mountains as an impassable backdrop (flat ground, no climbing), Lilja on the ice by the jetty, layout drafted by Claude for approval. See [map-overview.svg](map-overview.svg).

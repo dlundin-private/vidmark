@@ -39,7 +39,7 @@ describe('parseTiledMap', () => {
 
   it('converts isometric object coordinates to tile footprints', () => {
     const [obj] = parseTiledMap(tinyMap()).objects;
-    expect(obj).toEqual({ id: 7, name: 'boathouse', sprite: 'boathouse', npc: null, footprint: { x: 1, y: 0, w: 2, h: 1 } });
+    expect(obj).toEqual({ id: 7, name: 'boathouse', type: 'boathouse', sprite: 'boathouse', npc: null, broken: false, rest: false, footprint: { x: 1, y: 0, w: 2, h: 1 } });
   });
 
   it('reads the spawn tile from map properties', () => {

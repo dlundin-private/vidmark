@@ -1,5 +1,5 @@
-// Tuning values for Power, costs and wounds. All are starting values to tune
-// through play, not final (docs/design.md, "Vertical slice: core mechanics").
+// Tuning values for Power, costs, wounds and Craft. All are starting values to
+// tune through play, not final (docs/design.md, "Vertical slice: core mechanics").
 // The in-game debug panel can override any of them live; see src/systems/tuning.ts.
 
 export const DEFAULT_TUNING = {
@@ -20,6 +20,37 @@ export const DEFAULT_TUNING = {
 
   /** Signe falls at this many wounds (design: "about three"). */
   maxWounds: 3,
+  /** Wounds healed by one rest (design: wounds heal "with time"). */
+  woundsHealedByRest: 1,
+  /** Wounds from breaking through the ice. */
+  woundsFromBreakingThrough: 1,
+
+  // --- Craft (design: "Craft domain (slice abilities)") ---
+  /** Power cost of Strengthen, Weaken and Mend (design: 1 each). */
+  strengthenCost: 1,
+  weakenCost: 1,
+  mendCost: 1,
+  /** Push costs 1 Power per this many tiles moved (design: "1 per 2 tiles"). */
+  pushTilesPerPower: 2,
+  /** How far away, in tiles, Signe can reach with Craft. */
+  craftRange: 3,
+  /** Reach with the Range modifier. */
+  craftRangeExtended: 8,
+  /** Extra Power for a Weave that targets an area instead of one thing. */
+  areaTargetCost: 1,
+  /** Extra Power for each Weave modifier. */
+  modifierCost: 1,
+  /** Weaves using a trained action cost this much less per level above 1 (never below 1). */
+  trainedDiscountPerLevel: 1,
+  /** Rests a Craft effect lasts: it fades at the next rest. */
+  effectRests: 1,
+  /** Extra rests the Duration modifier adds. */
+  durationExtraRests: 1,
+  /** Rests before broken ice freezes over again. */
+  iceRefreezeRests: 1,
+  /** Distinct things a skill must be used on to reach level 2 and level 3. */
+  skillLevel2At: 3,
+  skillLevel3At: 7,
 };
 
 export type Tuning = typeof DEFAULT_TUNING;
@@ -37,4 +68,20 @@ export const TUNING_LABELS: Record<TuningKey, string> = {
   burnWhyYouLeft: 'Burn: why you left',
   burnName: 'Burn: your name',
   maxWounds: 'Wounds before Signe falls',
+  woundsHealedByRest: 'Wounds healed per rest',
+  woundsFromBreakingThrough: 'Wounds from breaking through ice',
+  strengthenCost: 'Strengthen cost',
+  weakenCost: 'Weaken cost',
+  mendCost: 'Mend cost',
+  pushTilesPerPower: 'Push: tiles per Power',
+  craftRange: 'Craft reach (tiles)',
+  craftRangeExtended: 'Reach with Range modifier',
+  areaTargetCost: 'Weave: extra cost for area',
+  modifierCost: 'Weave: cost per modifier',
+  trainedDiscountPerLevel: 'Weave discount per trained level',
+  effectRests: 'Rests an effect lasts',
+  durationExtraRests: 'Extra rests from Duration',
+  iceRefreezeRests: 'Rests until broken ice refreezes',
+  skillLevel2At: 'Uses to reach skill level 2',
+  skillLevel3At: 'Uses to reach skill level 3',
 };

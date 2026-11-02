@@ -24,6 +24,11 @@ export class GameStore {
     return this.current;
   }
 
+  /** The tuning values in effect right now (defaults plus debug panel overrides). */
+  get tuningValues(): Tuning {
+    return this.tuning();
+  }
+
   /** Changes whenever the whole state is replaced (new game or load), so scenes know to rebuild. */
   get generation(): number {
     return this.replacedCount;

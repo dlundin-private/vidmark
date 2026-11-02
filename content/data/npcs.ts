@@ -1,3 +1,4 @@
+import type { CraftAction } from './craft';
 import type { Domain } from './keepsakes';
 
 export type NpcId = 'ebbe' | 'hermit' | 'gerda' | 'olle' | 'hollow' | 'lilja' | 'torvald';
@@ -10,11 +11,13 @@ export interface NpcDef {
   domain: Domain;
   /** Already a Hollow when the game starts. */
   startsHollow?: boolean;
+  /** The skill their memories deepen (design: "memories teach"). */
+  teaches?: CraftAction;
 }
 
 // People in the vertical slice (docs/design.md, "Vertical slice: content").
 export const NPCS: readonly NpcDef[] = [
-  { id: 'ebbe', name: 'Ebbe', role: 'Net-mender who has forgotten his craft', domain: 'craft' },
+  { id: 'ebbe', name: 'Ebbe', role: 'Net-mender who has forgotten his craft', domain: 'craft', teaches: 'mend' },
   { id: 'hermit', name: 'The hermit', role: 'Remembers the old safe route across the ice', domain: 'kin' },
   { id: 'gerda', name: 'Old Gerda', role: 'Her grandmother knew Maren as a girl', domain: 'thought' },
   { id: 'olle', name: 'Reeve Olle', role: 'The Tithe-collector', domain: 'thought' },

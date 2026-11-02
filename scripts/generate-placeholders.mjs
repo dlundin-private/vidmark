@@ -182,6 +182,78 @@ function generateNetRack() {
     pattern: (hit, px, py) => ((px + py) % 3 === 0 || (px - py + 99) % 3 === 0 ? '#7d7466' : null),
   };
   save('net-rack.png', drawBoxes(2, 1, 24, [post(0.1), post(1.78), net, bar]));
+  // Torn: the net hangs in rags with gaps, and sags low.
+  const torn = {
+    u: 0.2, v: 0.5, du: 1.6, dv: 0.02, z: 2, dz: 17,
+    pattern: (hit, px, py) => {
+      if (hit.u > 0.7 && hit.u < 1.15 && hit.z < 14) return null; // a hole
+      if (hit.z < 6 && (px * 7) % 5 !== 0) return null; // ragged bottom
+      return (px + py) % 3 === 0 || (px - py + 99) % 4 === 0 ? '#6a6257' : null;
+    },
+  };
+  save('net-rack-broken.png', drawBoxes(2, 1, 24, [post(0.1), post(1.78), torn, bar]));
+}
+
+function generateCraftables() {
+  const wood = { top: '#8a6a4e', left: '#7a5c44', right: '#5a4433' };
+  const crate = (broken) => drawBoxes(1, 1, broken ? 8 : 14, broken
+    ? [
+        { u: 0.15, v: 0.2, du: 0.7, dv: 0.25, z: 0, dz: 3, ...wood },
+        { u: 0.3, v: 0.55, du: 0.55, dv: 0.2, z: 0, dz: 5, ...wood },
+        { u: 0.2, v: 0.3, du: 0.2, dv: 0.5, z: 3, dz: 3, ...wood },
+      ]
+    : [{
+        u: 0.18, v: 0.18, du: 0.64, dv: 0.64, z: 0, dz: 13,
+        pattern: (hit) => (hit.face !== 'top' && (Math.floor(hit.z) % 4 === 0 || Math.abs((hit.face === 'left' ? hit.u : hit.v) - 0.5) < 0.04) ? '#4a3a2c' : wood[hit.face]),
+      }]);
+  save('crate.png', crate(false));
+  save('crate-broken.png', crate(true));
+
+  // A small wooden boat drawn up on the shore, 2 x 1. Broken: a hole stove in its side.
+  const boat = (broken) => drawBoxes(2, 1, 12, [
+    { u: 0.15, v: 0.25, du: 1.7, dv: 0.5, z: 0, dz: 4, top: '#3f3128', left: '#5b463a', right: '#3d2f27' },
+    {
+      u: 0.05, v: 0.15, du: 1.9, dv: 0.7, z: 4, dz: 6,
+      pattern: (hit) => {
+        if (hit.face === 'top') return Math.abs(hit.v - 0.5) < 0.22 && Math.abs(hit.u - 1) < 0.8 ? '#2a201a' : '#6b5444';
+        if (broken && hit.face === 'left' && Math.abs(hit.u - 1.1) < 0.22 && hit.z < 9) return '#120d0a';
+        return Math.floor(hit.z) % 3 === 0 ? '#3d2f27' : hit.face === 'left' ? '#7a5c44' : '#4f3a2b';
+      },
+    },
+  ]);
+  save('boat.png', boat(false));
+  save('boat-broken.png', boat(true));
+
+  save('sled-broken.png', drawBoxes(2, 1, 12, [
+    { u: 0.1, v: 0.3, du: 1.1, dv: 0.4, z: 0, dz: 3, top: '#5b463a', left: '#4a3a30', right: '#3d2f27' },
+    { u: 1.3, v: 0.4, du: 0.6, dv: 0.25, z: 0, dz: 2, top: '#5b463a', left: '#4a3a30', right: '#3d2f27' },
+    { u: 0.3, v: 0.3, du: 0.8, dv: 0.4, z: 3, dz: 5, top: '#8a7a5a', left: '#6f6248', right: '#55493a' },
+  ]));
+  save('ice-marker-broken.png', drawBoxes(1, 1, 22, [
+    { u: 0.2, v: 0.46, du: 0.6, dv: 0.08, z: 0, dz: 2, top: '#6b5444', left: '#5b463a', right: '#3d2f27' },
+    { u: 0.15, v: 0.38, du: 0.24, dv: 0.24, z: 0, dz: 4, top: '#3f5a3a', left: '#35502f', right: '#273d23' },
+  ]));
+}
+
+/** Tile overlays for Craft effects on ice, and the targeting highlight. Same size as a ground tile. */
+function generateEffects() {
+  const overlay = (name, paint) => {
+    const c = new Canvas(TILE_W, TILE_H);
+    for (let y = 0; y < TILE_H; y++) for (let x = 0; x < TILE_W; x++) if (inDiamond(x, y)) paint(c, x, y);
+    save(name, c);
+  };
+  // Strengthened: thick, pale, bluish ice.
+  overlay('fx-strengthened.png', (c, x, y) => c.set(x, y, (x + y) % 6 === 0 ? '#ffffff' : '#e4f3ff', 150));
+  // Armed: faint cracks only Signe would notice.
+  overlay('fx-armed.png', (c, x, y) => {
+    const crack = Math.abs(y - 8 - (x - 16) * 0.3) < 0.6 || Math.abs(x - 20 + (y - 8) * 1.2) < 0.6;
+    if (crack) c.set(x, y, '#5a7f99', 170);
+  });
+  // Targeting: where the chosen ability can land.
+  overlay('fx-target.png', (c, x, y) => {
+    const edge = !inDiamond(x - 1, y) || !inDiamond(x + 1, y) || !inDiamond(x, y - 1) || !inDiamond(x, y + 1);
+    c.set(x, y, '#f0c674', edge ? 200 : 45);
+  });
 }
 
 function generateStatue() {
@@ -370,4 +442,6 @@ generatePeople();
 generateHouses();
 generateMountains();
 generateNature();
+generateCraftables();
+generateEffects();
 generateMarker();

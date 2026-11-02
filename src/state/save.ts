@@ -11,8 +11,17 @@ export interface SaveFile {
   state: GameState;
 }
 
-/** Migrations from version N to N+1, keyed by N. None yet. */
-const MIGRATIONS: Record<number, (state: Record<string, unknown>) => Record<string, unknown>> = {};
+/** Migrations from version N to N+1, keyed by N. */
+const MIGRATIONS: Record<number, (state: Record<string, unknown>) => Record<string, unknown>> = {
+  // 2: skills track what they were used on; the world remembers Craft effects.
+  1: (s) => {
+    const skills: Record<string, unknown> = {};
+    for (const [id, old] of Object.entries((s.skills ?? {}) as Record<string, { level?: number }>)) {
+      skills[id] = { usedOn: [], taught: Math.max(0, (old?.level ?? 1) - 1) };
+    }
+    return { ...s, skills, weaves: [], world: { objects: {}, tiles: {} } };
+  },
+};
 
 export function serialize(state: GameState, now = new Date()): string {
   const file: SaveFile = { game: 'vidmark', version: STATE_VERSION, savedAt: now.toISOString(), state };
@@ -63,6 +72,7 @@ function checkShape(s: Record<string, unknown>): void {
   if (!isObject(s.skills)) fail('skills are missing');
   if (!Array.isArray(s.weaves) || !Array.isArray(s.promises)) fail('Weaves or promises are missing');
   if (!isObject(s.flags)) fail('world flags are missing');
+  if (!isObject(s.world) || !isObject(s.world.objects) || !isObject(s.world.tiles)) fail('the world is missing');
   if (s.position !== null && !isObject(s.position)) fail('position is invalid');
 }
 

@@ -38,11 +38,17 @@ interface TiledObject {
 export interface MapObject {
   id: number;
   name: string;
+  /** Kind of object (Tiled's class/type): "boathouse", "birch", "npc"... */
+  type: string;
   /** Texture key of the sprite to draw. */
   sprite: string;
   footprint: Footprint;
   /** Person id (content/data/npcs.ts) if this object is someone Signe can talk to. */
   npc: string | null;
+  /** Starts broken (Mend can repair it). */
+  broken: boolean;
+  /** Signe can rest here (her home). */
+  rest: boolean;
 }
 
 /** A Tiled map reduced to what the world needs: ground frames, collision and objects. */
@@ -83,6 +89,9 @@ export function parseTiledMap(json: TiledJson): IsoMap {
     name: o.name,
     sprite: stringProperty(o.properties, 'sprite') ?? o.name,
     npc: stringProperty(o.properties, 'npc') ?? null,
+    type: o.type || o.name,
+    broken: boolProperty(o.properties, 'broken'),
+    rest: boolProperty(o.properties, 'rest'),
     // Isometric object coordinates are measured along the tile axes in tile-height units.
     footprint: {
       x: Math.round(o.x / json.tileheight),
@@ -123,6 +132,10 @@ function findTileLayer(json: TiledJson, name: string): { data: number[] } {
 function stringProperty(props: TiledProperty[] | undefined, name: string): string | undefined {
   const v = props?.find((p) => p.name === name)?.value;
   return typeof v === 'string' ? v : undefined;
+}
+
+function boolProperty(props: TiledProperty[] | undefined, name: string): boolean {
+  return props?.find((p) => p.name === name)?.value === true;
 }
 
 function numberProperty(props: TiledProperty[] | undefined, name: string): number | undefined {

@@ -1,9 +1,10 @@
+import type { CraftAction, WeaveModifier, WeaveTarget } from '../../content/data/craft';
 import { KEEPSAKES, type Domain, type KeepsakeId } from '../../content/data/keepsakes';
 import { NPCS, type NpcId } from '../../content/data/npcs';
 import type { Tile } from '../iso/types';
 
 /** Bump when the shape changes, and add a migration in save.ts. */
-export const STATE_VERSION = 1;
+export const STATE_VERSION = 2;
 
 /**
  * kept: Signe still has it. burned: spent for Power; gone.
@@ -26,21 +27,46 @@ export interface NpcState {
   faithLost: boolean;
 }
 
-export type SkillId = 'strengthen' | 'weaken' | 'push' | 'mend';
+export type SkillId = CraftAction;
 
 export interface SkillState {
-  level: number;
-  xp: number;
+  /** Distinct things this skill has been used on for real (design: skills grow with use, not grinding). */
+  usedOn: string[];
+  /** Levels taught by memories (design: "memories teach"). */
+  taught: number;
 }
+
+/** A memory consumed into a Weave: a Keepsake, someone's Offering, or an Echo of someone hollowed. */
+export type WeaveAnchor =
+  | { kind: 'keepsake'; id: KeepsakeId }
+  | { kind: 'offering'; npc: NpcId }
+  | { kind: 'echo'; npc: NpcId };
 
 export interface SavedWeave {
   id: string;
   name: string;
-  action: SkillId;
-  target: string;
-  modifier: string | null;
-  /** A memory consumed into the Weave, making it permanent. */
-  anchor: KeepsakeId | NpcId | null;
+  action: CraftAction;
+  target: WeaveTarget;
+  modifier: WeaveModifier | null;
+  /** A memory consumed into the Weave: its effects become permanent. */
+  anchor: WeaveAnchor | null;
+}
+
+/** A Craft effect on an object or a tile of ice. */
+export interface CraftEffect {
+  kind: 'strengthened' | 'weakened';
+  /** Laid with the Trigger modifier and still waiting for someone to step on it. */
+  armed: boolean;
+  /** Rests left before it fades; null = permanent (an anchored Weave). */
+  restsLeft: number | null;
+}
+
+/** How the world differs from the map because of what Signe has done. */
+export interface WorldState {
+  /** By map object id. */
+  objects: Record<string, { broken?: boolean; at?: Tile; effect?: CraftEffect }>;
+  /** By tile key "x,y". */
+  tiles: Record<string, { effect?: CraftEffect; brokenRestsLeft?: number }>;
 }
 
 export interface PromiseRecord {
@@ -67,6 +93,7 @@ export interface GameState {
   promises: PromiseRecord[];
   flags: Record<string, FlagValue>;
   position: Tile | null;
+  world: WorldState;
 }
 
 export function createNewGame(basePower: number): GameState {
@@ -76,7 +103,7 @@ export function createNewGame(basePower: number): GameState {
   const npcs = Object.fromEntries(
     NPCS.map((n) => [n.id, { offered: false, hollowed: !!n.startsHollow, faithLost: false }]),
   ) as Record<NpcId, NpcState>;
-  const skill = (): SkillState => ({ level: 1, xp: 0 });
+  const skill = (): SkillState => ({ usedOn: [], taught: 0 });
   return {
     version: STATE_VERSION,
     domains: ['craft'],
@@ -90,5 +117,6 @@ export function createNewGame(basePower: number): GameState {
     promises: [],
     flags: {},
     position: null,
+    world: { objects: {}, tiles: {} },
   };
 }

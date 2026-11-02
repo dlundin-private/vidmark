@@ -57,6 +57,9 @@ export function installDebugPanel(): void {
         row('Hearth', A.hearth(s).map(npcName).join(', ') || 'nobody'),
         row('Echoes', A.echoes(s).map(npcName).join(', ') || 'none'),
         row('Keepsakes', KEEPSAKES.map((k) => `${k.title}: ${keepsakeLabel(k.id)}`).join(' · ')),
+        row('Skills', (['strengthen', 'weaken', 'push', 'mend'] as const).map((k) => `${k} ${A.skillLevel(s, k, t)} (${s.skills[k].usedOn.length} used)`).join(' · ')),
+        row('Weaves', s.weaves.map((w) => w.name + (w.anchor ? ' (anchored)' : '')).join(', ') || 'none'),
+        row('World', `${Object.keys(s.world.objects).length} objects changed, ${Object.keys(s.world.tiles).length} tiles of ice changed`),
         row('Promises', s.promises.map((p) => `${p.id} (to ${npcName(p.to)})`).join(', ') || 'none'),
         row('Flags', Object.entries(s.flags).map(([k, v]) => (v === true ? k : `${k}=${String(v)}`)).join(', ') || 'none'),
         row('Position', s.position ? `${s.position.x}, ${s.position.y}` : 'map spawn'),
@@ -64,7 +67,7 @@ export function installDebugPanel(): void {
 
       section('Poke the state', [
         el('div', { className: 'dbg-buttons' }, [
-          button('Rest', act(() => store.update(A.rest))),
+          button('Rest at home', act(() => store.update(A.restAtHome))),
           button('Spend 1', act(() => (store.update((st) => A.spendPower(st, 1)) ? null : 'Not enough Power.'))),
           button('+1 reserve', act(() => store.update((st) => A.addReserve(st, 1)))),
           button('Wound', act(() => store.update(A.addWound))),

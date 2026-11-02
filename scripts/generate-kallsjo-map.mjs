@@ -156,7 +156,7 @@ const free = (x, y, w, h) => {
 function place(name, x, y, w = 1, h = 1, extra = {}) {
   if (!free(x, y, w, h)) throw new Error(`Can't place ${name} at ${x},${y}: occupied`);
   for (let ty = y; ty < y + h; ty++) for (let tx = x; tx < x + w; tx++) occupied[idx(tx, ty)] = 1;
-  objects.push({ name, sprite: extra.sprite ?? name, x, y, w, h, npc: extra.npc });
+  objects.push({ name, sprite: extra.sprite ?? name, x, y, w, h, npc: extra.npc, broken: extra.broken, rest: extra.rest });
 }
 
 /** Clears an area of terrain to plain snow (a yard or clearing), keeping roads. */
@@ -175,15 +175,21 @@ for (let x = V.x - 22; x <= V.x + 22; x++) for (let y = sy; y <= sy + 1; y++) if
 // Jetty: wooden planks from the shore out onto the ice.
 for (let y = sy - 8; y <= sy; y++) for (const x of [V.x - 4, V.x - 3]) set(x, y, 'wood');
 
-place('house', ...at(-4, 3), 3, 2); // Signe's home: Torvald, Lilja, Signe
+place('house', ...at(-4, 3), 3, 2, { rest: true }); // Signe's home: Torvald, Lilja, Signe. She rests here.
 place('house-small', ...at(10, 3), 2, 2); // Old Gerda
 place('hut', ...at(-14, 3), 2, 2); // Ebbe
-place('net-rack', ...[V.x - 15, sy + 1], 2, 1);
-place('net-rack', ...[V.x - 11, sy + 2], 2, 1);
+// Ebbe's nets are torn: he has forgotten how to mend them.
+place('net-rack', ...[V.x - 15, sy + 1], 2, 1, { broken: true });
+place('net-rack', ...[V.x - 11, sy + 2], 2, 1, { broken: true });
 place('boathouse', ...[V.x - 9, sy], 3, 2); // the boathouse where the Hollow sits
 place('boathouse', ...[V.x + 14, sy], 3, 2);
 place('statue', ...[V.x + 8, sy], 1, 1); // Saint Maren on the shore
 place('sled', ...at(3, 1), 2, 1); // the Tithe-collector's sled
+// By the boathouses: a stove-in boat (too big for Mend at first) and crates to push.
+place('boat', ...[V.x - 6, sy], 2, 1, { broken: true });
+place('crate', ...[V.x - 5, sy + 2]);
+place('crate', ...[V.x - 2, sy + 1]);
+place('crate', ...[V.x + 12, sy + 2]);
 place('house-small', ...at(-9, 6), 2, 2);
 place('house-small', ...at(4, 7), 2, 2);
 
@@ -300,6 +306,8 @@ const tiledObjects = objects.map((o, i) => ({
   properties: [
     { name: 'sprite', type: 'string', value: o.sprite },
     ...(o.npc ? [{ name: 'npc', type: 'string', value: o.npc }] : []),
+    ...(o.broken ? [{ name: 'broken', type: 'bool', value: true }] : []),
+    ...(o.rest ? [{ name: 'rest', type: 'bool', value: true }] : []),
   ],
 }));
 

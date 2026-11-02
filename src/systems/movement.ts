@@ -55,6 +55,14 @@ export class TileWalker {
     if (!this.next) this.startNextStep();
   }
 
+  /** Puts the character straight onto a tile, dropping any route (falling through ice, waking at home). */
+  teleport(tile: Tile): void {
+    this.current = { ...tile };
+    this.next = null;
+    this.queue = [];
+    this.elapsed = 0;
+  }
+
   /** Advances time. Returns the tiles entered during this update, in order. */
   update(deltaMs: number): Tile[] {
     const entered: Tile[] = [];

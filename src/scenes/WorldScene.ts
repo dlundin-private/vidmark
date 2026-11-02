@@ -6,14 +6,19 @@ import {
   WALK_STEPS_PER_TILE,
   WORLD_TOP_MARGIN,
 } from '../config';
+import { CRAFTABLES } from '../../content/data/craft';
+import type { NpcId } from '../../content/data/npcs';
 import { IsoProjection, depthOrder, rectsOverlap, roundPoint, tilesInView, type Footprint, type Rect, type Tile } from '../iso';
 import { TileWalker } from '../systems/movement';
-import { findPath, isWalkable } from '../systems/pathfinding';
-import { parseTiledMap, type IsoMap, type TiledJson } from '../systems/tiledMap';
-import type { NpcId } from '../../content/data/npcs';
-import { dialogueBox, store } from '../game';
+import { findPath, type WalkGrid } from '../systems/pathfinding';
+import { parseTiledMap, type MapObject, type TiledJson } from '../systems/tiledMap';
+import { WorldModel } from '../systems/world';
+import { cast, planCast, plainSpell, stepOnto, weaveSpell, type Aim, type Spell } from '../systems/craft';
+import { dialogueBox, store, tuning } from '../game';
 import { isBeside, pathToBeside } from '../systems/interaction';
-import { setPosition } from '../state';
+import * as A from '../state/actions';
+import { CraftHud, type Selection } from './CraftHud';
+import { WeaveScreen } from './WeaveScreen';
 import { TILESET_KEY } from './BootScene';
 import mapJson from '../../assets/maps/kallsjo.json';
 
@@ -23,12 +28,16 @@ const MARKER_SPRITE = 'marker';
 const BLOCKED_FRAME = 7;
 /** Extra world pixels around the camera view that are drawn too, so edges never pop in. */
 const VIEW_MARGIN = 64;
+/** Tints for objects under a Craft effect. */
+const TINT = { strengthened: 0xcfe6ff, weakened: 0xe0b0a8 } as const;
 
 /** Something drawn in the entity layer and depth-sorted by its footprint. */
 interface Sortable {
   sprite: Phaser.GameObjects.Image;
   footprint: () => Footprint;
-  /** World rectangle of a sprite that never moves; null for Signe, who is always drawn. */
+  /** The map object it draws; null for Signe. */
+  obj: MapObject | null;
+  /** World rectangle of the sprite, for culling; null for Signe, who is always drawn. */
   bounds: Rect | null;
 }
 
@@ -50,26 +59,48 @@ const DIRECTIONS: Record<keyof DirectionKeys, Tile> = {
   right: { x: 1, y: 0 },
 };
 
+// The HUD and Weave screen are page-wide; they talk to whichever World scene is running.
+let activeScene: WorldScene | null = null;
+const weaveScreen = new WeaveScreen(store);
+const hud = new CraftHud({
+  onSelect: (s) => activeScene?.onSelect(s),
+  onOpenWeaves: () => weaveScreen.open(),
+});
+
 export class WorldScene extends Phaser.Scene {
-  private map!: IsoMap;
+  private world!: WorldModel;
+  private worldVersion = 0;
+  /** Route planning: like the world, but steering around Signe's own armed traps. */
+  private routing!: WalkGrid;
   private proj!: IsoProjection;
   private walker!: TileWalker;
   private signe!: Phaser.GameObjects.Image;
   private marker!: Phaser.GameObjects.Image;
   private ground!: Phaser.GameObjects.Blitter;
   private collisionOverlay!: Phaser.GameObjects.Blitter;
+  private fxStrengthened!: Phaser.GameObjects.Blitter;
+  private fxArmed!: Phaser.GameObjects.Blitter;
+  private fxTarget!: Phaser.GameObjects.Blitter;
   private entityLayer!: Phaser.GameObjects.Layer;
   private sortables: Sortable[] = [];
+  private sortableById = new Map<number, Sortable>();
   /** The sortables currently on (or near) screen; only these are drawn and depth-sorted. */
   private onScreen: Sortable[] = [];
+  /** Objects whose look currently differs from the map (broken, moved, under an effect). */
+  private changedIds = new Set<number>();
   private lastViewKey = '';
   private lastSortKey = '';
   private keys!: DirectionKeys;
   /** Last direction tapped, kept until used: a tap can go down and up within one frame. */
   private tapped: keyof DirectionKeys | null = null;
   private people: Person[] = [];
-  /** Who Signe is walking over to talk to. */
-  private pendingTalk: Person | null = null;
+  private home: MapObject | null = null;
+  /** Who or what Signe is walking over to (to talk, or to rest at home). */
+  private pendingVisit: { tile: Footprint; arrive: () => void } | null = null;
+  /** The spell chosen in the HUD, waiting for a target. */
+  private spell: Spell | null = null;
+  /** Push: the object chosen, waiting for where it should stop. */
+  private pushing: MapObject | null = null;
 
   constructor() {
     super('World');
@@ -77,56 +108,72 @@ export class WorldScene extends Phaser.Scene {
 
   create(): void {
     // create() runs again on every restart of this same scene object.
+    // eslint-disable-next-line @typescript-eslint/no-this-alias -- the page-wide HUD needs the running scene
+    activeScene = this;
     this.sortables = [];
+    this.sortableById = new Map();
     this.onScreen = [];
+    this.changedIds = new Set();
     this.lastViewKey = '';
     this.lastSortKey = '';
     this.tapped = null;
     this.people = [];
-    this.pendingTalk = null;
-    this.map = parseTiledMap(mapJson as TiledJson);
-    this.proj = IsoProjection.forMap(this.map.height, TILE_WIDTH, TILE_HEIGHT, WORLD_TOP_MARGIN);
-    const world = this.proj.worldSize(this.map.width, this.map.height);
+    this.pendingVisit = null;
+    this.spell = null;
+    this.pushing = null;
+    hud.select(null);
+
+    const map = parseTiledMap(mapJson as TiledJson);
+    this.world = new WorldModel(map, () => store.state, () => this.worldVersion);
+    this.routing = { width: map.width, height: map.height, isBlocked: (x, y) => this.world.isBlockedForRouting(x, y) };
+    this.proj = IsoProjection.forMap(map.height, TILE_WIDTH, TILE_HEIGHT, WORLD_TOP_MARGIN);
+    const size = this.proj.worldSize(map.width, map.height);
 
     // Draw order between layers is fixed; inside the entity layer it comes from the footprints.
     const groundLayer = this.add.layer();
     const overlayLayer = this.add.layer();
     this.entityLayer = this.add.layer();
 
-    // Ground tiles are blitted for the visible area only (see refreshView).
+    // Ground and overlays are blitted for the visible area only (see refreshView).
     this.ground = this.add.blitter(0, 0, TILESET_KEY);
     groundLayer.add(this.ground);
+    this.fxStrengthened = this.add.blitter(0, 0, 'fx-strengthened');
+    this.fxArmed = this.add.blitter(0, 0, 'fx-armed');
+    this.fxTarget = this.add.blitter(0, 0, 'fx-target');
     this.collisionOverlay = this.add.blitter(0, 0, TILESET_KEY).setVisible(false);
-    overlayLayer.add(this.collisionOverlay);
+    overlayLayer.add([this.fxStrengthened, this.fxArmed, this.fxTarget, this.collisionOverlay]);
 
     this.marker = this.add.image(0, 0, MARKER_SPRITE).setOrigin(0.5, 0).setVisible(false);
     overlayLayer.add(this.marker);
 
-    for (const obj of this.map.objects) {
+    for (const obj of map.objects) {
       const fp = obj.footprint;
       const origin = IsoProjection.footprintOrigin(fp);
-      const anchor = this.proj.footprintBottom(fp);
-      const sprite = this.add.image(anchor.x, anchor.y, obj.sprite).setOrigin(origin.x, origin.y).setVisible(false);
+      const sprite = this.add.image(0, 0, obj.sprite).setOrigin(origin.x, origin.y).setVisible(false);
       const expectedWidth = (fp.w + fp.h) * this.proj.halfW;
       if (sprite.width !== expectedWidth) {
         console.warn(`Sprite "${obj.sprite}" is ${sprite.width}px wide; a ${fp.w}x${fp.h} footprint needs ${expectedWidth}px`);
       }
       this.entityLayer.add(sprite);
-      const b = sprite.getBounds();
-      this.sortables.push({ sprite, footprint: () => fp, bounds: { x: b.x, y: b.y, width: b.width, height: b.height } });
+      const sortable: Sortable = { sprite, obj, footprint: () => this.world.footprintOf(obj), bounds: null };
+      this.sortables.push(sortable);
+      this.sortableById.set(obj.id, sortable);
+      this.applyLook(sortable);
       if (obj.npc) this.people.push({ id: obj.npc as NpcId, tile: { x: fp.x, y: fp.y }, sprite });
+      if (obj.rest) this.home = obj;
     }
+    this.syncObjects();
 
     const saved = store.state.position;
-    const start = saved && isWalkable(this.map, saved) ? saved : this.map.spawn;
+    const start = saved && !this.world.isBlocked(saved.x, saved.y) ? saved : map.spawn;
     this.walker = new TileWalker(start, WALK_MS_PER_TILE, WALK_STEPS_PER_TILE);
     this.signe = this.add.image(0, 0, SIGNE_SPRITE).setOrigin(0.5, 1);
     this.entityLayer.add(this.signe);
-    this.sortables.push({ sprite: this.signe, footprint: () => this.walker.footprint, bounds: null });
+    this.sortables.push({ sprite: this.signe, obj: null, footprint: () => this.walker.footprint, bounds: null });
     this.placeSigne();
 
     const cam = this.cameras.main;
-    cam.setBounds(0, 0, world.width, world.height);
+    cam.setBounds(0, 0, size.width, size.height);
     cam.setRoundPixels(true);
     cam.startFollow(this.signe, true);
 
@@ -141,51 +188,213 @@ export class WorldScene extends Phaser.Scene {
     }
 
     // A new game or a loaded save replaces the whole state: rebuild the scene from it.
+    // Any other change (Craft, rest, the debug panel) updates the world in place.
     const generation = store.generation;
     const unsubscribe = store.subscribe(() => {
-      if (store.generation !== generation) this.scene.restart();
+      if (store.generation !== generation) return this.scene.restart();
+      this.worldVersion++;
+      this.syncObjects();
+      this.lastViewKey = '';
+      hud.render(store.state, tuning.values);
     });
-    this.events.once(Phaser.Scenes.Events.SHUTDOWN, unsubscribe);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      unsubscribe();
+      if (activeScene === this) activeScene = null;
+    });
+    hud.render(store.state, tuning.values);
   }
 
   update(_time: number, delta: number): void {
-    if (!dialogueBox.isOpen) this.handleKeys();
+    hud.setVisible(!dialogueBox.isOpen);
+    if (!dialogueBox.isOpen && !weaveScreen.isOpen) this.handleKeys();
+    const before = this.walker.tile;
     const entered = this.walker.update(delta);
+    if (entered.length > 0) this.onEntered(before, entered);
     if (!this.walker.isMoving) {
       this.marker.setVisible(false);
       if (entered.length > 0) this.autosave();
-      const who = this.pendingTalk;
-      this.pendingTalk = null;
-      if (who && isBeside(this.walker.tile, who.tile)) this.talkTo(who);
+      const visit = this.pendingVisit;
+      this.pendingVisit = null;
+      if (visit && isBesideFootprint(this.walker.tile, visit.tile)) visit.arrive();
     }
     this.placeSigne();
     this.refreshView();
     this.sortDepth();
   }
 
+  // --- Craft ------------------------------------------------------------------
+
+  /** The HUD picked an action or Weave (or cleared it). */
+  onSelect(selection: Selection | null): void {
+    this.pushing = null;
+    this.spell = selection ? this.spellFor(selection) : null;
+    if (this.spell) {
+      this.pendingVisit = null;
+      hud.say(selection?.kind === 'action' ? 'Tap what to work on.' : 'Tap where to cast it.', 0);
+    } else {
+      hud.say('', 1);
+    }
+    this.lastViewKey = '';
+  }
+
+  private spellFor(selection: Selection): Spell | null {
+    if (selection.kind === 'action') return plainSpell(selection.action, 'object');
+    const w = store.state.weaves.find((x) => x.id === selection.id);
+    return w ? weaveSpell(w) : null;
+  }
+
+  /** A tap while a spell is chosen: aim it, check it, and cast it. */
+  private aimAt(worldX: number, worldY: number): void {
+    const spell = this.spell!;
+    const tile = this.proj.pick({ x: worldX, y: worldY });
+    const signe = this.walker.planningTile;
+    const t = tuning.values;
+    let plan;
+
+    if (this.pushing) {
+      plan = planCast(this.world, store.state, t, spell, { kind: 'object', id: this.pushing.id }, signe, tile);
+    } else {
+      const object = this.craftableAt(worldX, worldY, tile);
+      // A plain Strengthen or Weaken works on whatever was tapped: an object, or the ice.
+      let s = spell;
+      if (spell.modifier === null && spell.target === 'object' && !object && (spell.action === 'strengthen' || spell.action === 'weaken')) {
+        s = { ...spell, target: 'surface' };
+      }
+      const aim: Aim = s.target === 'object' && object ? { kind: 'object', id: object.id } : { kind: 'tile', x: tile.x, y: tile.y };
+      plan = planCast(this.world, store.state, t, s, aim, signe);
+      if (plan.ok && s.action === 'push') {
+        this.pushing = plan.object!;
+        hud.say(`Push the ${plan.object!.type.replace(/-/g, ' ')}: tap where it should stop. 1 Power per ${t.pushTilesPerPower} tiles.`, 0);
+        return;
+      }
+    }
+
+    if (!plan.ok) {
+      hud.say(plan.reason);
+      return;
+    }
+    if (A.availablePower(store.state) < plan.cost) {
+      hud.say(`That needs ${plan.cost} Power. You have ${A.availablePower(store.state)}.`);
+      return;
+    }
+    const done = plan;
+    const message = store.update((s, tt) => cast(this.world, s, tt, done));
+    store.save();
+    hud.select(null); // clears the "tap what to work on" prompt, so say the result after
+    hud.say(`${message} (−${plan.cost} Power)`);
+  }
+
+  /** The craftable object drawn under a point, or standing on the tapped tile. */
+  private craftableAt(x: number, y: number, tile: Tile): MapObject | undefined {
+    const hit = this.spriteAt(x, y, (s) => !!s.obj && s.obj.type in CRAFTABLES);
+    if (hit) return hit;
+    const onTile = this.world.objectAt(tile.x, tile.y);
+    return onTile && onTile.type in CRAFTABLES ? onTile : undefined;
+  }
+
+  /** Signe moved onto new tiles: her own armed ice gives way under her. */
+  private onEntered(before: Tile, entered: Tile[]): void {
+    let previous = before;
+    for (const tile of entered) {
+      const through = store.update((s, t) => stepOnto(this.world, s, t, tile));
+      if (through) {
+        this.walker.teleport(previous);
+        if (A.hasFallen(store.state, tuning.values)) return this.collapse();
+        hud.say('The ice gives way. You haul yourself out, soaked and cut.');
+        this.autosave();
+        return;
+      }
+      previous = tile;
+    }
+  }
+
+  /** Too many wounds outside a fight: Signe comes to at home, rested. */
+  private collapse(): void {
+    store.update(A.restAtHome);
+    if (this.home) {
+      const fp = this.world.footprintOf(this.home);
+      const door = { x: fp.x + 1, y: fp.y + fp.h };
+      if (!this.world.isBlocked(door.x, door.y)) this.walker.teleport(door);
+    }
+    hud.say('Everything goes dark. You wake at home, aching, with no memory of the walk back.', 6000);
+    this.autosave();
+  }
+
+  private offerRest(): void {
+    hud.ask('Rest at home? Power refills, a wound heals, and Craft effects fade.', [
+      {
+        label: 'Rest',
+        run: () => {
+          store.update(A.restAtHome);
+          this.autosave();
+          hud.say('You rest by the fire. Power restored.');
+        },
+      },
+      { label: 'Not now', run: () => undefined },
+    ]);
+  }
+
+  /** Updates the sprites of objects that changed: broken or mended, moved, strengthened or weakened. */
+  private syncObjects(): void {
+    const now = new Set(Object.keys(store.state.world.objects).map(Number));
+    for (const id of new Set([...now, ...this.changedIds])) {
+      const s = this.sortableById.get(id);
+      if (s) this.applyLook(s);
+    }
+    this.changedIds = now;
+  }
+
+  /** Texture (whole or broken), tint (Craft effect) and position of one object. */
+  private applyLook(s: Sortable): void {
+    if (!s.obj) return;
+    const whole = s.obj.sprite.replace(/-broken$/, '');
+    const broken = `${whole}-broken`;
+    const key = this.world.isBroken(s.obj) && this.textures.exists(broken) ? broken : whole;
+    if (s.sprite.texture.key !== key) s.sprite.setTexture(key);
+    const effect = this.world.objectEffect(s.obj);
+    if (effect) s.sprite.setTint(TINT[effect.kind]);
+    else s.sprite.clearTint();
+    this.placeObject(s);
+  }
+
+  /** Anchors an object's sprite on its (possibly pushed) footprint. */
+  private placeObject(s: Sortable): void {
+    const p = this.proj.footprintBottom(s.footprint());
+    s.sprite.setPosition(p.x, p.y);
+    const b = s.sprite.getBounds();
+    s.bounds = { x: b.x, y: b.y, width: b.width, height: b.height };
+  }
+
+  // --- Drawing ------------------------------------------------------------------
+
   /**
-   * Draws the ground and shows the objects around the camera; everything else
-   * stays hidden. Runs when the camera has moved far enough to matter.
+   * Draws the ground, Craft overlays and the objects around the camera;
+   * everything else stays hidden. Runs when the camera has moved far enough
+   * to matter, or the world changed.
    */
   private refreshView(): void {
     const cam = this.cameras.main;
     cam.preRender(); // make worldView match this frame's follow position
     const v = cam.worldView;
-    const key = `${Math.floor(v.x / VIEW_MARGIN)},${Math.floor(v.y / VIEW_MARGIN)},${v.width},${v.height},${this.collisionOverlay.visible}`;
+    const signe = this.walker.tile;
+    const key = `${Math.floor(v.x / VIEW_MARGIN)},${Math.floor(v.y / VIEW_MARGIN)},${v.width},${v.height},${this.collisionOverlay.visible},${signe.x},${signe.y}`;
     if (key === this.lastViewKey) return;
     this.lastViewKey = key;
 
     // The margin is at least one key step, so the area drawn always covers the real view.
     const view: Rect = { x: v.x - VIEW_MARGIN, y: v.y - VIEW_MARGIN, width: v.width + 2 * VIEW_MARGIN, height: v.height + 2 * VIEW_MARGIN };
-    this.ground.clear();
-    this.collisionOverlay.clear();
-    for (const t of tilesInView(this.proj, view, this.map.width, this.map.height)) {
+    for (const b of [this.ground, this.collisionOverlay, this.fxStrengthened, this.fxArmed, this.fxTarget]) b.clear();
+    const reach = this.spell ? (this.spell.modifier === 'range' ? tuning.values.craftRangeExtended : tuning.values.craftRange) : -1;
+    for (const t of tilesInView(this.proj, view, this.world.width, this.world.height)) {
       const top = this.proj.toWorld(t.x, t.y);
-      const frame = this.map.ground[t.y * this.map.width + t.x] ?? -1;
-      if (frame >= 0) this.ground.create(top.x - this.proj.halfW, top.y, frame);
-      if (this.collisionOverlay.visible && this.map.isBlocked(t.x, t.y)) {
-        this.collisionOverlay.create(top.x - this.proj.halfW, top.y, BLOCKED_FRAME);
-      }
+      const x = top.x - this.proj.halfW;
+      const frame = this.world.groundFrame(t.x, t.y);
+      if (frame >= 0) this.ground.create(x, top.y, frame);
+      const effect = this.world.tileEffect(t.x, t.y);
+      if (effect?.kind === 'strengthened') this.fxStrengthened.create(x, top.y);
+      if (effect?.armed) this.fxArmed.create(x, top.y);
+      if (reach >= 0 && Math.abs(t.x - signe.x) + Math.abs(t.y - signe.y) <= reach) this.fxTarget.create(x, top.y);
+      if (this.collisionOverlay.visible && this.world.isBlocked(t.x, t.y)) this.collisionOverlay.create(x, top.y, BLOCKED_FRAME);
     }
 
     for (const s of this.onScreen) s.sprite.setVisible(false);
@@ -194,9 +403,28 @@ export class WorldScene extends Phaser.Scene {
     this.lastSortKey = '';
   }
 
+  /** Re-sorts what's on screen when the set changed or Signe's footprint did. */
+  private sortDepth(): void {
+    const f = this.walker.footprint;
+    const key = `${f.x},${f.y},${f.w},${f.h}`;
+    if (key === this.lastSortKey) return;
+    this.lastSortKey = key;
+    const footprints = this.onScreen.map((s) => s.footprint());
+    depthOrder(footprints).forEach((index, rank) => this.onScreen[index]!.sprite.setDepth(rank));
+  }
+
+  /** Puts Signe's feet on her (interpolated) tile, on whole pixels. */
+  private placeSigne(): void {
+    const v = this.walker.visual;
+    const p = roundPoint(this.proj.footprintBottom({ x: v.x, y: v.y, w: 1, h: 1 }));
+    this.signe.setPosition(p.x, p.y);
+  }
+
+  // --- Walking and talking --------------------------------------------------------
+
   /** Saves whenever Signe comes to a stop. */
   private autosave(): void {
-    store.update((s) => setPosition(s, this.walker.tile));
+    store.update((s) => A.setPosition(s, this.walker.tile));
     store.save();
   }
 
@@ -210,48 +438,51 @@ export class WorldScene extends Phaser.Scene {
   }
 
   private talkToSomeoneBeside(): void {
-    if (dialogueBox.isOpen || this.walker.isMoving) return;
+    if (dialogueBox.isOpen || weaveScreen.isOpen || this.walker.isMoving) return;
     const who = this.people.find((p) => isBeside(this.walker.tile, p.tile));
     if (who) this.talkTo(who);
   }
 
-  /** The person drawn under a world point, frontmost first, ignoring transparent pixels. */
-  private personAt(x: number, y: number): Person | null {
-    const hits = this.people.filter(({ sprite }) => {
-      const left = sprite.x - sprite.displayOriginX;
-      const top = sprite.y - sprite.displayOriginY;
-      const px = Math.floor(x - left);
-      const py = Math.floor(y - top);
+  /** The sprite drawn under a world point, frontmost first, ignoring transparent pixels. */
+  private spriteAt(x: number, y: number, accept: (s: Sortable) => boolean): MapObject | undefined {
+    const hits = this.onScreen.filter((s) => {
+      if (!s.obj || !accept(s)) return false;
+      const { sprite } = s;
+      const px = Math.floor(x - (sprite.x - sprite.displayOriginX));
+      const py = Math.floor(y - (sprite.y - sprite.displayOriginY));
       if (px < 0 || py < 0 || px >= sprite.width || py >= sprite.height) return false;
       return this.textures.getPixelAlpha(px, py, sprite.texture.key) > 0;
     });
     hits.sort((a, b) => b.sprite.depth - a.sprite.depth);
-    return hits[0] ?? null;
+    return hits[0]?.obj ?? undefined;
   }
 
   private onPointerDown(pointer: Phaser.Input.Pointer): void {
-    if (dialogueBox.isOpen) return;
-    this.pendingTalk = null;
+    if (dialogueBox.isOpen || weaveScreen.isOpen) return;
+    if (this.spell) return this.aimAt(pointer.worldX, pointer.worldY);
+    this.pendingVisit = null;
     const tile = this.proj.pick({ x: pointer.worldX, y: pointer.worldY });
-    const who = this.personAt(pointer.worldX, pointer.worldY) ?? this.people.find((p) => p.tile.x === tile.x && p.tile.y === tile.y);
-    if (who) return this.walkToTalk(who);
+    const tapped = this.spriteAt(pointer.worldX, pointer.worldY, (s) => !!s.obj?.npc || !!s.obj?.rest) ?? this.world.objectAt(tile.x, tile.y);
+    const person = tapped?.npc ? this.people.find((p) => p.id === tapped.npc) : undefined;
+    if (person) return this.walkBeside({ ...person.tile, w: 1, h: 1 }, () => this.talkTo(person));
+    if (tapped?.rest) return this.walkBeside(this.world.footprintOf(tapped), () => this.offerRest());
     this.walkTo(tile);
   }
 
-  /** Walks beside someone, then talks; talks at once if already beside them. */
-  private walkToTalk(who: Person): void {
-    const path = pathToBeside(this.map, this.walker.planningTile, who.tile);
+  /** Walks next to something, then does `arrive`; at once if already there. */
+  private walkBeside(target: Footprint, arrive: () => void): void {
+    const path = besidePath(this.routing, this.walker.planningTile, target);
     if (!path) return;
-    if (path.length === 0 && !this.walker.isMoving) return this.talkTo(who);
+    if (path.length === 0 && !this.walker.isMoving) return arrive();
     this.walker.setPath(path);
-    this.pendingTalk = who;
+    this.pendingVisit = { tile: target, arrive };
     const end = path.at(-1) ?? this.walker.planningTile;
     const top = this.proj.toWorld(end.x, end.y);
     this.marker.setPosition(top.x, top.y).setVisible(true);
   }
 
   private walkTo(target: Tile): void {
-    const path = findPath(this.map, this.walker.planningTile, target);
+    const path = findPath(this.routing, this.walker.planningTile, target);
     if (!path) return; // Blocked, outside the map or unreachable: do nothing.
     this.walker.setPath(path);
     const top = this.proj.toWorld(target.x, target.y);
@@ -260,7 +491,7 @@ export class WorldScene extends Phaser.Scene {
 
   private handleKeys(): void {
     if (this.tapped || this.keys.up.concat(this.keys.down, this.keys.left, this.keys.right).some((k) => k.isDown)) {
-      this.pendingTalk = null;
+      this.pendingVisit = null;
     }
     const directions = Object.keys(this.keys) as (keyof DirectionKeys)[];
     const down = directions.find((d) => this.keys[d].some((k) => k.isDown));
@@ -278,7 +509,8 @@ export class WorldScene extends Phaser.Scene {
     const from = this.walker.tile;
     const dir = DIRECTIONS[held];
     const next = { x: from.x + dir.x, y: from.y + dir.y };
-    if (isWalkable(this.map, next)) {
+    // Keys can walk onto armed ice; only route planning steers around it.
+    if (!this.world.isBlocked(next.x, next.y)) {
       this.walker.setPath([next]);
       this.marker.setVisible(false);
     }
@@ -296,21 +528,23 @@ export class WorldScene extends Phaser.Scene {
       right: add('right', K.D, K.RIGHT),
     };
   }
+}
 
-  /** Puts Signe's feet on her (interpolated) tile, on whole pixels. */
-  private placeSigne(): void {
-    const v = this.walker.visual;
-    const p = roundPoint(this.proj.footprintBottom({ x: v.x, y: v.y, w: 1, h: 1 }));
-    this.signe.setPosition(p.x, p.y);
-  }
+/** Beside any tile of a footprint (talking to someone, standing at a door). */
+function isBesideFootprint(t: Tile, f: Footprint): boolean {
+  for (let y = f.y; y < f.y + f.h; y++) for (let x = f.x; x < f.x + f.w; x++) if (isBeside(t, { x, y })) return true;
+  return false;
+}
 
-  /** Re-sorts what's on screen when the set changed or Signe's footprint did. */
-  private sortDepth(): void {
-    const f = this.walker.footprint;
-    const key = `${f.x},${f.y},${f.w},${f.h}`;
-    if (key === this.lastSortKey) return;
-    this.lastSortKey = key;
-    const footprints = this.onScreen.map((s) => s.footprint());
-    depthOrder(footprints).forEach((index, rank) => this.onScreen[index]!.sprite.setDepth(rank));
+/** The shortest route to stand beside a footprint. */
+function besidePath(grid: WalkGrid, from: Tile, f: Footprint): Tile[] | null {
+  if (isBesideFootprint(from, f)) return [];
+  let best: Tile[] | null = null;
+  for (let y = f.y; y < f.y + f.h; y++) {
+    for (let x = f.x; x < f.x + f.w; x++) {
+      const path = pathToBeside(grid, from, { x, y });
+      if (path && path.length > 0 && (!best || path.length < best.length)) best = path;
+    }
   }
+  return best;
 }

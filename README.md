@@ -8,15 +8,15 @@ This repo builds the **vertical slice**: one village by the frozen lake in Kalls
 
 ## Status
 
-Build steps 1–3 of 7 are done: Kallsjö, a 256×256 valley with a frozen lake, birch forest, mountains, an ice road and Signe's village to walk around; the game state with save/load; and conversations with everyone in the slice that react to what Signe has lost. There's no magic or combat to play yet. All art is placeholder, and all dialogue is a first draft.
+Build steps 1–4 of 7 are done: Kallsjö, a 256×256 valley with a frozen lake, birch forest, mountains, an ice road and Signe's village to walk around; the game state with save/load; conversations with everyone in the slice that react to what Signe has lost; and Craft magic: Strengthen, Weaken, Push and Mend, Weave crafting, training and resting. There's no combat yet. All art is placeholder, and all dialogue is a first draft.
 
 | Step | What | Status |
 | --- | --- | --- |
 | 1 | Isometric map, movement and depth sorting | Done |
 | 2 | Game state and save/load | Done |
 | 3 | Ink dialogue wired to the game state | Done |
-| 4 | Craft abilities, Power, Weave crafting and skill training | Next |
-| 5 | Offering, hollowing and Keepsake burning | |
+| 4 | Craft abilities, Power, Weave crafting and skill training | Done |
+| 5 | Offering, hollowing and Keepsake burning | Next |
 | 6 | Turn-based combat and the wolf fight | |
 | 7 | Both quests, world changes and playtesting | |
 
@@ -29,6 +29,10 @@ Build steps 1–3 of 7 are done: Kallsjö, a 256×256 valley with a frozen lake,
 | Continue / choose | Tap the box / tap a choice | Space or Enter / number keys |
 | Step one tile | | WASD or arrow keys (hold to keep walking) |
 | Show blocked tiles | | C |
+| Use Craft | Tap an action at the bottom, then tap what to work on | 1–4, then click; Esc cancels |
+| Cast a saved Weave | Tap it at the bottom, then tap where | 5–9 |
+| Craft a Weave | Weaves… | V |
+| Rest (refill Power) | Tap Signe's home | |
 | Debug panel | Gear button, top right | ` (backtick) |
 
 Keys move along the isometric axes: W/↑ goes up-right, S/↓ down-left, A/← up-left and D/→ down-right.
@@ -36,6 +40,19 @@ Keys move along the isometric axes: W/↑ goes up-right, S/↓ down-left, A/← 
 The game saves in the browser whenever Signe stops walking or finishes a conversation, and picks up there next time.
 
 To see dialogue react to loss, burn a Keepsake in the debug panel and talk to someone: burn *the swim* and Signe greets Lilja as a stranger; burn *the story* and Torvald's tale is new to her; burn *your name* and nobody says it.
+
+## Craft
+
+Signe holds Craft, the domain of made things. Each action costs Power (the dots, top left):
+
+- **Strengthen** makes a thing or a patch of ice resilient.
+- **Weaken** makes a thing brittle, or cracks the ice open.
+- **Push** slides a crate or sled away from her: 1 Power per 2 tiles.
+- **Mend** repairs what's broken: Ebbe's torn nets need Mend I, the stove-in boat Mend II.
+
+In the Weave screen she combines an action, a target (object, one tile of ice, or a 3 × 3 area) and one modifier (Duration, Range, Size, Trigger) into a saved Weave, for example Weaken + surface + Trigger: ice that breaks under the next step. A Weave can be anchored in a memory, which makes it permanent and consumes the memory for good.
+
+Power refills when she rests at home. Mend and Weaken grow surer with use on new things.
 
 ## Testing and tuning
 
