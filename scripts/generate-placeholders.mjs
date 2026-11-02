@@ -36,7 +36,8 @@ function hash(x, y, seed) {
   return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
 }
 
-// Tile order here is the tileset order (local id 0..n-1); generate-test-map.mjs relies on it.
+// Tile order here is the tileset order (local id 0..n-1); generate-kallsjo-map.mjs relies on it.
+// Append new tiles at the end so existing ids stay stable.
 const TILES = [
   { name: 'snow', base: '#dde4ec', speck: '#cbd5e0', edge: '#bfc9d6', density: 0.08 },
   { name: 'snow-2', base: '#d5dde7', speck: '#e8eef4', edge: '#bfc9d6', density: 0.1 },
@@ -46,6 +47,11 @@ const TILES = [
   { name: 'ice-2', base: '#9dbdd1', speck: '#b6d1e1', edge: '#8fb1c6', density: 0.06 },
   { name: 'water', base: '#2c4658', speck: '#36566b', edge: '#223848', density: 0.1 },
   { name: 'blocked', base: '#ff00ff', speck: '#ff00ff', edge: '#ff00ff', density: 0, alpha: 110 },
+  { name: 'road', base: '#c9c2b4', speck: '#b5ad9d', edge: '#a8a091', density: 0.22 },
+  { name: 'road-2', base: '#c2baab', speck: '#d3ccbf', edge: '#a8a091', density: 0.18 },
+  { name: 'ice-road', base: '#c3d3dc', speck: '#d8e3ea', edge: '#9fb7c6', density: 0.2 },
+  { name: 'wood', base: '#7a5c44', speck: '#5e4533', edge: '#4f3a2b', density: 0, planks: true },
+  { name: 'rock', base: '#6d6f72', speck: '#7e8083', edge: '#55575a', density: 0.25 },
 ];
 
 function generateTileset() {
@@ -56,7 +62,7 @@ function generateTileset() {
         if (!inDiamond(x, y)) continue;
         // Darken the two lower edges a little so the grid reads without hard lines.
         const lowerEdge = y >= HALF_H && !inDiamond(x, y + 1);
-        const speck = hash(x, y, i) < tile.density;
+        const speck = tile.planks ? (x + 2 * y) % 8 === 0 : hash(x, y, i) < tile.density;
         const colour = lowerEdge ? tile.edge : speck ? tile.speck : tile.base;
         canvas.set(i * TILE_W + x, y, colour, tile.alpha ?? 255);
       }
@@ -241,6 +247,106 @@ function generatePeople() {
   for (const [id, colours] of Object.entries(people)) save(`npc-${id}.png`, figure(colours));
 }
 
+// --- The wider world (Kallsjö) ---------------------------------------------
+
+/** Seeded random numbers, so regenerating gives the same art. */
+function rng(seed) {
+  let a = seed >>> 0;
+  return () => {
+    a = (a + 0x6d2b79f5) >>> 0;
+    let t = a;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function generateHouses() {
+  // Timber houses with snowy roofs. A roof is a stack of shrinking boxes (a stepped gable).
+  const house = (w, h, wallH, wall, wallDark, door) => {
+    const boxes = [{
+      u: 0.15, v: 0.15, du: w - 0.3, dv: h - 0.3, z: 0, dz: wallH,
+      pattern: (hit) => {
+        if (hit.face === 'top') return wall;
+        const base = hit.face === 'left' ? wall : wallDark;
+        const isDoor = hit.face === 'left' && Math.abs(hit.u - door) < 0.28 && hit.z < wallH * 0.7;
+        const isWindow = hit.face === 'right' && Math.abs(hit.v - h / 2) < 0.22 && hit.z > wallH * 0.35 && hit.z < wallH * 0.7;
+        if (isDoor) return '#1d1612';
+        if (isWindow) return '#e8c27a';
+        return Math.floor(hit.z) % 4 === 0 ? '#2a201a' : base;
+      },
+    }];
+    const steps = 4;
+    for (let k = 0; k < steps; k++) {
+      const inset = (k * (h / 2 - 0.1)) / steps;
+      boxes.push({
+        u: 0, v: inset, du: w, dv: h - 2 * inset, z: wallH + k * 4, dz: 4,
+        top: '#eef2f6', left: '#d0d8e0', right: '#aeb9c4',
+      });
+    }
+    return drawBoxes(w, h, wallH + steps * 4, boxes);
+  };
+  save('house.png', house(3, 2, 20, '#6b4a36', '#4a3326', 1.5));
+  save('house-small.png', house(2, 2, 16, '#5d4636', '#41312a', 1));
+  save('hut.png', house(2, 2, 12, '#55493d', '#3b332b', 0.9));
+}
+
+function generateMountains() {
+  // Stepped rock with snow higher up. Sizes match the footprints the map uses.
+  const random = rng(7);
+  for (const size of [8, 4, 2, 1]) {
+    for (const variant of ['a', 'b']) {
+      const height = Math.round(size * (16 + random() * 6));
+      const tiers = Math.max(2, Math.min(6, size + 1));
+      const boxes = [];
+      for (let k = 0; k < tiers; k++) {
+        const inset = (k / tiers) * size * 0.42 + random() * 0.08 * size;
+        const z = (k / tiers) * height;
+        const snowy = k >= tiers * 0.55;
+        boxes.push({
+          u: Math.min(inset, size / 2 - 0.1), v: Math.min(inset * (0.8 + random() * 0.4), size / 2 - 0.1),
+          du: Math.max(0.2, size - 2 * inset), dv: Math.max(0.2, size - 2 * inset),
+          z, dz: height / tiers + 1,
+          top: snowy ? '#eef2f6' : '#7d8084', left: snowy ? '#d3dbe3' : '#65686c', right: snowy ? '#aab6c2' : '#4c4f53',
+        });
+      }
+      save(`mountain-${size}${variant}.png`, drawBoxes(size, size, height + 2, boxes));
+    }
+  }
+}
+
+function generateNature() {
+  // A taller birch variant, reeds and a ruined wall.
+  const trunk = (h) => ({
+    u: 0.44, v: 0.44, du: 0.14, dv: 0.14, z: 0, dz: h,
+    pattern: (hit) => (Math.floor(hit.z) % 9 === 4 || Math.floor(hit.z) % 13 === 7 ? '#2b2b2b' : hit.face === 'right' ? '#c9c9c4' : '#f0f0ea'),
+  });
+  const twigs = (z, dz) => ({
+    u: 0.1, v: 0.1, du: 0.8, dv: 0.8, z, dz,
+    pattern: (hit, px, py) => ((px * 5 + py * 3) % 7 === 0 || (px + 2 * py) % 6 === 0 ? (hit.face === 'right' ? '#4a3b33' : '#6b574a') : null),
+  });
+  save('birch-2.png', drawBoxes(1, 1, 58, [trunk(52), twigs(30, 28)]));
+  save('reeds.png', drawBoxes(1, 1, 14, [{
+    u: 0.1, v: 0.1, du: 0.8, dv: 0.8, z: 0, dz: 13,
+    pattern: (hit, px, py) => (px % 3 === 0 || (px + py) % 5 === 0 ? (hit.z > 10 ? '#b59a5e' : '#8a7448') : null),
+  }]));
+  const ruin = [
+    { u: 0.1, v: 0.1, du: 1.8, dv: 0.25, z: 0, dz: 14, top: '#9a948a', left: '#857f76', right: '#6b665f' },
+    { u: 0.1, v: 0.35, du: 0.25, dv: 1.1, z: 0, dz: 9, top: '#9a948a', left: '#857f76', right: '#6b665f' },
+    { u: 1.2, v: 1.4, du: 0.6, dv: 0.3, z: 0, dz: 5, top: '#9a948a', left: '#857f76', right: '#6b665f' },
+  ];
+  save('ruin.png', drawBoxes(2, 2, 16, ruin));
+  // Ice road markers: a pole with a sprig of spruce, as on real ice roads.
+  save('ice-marker.png', drawBoxes(1, 1, 22, [
+    { u: 0.46, v: 0.46, du: 0.08, dv: 0.08, z: 0, dz: 18, top: '#6b5444', left: '#5b463a', right: '#3d2f27' },
+    { u: 0.38, v: 0.38, du: 0.24, dv: 0.24, z: 14, dz: 7, top: '#3f5a3a', left: '#35502f', right: '#273d23' },
+  ]));
+  save('sled.png', drawBoxes(2, 1, 12, [
+    { u: 0.1, v: 0.3, du: 1.8, dv: 0.4, z: 0, dz: 3, top: '#5b463a', left: '#4a3a30', right: '#3d2f27' },
+    { u: 0.3, v: 0.3, du: 1.2, dv: 0.4, z: 3, dz: 7, top: '#8a7a5a', left: '#6f6248', right: '#55493a' },
+  ]));
+}
+
 function generateMarker() {
   // Tile-sized diamond outline for the click target.
   const canvas = new Canvas(TILE_W, TILE_H);
@@ -261,4 +367,7 @@ generateNetRack();
 generateStatue();
 generateSigne();
 generatePeople();
+generateHouses();
+generateMountains();
+generateNature();
 generateMarker();

@@ -8,7 +8,7 @@ This repo builds the **vertical slice**: one village by the frozen lake in Kalls
 
 ## Status
 
-Build steps 1–3 of 7 are done: an isometric test map Signe can walk around, the game state with save/load, and conversations with everyone in the slice that react to what Signe has lost. There's no magic or combat to play yet. All art is placeholder, and all dialogue is a first draft.
+Build steps 1–3 of 7 are done: Kallsjö, a 256×256 valley with a frozen lake, birch forest, mountains, an ice road and Signe's village to walk around; the game state with save/load; and conversations with everyone in the slice that react to what Signe has lost. There's no magic or combat to play yet. All art is placeholder, and all dialogue is a first draft.
 
 | Step | What | Status |
 | --- | --- | --- |
@@ -57,16 +57,16 @@ npm run build     # production build into dist/
 
 Every push to `main` is tested, built and published to GitHub Pages by [.github/workflows/pages.yml](.github/workflows/pages.yml).
 
-### Placeholder art and the test map
+### Placeholder art and the map
 
-The sprites in `assets/sprites/` and the map in `assets/maps/test-map.json` are generated:
+The sprites in `assets/sprites/` and the map in `assets/maps/kallsjo.json` are generated:
 
 ```bash
 npm run gen:art   # placeholder PNGs
-npm run gen:map   # 24x24 isometric Tiled map
+npm run gen:map   # the 256x256 Kallsjö map, plus docs/map-overview.svg
 ```
 
-The map is a normal Tiled JSON map, so it can be edited in [Tiled](https://www.mapeditor.org/) from here on. Real art can replace any sprite as long as it keeps the file name and size. An object sprite is exactly as wide as its footprint's diamond (`(w + h) × 16` px), with the footprint's front corner on the bottom edge.
+[docs/map-overview.svg](docs/map-overview.svg) shows the whole layout with labels. The map is a normal Tiled JSON map, so once the layout is final it can be edited in [Tiled](https://www.mapeditor.org/) instead of regenerated. Real art can replace any sprite as long as it keeps the file name and size. An object sprite is exactly as wide as its footprint's diamond (`(w + h) × 16` px), with the footprint's front corner on the bottom edge.
 
 ## Tech
 
@@ -75,6 +75,7 @@ The map is a normal Tiled JSON map, so it can be edited in [Tiled](https://www.m
 - Fixed 480×270 resolution, scaled by whole device pixels only so pixels stay sharp on any screen
 - [Ink](https://www.inklestudios.com/ink/) dialogue via inkjs, bound to the game state
 - Depth sorting by tile footprint, so characters walk correctly in front of and behind multi-tile buildings
+- Only what's on screen is drawn and sorted, so the 256×256 map with 8,000 objects runs at full speed
 
 ## Layout
 
@@ -91,7 +92,7 @@ content/
   ink/          dialogue in Ink, compiled at build time
 assets/         maps and sprites
 docs/           design doc
-scripts/        placeholder art and test map generators
+scripts/        placeholder art and map generators
 ```
 
 Working with Claude Code? Start with [CLAUDE.md](CLAUDE.md): it holds the design pillars, vocabulary and architecture rules.

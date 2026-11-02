@@ -39,6 +39,21 @@ All in `content/data/tuning.ts`, changeable live in the debug panel.
 | Burn: shame / why you left / your name | 6 / 5 / 6 | Draft, following "pain pays best" |
 | Wounds before Signe falls | 3 | From the design |
 
+## The Kallsjö map (step 1, rebuilt)
+
+Daniel asked for a much bigger world with roads, mountains and forest, and for people to stand where their dialogue puts them. Decided by Daniel: 256 × 256 tiles, mountains as an impassable backdrop (flat ground, no climbing), Lilja on the ice by the jetty, layout drafted by Claude for approval. See [map-overview.svg](map-overview.svg).
+
+| Decision | Status |
+| --- | --- |
+| The lake fills the middle of the valley (about 136 tiles across); birch forest rings it; mountains ring the forest. | Draft, from the design ("the lake is the centre of the map") |
+| Signe's village sits on the near (south-west) shore, with her home, Old Gerda's house, Ebbe's hut and net racks, two boathouses, two more houses, a jetty with reeds, and Saint Maren's statue on the shore. | Draft |
+| The ice road runs straight across the lake from the village to the far shore, marked with poles and spruce sprigs, and continues through a pass north. | Draft. The design doesn't say where the ice road leads. |
+| A road leaves the village through a pass south: the way out of the valley. A shore track runs east around the lake to the hermit's hut on a headland. | Draft |
+| Maren's ruined birth village is three ruined walls on an island in the lake, reachable over the ice. | Draft, from the design |
+| Torvald fishes at a hole in the ice near the start of the ice road. Lilja plays on the ice at the end of the jetty. Ebbe stands at his net racks, Gerda by the statue near her house, Olle by his sled in the street, the Hollow at the boathouse door, the hermit outside his hut. | Torvald and Lilja decided by Daniel; the rest draft |
+| A second hole of open water lies out on the lake, away from the road. | Draft |
+| Only one of the design's "fishing villages" ringing the lake is built; the slice has one village. | Draft |
+
 ## Dialogue drafts (step 3)
 
 All lines in `content/ink/` are Claude's first drafts. They stay within the design doc's facts, except for the details below, which are invented and need your call.

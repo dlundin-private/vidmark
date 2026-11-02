@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { parseTiledMap, type TiledJson } from './tiledMap';
 import { findPath } from './pathfinding';
-import testMap from '../../assets/maps/test-map.json';
+import kallsjo from '../../assets/maps/kallsjo.json';
 import { NPCS } from '../../content/data/npcs';
 
 function tinyMap(): TiledJson {
@@ -51,49 +51,58 @@ describe('parseTiledMap', () => {
   });
 });
 
-describe('the step 1 test map', () => {
-  const map = parseTiledMap(testMap as TiledJson);
-  // Walled off by two birches on purpose, to test clicks on unreachable tiles.
-  const UNREACHABLE = { x: 23, y: 23 };
+describe('the Kallsjö map', () => {
+  const map = parseTiledMap(kallsjo as TiledJson);
+  // Ground frames (tileset order in scripts/generate-placeholders.mjs).
+  const FRAME = { ice: [4, 5], water: 6, road: [8, 9], iceRoad: 10 };
+  const frameAt = (x: number, y: number) => map.ground[y * map.width + x] ?? -1;
+  const person = (id: string) => map.objects.find((o) => o.npc === id)!.footprint;
+  const beside = (x: number, y: number) => [{ x: x + 1, y }, { x: x - 1, y }, { x, y: y + 1 }, { x, y: y - 1 }];
 
-  it('is 24x24 with 32x16 tiles', () => {
-    expect([map.width, map.height, map.tileWidth, map.tileHeight]).toEqual([24, 24, 32, 16]);
+  it('is 256x256 with 32x16 tiles', () => {
+    expect([map.width, map.height, map.tileWidth, map.tileHeight]).toEqual([256, 256, 32, 16]);
   });
 
-  it('has the objects the step asks for, each on blocked tiles', () => {
-    const names = new Set(map.objects.map((o) => o.name));
-    for (const n of ['boathouse', 'birch', 'net-rack', 'statue']) expect(names.has(n)).toBe(true);
+  it('starts Signe on a free tile', () => {
+    expect(map.isBlocked(map.spawn.x, map.spawn.y)).toBe(false);
+  });
+
+  it('blocks every object footprint, and the mountains at the edges', () => {
     for (const o of map.objects) {
       const { x, y, w, h } = o.footprint;
       for (let ty = y; ty < y + h; ty++) for (let tx = x; tx < x + w; tx++) expect(map.isBlocked(tx, ty)).toBe(true);
     }
+    for (const [x, y] of [[0, 0], [255, 0], [0, 255], [255, 255]] as const) expect(map.isBlocked(x, y)).toBe(true);
   });
 
-  it('lets Signe walk all the way around every object', () => {
-    for (const o of map.objects) {
-      const { x, y, w, h } = o.footprint;
-      const sides = [
-        { x: x - 1, y }, { x: x + w, y }, { x, y: y - 1 }, { x, y: y + h },
-      ].filter((t) => t.x >= 0 && t.y >= 0 && t.x < map.width && t.y < map.height && !map.isBlocked(t.x, t.y))
-        .filter((t) => !(t.x === UNREACHABLE.x && t.y === UNREACHABLE.y));
-      // Objects at the map edge or walling off the test corner may lose a side; the others keep all four.
-      if (o.name === 'boathouse' || o.name === 'statue' || o.name === 'net-rack') expect(sides.length).toBe(4);
-      for (const s of sides) expect(findPath(map, map.spawn, s)).not.toBeNull();
-    }
-  });
-
-  it('puts every person on the map, each with a reachable tile beside them to talk from', () => {
+  it('puts every person on the map, each reachable from where Signe starts', () => {
     const people = map.objects.filter((o) => o.npc);
     expect(people.map((o) => o.npc).sort()).toEqual(NPCS.map((n) => n.id).sort());
     for (const p of people) {
       const { x, y } = p.footprint;
-      const beside = [{ x: x + 1, y }, { x: x - 1, y }, { x, y: y + 1 }, { x, y: y - 1 }];
-      expect(beside.some((t) => findPath(map, map.spawn, t) !== null)).toBe(true);
+      expect(beside(x, y).some((t) => findPath(map, map.spawn, t) !== null)).toBe(true);
     }
   });
 
-  it('has an unreachable corner for testing', () => {
-    expect(map.isBlocked(UNREACHABLE.x, UNREACHABLE.y)).toBe(false);
-    expect(findPath(map, map.spawn, UNREACHABLE)).toBeNull();
+  it('has Lilja out on the ice, as her dialogue says', () => {
+    const { x, y } = person('lilja');
+    expect(FRAME.ice).toContain(frameAt(x, y));
+  });
+
+  it('has Torvald fishing beside open water', () => {
+    const { x, y } = person('torvald');
+    expect(beside(x, y).some((t) => frameAt(t.x, t.y) === FRAME.water)).toBe(true);
+  });
+
+  it('has an ice road across the lake, and roads out through passes north and south', () => {
+    const iceRoad = [];
+    for (let y = 0; y < map.height; y++) for (let x = 0; x < map.width; x++) if (frameAt(x, y) === FRAME.iceRoad) iceRoad.push(y);
+    expect(Math.max(...iceRoad) - Math.min(...iceRoad)).toBeGreaterThan(100);
+    const roadAt = (y: number) => [...Array(map.width).keys()].find((x) => FRAME.road.includes(frameAt(x, y)!) && !map.isBlocked(x, y));
+    for (const edge of [0, map.height - 1]) {
+      const x = roadAt(edge);
+      expect(x).toBeDefined();
+      expect(findPath(map, map.spawn, { x: x!, y: edge })).not.toBeNull();
+    }
   });
 });
