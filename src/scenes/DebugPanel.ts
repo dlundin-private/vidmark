@@ -195,7 +195,7 @@ const CSS = `
   border: 1px solid #3a4250; background: rgba(20, 24, 30, 0.8); color: #c9d2dc; font-size: 18px; cursor: pointer; }
 .dbg-panel { position: fixed; top: 0; right: 0; bottom: 0; z-index: 21; width: min(380px, 100vw); box-sizing: border-box;
   overflow-y: auto; padding: 10px 12px 24px; background: rgba(14, 17, 22, 0.96); color: #d8dee6;
-  font: 13px/1.4 system-ui, sans-serif; touch-action: pan-y; user-select: text; -webkit-user-select: text; }
+  font: 15px/1.4 system-ui, sans-serif; touch-action: pan-y; user-select: text; -webkit-user-select: text; }
 .dbg-panel[hidden] { display: none; }
 .dbg-head { display: flex; justify-content: space-between; align-items: center; position: sticky; top: -10px;
   background: rgba(14, 17, 22, 0.98); padding: 4px 0; }

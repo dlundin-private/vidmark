@@ -108,14 +108,14 @@ const CSS = `
 .dlg[hidden] { display: none; }
 .dlg-box { width: min(640px, 100%); max-height: 60vh; overflow-y: auto; box-sizing: border-box; padding: 14px 18px 12px;
   background: rgba(12, 14, 18, 0.94); border: 1px solid #3a4250; border-radius: 4px; color: #dfe4ea;
-  font: 17px/1.45 Georgia, 'Times New Roman', serif; cursor: pointer; position: relative; touch-action: pan-y; }
+  font: 19px/1.45 Georgia, 'Times New Roman', serif; cursor: pointer; position: relative; touch-action: pan-y; }
 .dlg-speaker { font: 600 12px/1 system-ui, sans-serif; letter-spacing: 0.08em; text-transform: uppercase; color: #b7c4d1; margin-bottom: 8px; }
 .dlg-text { margin: 0; }
 .dlg-narration { font-style: italic; color: #b9c1ca; }
 .dlg-hint { position: absolute; right: 12px; bottom: 6px; color: #6f7c8a; font-size: 12px; }
 .dlg-choices { display: grid; gap: 6px; cursor: default; }
 .dlg-choice { text-align: left; background: #1b2029; color: #e4e9ef; border: 1px solid #3a4250; border-radius: 4px;
-  padding: 9px 12px; font: inherit; font-size: 16px; cursor: pointer; }
+  padding: 10px 13px; font: inherit; font-size: 18px; cursor: pointer; }
 .dlg-choice:hover, .dlg-choice:focus-visible { border-color: #8fa0b3; outline: none; }
-@media (max-height: 420px) { .dlg-box { font-size: 15px; padding: 10px 14px; max-height: 70vh; } .dlg-choice { padding: 7px 10px; font-size: 15px; } }
+@media (max-height: 420px) { .dlg-box { font-size: 17px; padding: 10px 14px; max-height: 70vh; } .dlg-choice { padding: 8px 11px; font-size: 16px; } }
 `;

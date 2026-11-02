@@ -23,3 +23,15 @@ export const WALK_STEPS_PER_TILE = TILE_HEIGHT / 2;
 export const WORLD_TOP_MARGIN = 64;
 
 export const BACKGROUND_COLOUR = '#0b0d10';
+
+// --- People moving about ---
+/** People walk a little slower than Signe. */
+export const PERSON_WALK_MS_PER_TILE = 340;
+/** How long someone stands still between little walks, in ms (min, max). */
+export const PERSON_IDLE_MS: readonly [number, number] = [3000, 9000];
+/** Time between two people meeting to talk, in ms (min, max). */
+export const MEETING_INTERVAL_MS: readonly [number, number] = [14000, 30000];
+/** People only walk over to someone whose spot is at most this many tiles from theirs. */
+export const MEETING_MAX_DISTANCE = 18;
+/** How long each line of a meeting stays in its speech bubble. */
+export const BUBBLE_MS_PER_LINE = 3200;

@@ -3,6 +3,8 @@ import { NPCS } from '../../content/data/npcs';
 import { STATE_VERSION, type GameState } from './GameState';
 
 export const SAVE_KEY = 'vidmark.save';
+/** The game as it was at the last rest at home: where death returns to. */
+export const REST_KEY = 'vidmark.rest';
 
 export interface SaveFile {
   game: 'vidmark';

@@ -1,20 +1,29 @@
 import Phaser from 'phaser';
 import {
+  BUBBLE_MS_PER_LINE,
+  MEETING_INTERVAL_MS,
+  MEETING_MAX_DISTANCE,
+  PERSON_IDLE_MS,
+  PERSON_WALK_MS_PER_TILE,
   TILE_HEIGHT,
   TILE_WIDTH,
   WALK_MS_PER_TILE,
   WALK_STEPS_PER_TILE,
   WORLD_TOP_MARGIN,
 } from '../config';
-import { CRAFTABLES } from '../../content/data/craft';
+import { MEETINGS } from '../../content/data/meetings';
+import { NPCS } from '../../content/data/npcs';
+import { ACTIONS, CRAFTABLES } from '../../content/data/craft';
 import type { NpcId } from '../../content/data/npcs';
+import { PeopleSim } from '../systems/people';
+import { DeathScreen, SpeechBubbles } from './Overlays';
 import { IsoProjection, depthOrder, rectsOverlap, roundPoint, tilesInView, type Footprint, type Rect, type Tile } from '../iso';
 import { TileWalker } from '../systems/movement';
 import { findPath, type WalkGrid } from '../systems/pathfinding';
 import { parseTiledMap, type MapObject, type TiledJson } from '../systems/tiledMap';
 import { WorldModel } from '../systems/world';
 import { cast, planCast, plainSpell, stepOnto, weaveSpell, type Aim, type Spell } from '../systems/craft';
-import { dialogueBox, store, tuning } from '../game';
+import { ambientDialogue, dialogueBox, store, tuning } from '../game';
 import { isBeside, pathToBeside } from '../systems/interaction';
 import * as A from '../state/actions';
 import { CraftHud, type Selection } from './CraftHud';
@@ -43,10 +52,10 @@ interface Sortable {
 
 type DirectionKeys = Record<'up' | 'down' | 'left' | 'right', Phaser.Input.Keyboard.Key[]>;
 
-/** Someone Signe can talk to, standing on a tile. */
+/** Someone Signe can talk to. Where they stand comes from the PeopleSim. */
 interface Person {
   id: NpcId;
-  tile: Tile;
+  obj: MapObject;
   sprite: Phaser.GameObjects.Image;
 }
 
@@ -66,6 +75,9 @@ const hud = new CraftHud({
   onSelect: (s) => activeScene?.onSelect(s),
   onOpenWeaves: () => weaveScreen.open(),
 });
+const bubbles = new SpeechBubbles(BUBBLE_MS_PER_LINE);
+const deathScreen = new DeathScreen();
+const NPC_BY_NAME = new Map(NPCS.map((n) => [n.name, n.id]));
 
 export class WorldScene extends Phaser.Scene {
   private world!: WorldModel;
@@ -94,9 +106,11 @@ export class WorldScene extends Phaser.Scene {
   /** Last direction tapped, kept until used: a tap can go down and up within one frame. */
   private tapped: keyof DirectionKeys | null = null;
   private people: Person[] = [];
-  private home: MapObject | null = null;
+  private sim!: PeopleSim;
+  /** Who Signe is talking with; they hold still. */
+  private talkingWith: NpcId | null = null;
   /** Who or what Signe is walking over to (to talk, or to rest at home). */
-  private pendingVisit: { tile: Footprint; arrive: () => void } | null = null;
+  private pendingVisit: { target: () => Footprint; arrive: () => void; who: NpcId | null } | null = null;
   /** The spell chosen in the HUD, waiting for a target. */
   private spell: Spell | null = null;
   /** Push: the object chosen, waiting for where it should stop. */
@@ -118,7 +132,9 @@ export class WorldScene extends Phaser.Scene {
     this.lastSortKey = '';
     this.tapped = null;
     this.people = [];
+    this.talkingWith = null;
     this.pendingVisit = null;
+    bubbles.clear();
     this.spell = null;
     this.pushing = null;
     hud.select(null);
@@ -155,14 +171,41 @@ export class WorldScene extends Phaser.Scene {
         console.warn(`Sprite "${obj.sprite}" is ${sprite.width}px wide; a ${fp.w}x${fp.h} footprint needs ${expectedWidth}px`);
       }
       this.entityLayer.add(sprite);
-      const sortable: Sortable = { sprite, obj, footprint: () => this.world.footprintOf(obj), bounds: null };
+      const npc = obj.npc as NpcId | null;
+      // People move, so they are always sorted and their footprint comes from the simulation.
+      const sortable: Sortable = npc
+        ? { sprite, obj, footprint: () => this.sim.footprintOf(npc), bounds: null }
+        : { sprite, obj, footprint: () => this.world.footprintOf(obj), bounds: null };
       this.sortables.push(sortable);
       this.sortableById.set(obj.id, sortable);
-      this.applyLook(sortable);
-      if (obj.npc) this.people.push({ id: obj.npc as NpcId, tile: { x: fp.x, y: fp.y }, sprite });
-      if (obj.rest) this.home = obj;
+      if (!npc) this.applyLook(sortable);
+      if (npc) this.people.push({ id: npc, obj, sprite });
     }
     this.syncObjects();
+    this.sim = new PeopleSim(
+      {
+        width: map.width,
+        height: map.height,
+        isBlocked: (x, y) => this.world.isBlockedForRouting(x, y),
+        isIce: (x, y) => this.world.isIce(x, y),
+        placePerson: (id, tile) => {
+          const p = this.people.find((q) => q.id === id);
+          if (p) this.world.placeDynamic(p.obj.id, tile);
+        },
+      },
+      this.people.map((p) => {
+        const def = NPCS.find((n) => n.id === p.id)!;
+        return { id: p.id, home: { x: p.obj.footprint.x, y: p.obj.footprint.y }, radius: def.wander.radius, onIce: def.wander.onIce ?? false };
+      }),
+      MEETINGS,
+      {
+        msPerTile: PERSON_WALK_MS_PER_TILE,
+        stepsPerTile: WALK_STEPS_PER_TILE,
+        idleMs: PERSON_IDLE_MS,
+        meetingIntervalMs: MEETING_INTERVAL_MS,
+        meetingMaxDistance: MEETING_MAX_DISTANCE,
+      },
+    );
 
     const saved = store.state.position;
     const start = saved && !this.world.isBlocked(saved.x, saved.y) ? saved : map.spawn;
@@ -193,6 +236,7 @@ export class WorldScene extends Phaser.Scene {
     const unsubscribe = store.subscribe(() => {
       if (store.generation !== generation) return this.scene.restart();
       this.worldVersion++;
+      if (A.hasFallen(store.state, tuning.values) && !deathScreen.isOpen) this.die();
       this.syncObjects();
       this.lastViewKey = '';
       hud.render(store.state, tuning.values);
@@ -202,11 +246,14 @@ export class WorldScene extends Phaser.Scene {
       if (activeScene === this) activeScene = null;
     });
     hud.render(store.state, tuning.values);
+    if (A.hasFallen(store.state, tuning.values)) this.die();
   }
 
   update(_time: number, delta: number): void {
-    hud.setVisible(!dialogueBox.isOpen);
-    if (!dialogueBox.isOpen && !weaveScreen.isOpen) this.handleKeys();
+    const busy = dialogueBox.isOpen || weaveScreen.isOpen || deathScreen.isOpen;
+    hud.setVisible(!dialogueBox.isOpen && !deathScreen.isOpen);
+    if (!busy) this.handleKeys();
+    this.updatePeople(delta);
     const before = this.walker.tile;
     const entered = this.walker.update(delta);
     if (entered.length > 0) this.onEntered(before, entered);
@@ -215,7 +262,7 @@ export class WorldScene extends Phaser.Scene {
       if (entered.length > 0) this.autosave();
       const visit = this.pendingVisit;
       this.pendingVisit = null;
-      if (visit && isBesideFootprint(this.walker.tile, visit.tile)) visit.arrive();
+      if (visit && isBesideFootprint(this.walker.tile, visit.target())) visit.arrive();
     }
     this.placeSigne();
     this.refreshView();
@@ -230,7 +277,8 @@ export class WorldScene extends Phaser.Scene {
     this.spell = selection ? this.spellFor(selection) : null;
     if (this.spell) {
       this.pendingVisit = null;
-      hud.say(selection?.kind === 'action' ? 'Tap what to work on.' : 'Tap where to cast it.', 0);
+      const what = selection?.kind === 'action' ? ACTIONS.find((a) => a.id === selection.action)!.description : 'Your Weave is ready.';
+      hud.say(`${what} Tap where to use it. Tap the button again to cancel.`, 0);
     } else {
       hud.say('', 1);
     }
@@ -299,7 +347,7 @@ export class WorldScene extends Phaser.Scene {
       const through = store.update((s, t) => stepOnto(this.world, s, t, tile));
       if (through) {
         this.walker.teleport(previous);
-        if (A.hasFallen(store.state, tuning.values)) return this.collapse();
+        if (deathScreen.isOpen) return;
         hud.say('The ice gives way. You haul yourself out, soaked and cut.');
         this.autosave();
         return;
@@ -308,16 +356,54 @@ export class WorldScene extends Phaser.Scene {
     }
   }
 
-  /** Too many wounds outside a fight: Signe comes to at home, rested. */
-  private collapse(): void {
-    store.update(A.restAtHome);
-    if (this.home) {
-      const fp = this.world.footprintOf(this.home);
-      const door = { x: fp.x + 1, y: fp.y + fp.h };
-      if (!this.world.isBlocked(door.x, door.y)) this.walker.teleport(door);
+  /**
+   * The last wound: Signe dies, and the game goes back to her last rest at
+   * home (decided by Daniel), told as a memory she had wrong.
+   */
+  private die(): void {
+    this.walker.setPath([]);
+    this.pendingVisit = null;
+    hud.select(null);
+    const lines = ambientDialogue.linesOf('death').map((l) => l.text);
+    deathScreen.show(lines, () => store.returnToLastRest());
+  }
+
+  // --- People ---------------------------------------------------------------------
+
+  private updatePeople(delta: number): void {
+    const frozen = new Set<NpcId>();
+    if (this.talkingWith) frozen.add(this.talkingWith);
+    if (this.pendingVisit?.who) frozen.add(this.pendingVisit.who);
+    this.sim.update(delta, {
+      signe: this.walker.planningTile,
+      signeRoute: this.walker.route,
+      frozen,
+      meet: (m) => {
+        const lines = ambientDialogue.linesOf(m.knot);
+        if (lines.length === 0) return 0;
+        return bubbles.play(lines.map((l) => ({ who: NPC_BY_NAME.get(l.speaker ?? '') ?? m.a, text: l.text })));
+      },
+    });
+    for (const p of this.people) {
+      const v = this.sim.visualOf(p.id);
+      const at = roundPoint(this.proj.footprintBottom({ x: v.x, y: v.y, w: 1, h: 1 }));
+      p.sprite.setPosition(at.x, at.y);
     }
-    hud.say('Everything goes dark. You wake at home, aching, with no memory of the walk back.', 6000);
-    this.autosave();
+    bubbles.update(delta, (who) => this.screenPointAbove(who), dialogueBox.isOpen || weaveScreen.isOpen || deathScreen.isOpen);
+  }
+
+  /** CSS-pixel point just above someone's head, or null if they are off screen. */
+  private screenPointAbove(who: string): { x: number; y: number } | null {
+    const p = this.people.find((q) => q.id === who);
+    if (!p) return null;
+    const cam = this.cameras.main;
+    const wx = p.sprite.x;
+    const wy = p.sprite.y - p.sprite.height + 6;
+    const v = cam.worldView;
+    if (wx < v.x || wx > v.x + v.width || wy < v.y - 20 || wy > v.y + v.height) return null;
+    const rect = this.game.canvas.getBoundingClientRect();
+    const k = rect.width / cam.width;
+    return { x: rect.left + (wx - v.x) * k, y: rect.top + (wy - v.y) * k };
   }
 
   private offerRest(): void {
@@ -327,7 +413,8 @@ export class WorldScene extends Phaser.Scene {
         run: () => {
           store.update(A.restAtHome);
           this.autosave();
-          hud.say('You rest by the fire. Power restored.');
+          store.saveRestPoint(); // where death returns to
+          hud.say('You rest by the fire. Power restored. You will remember this.');
         },
       },
       { label: 'Not now', run: () => undefined },
@@ -403,10 +490,11 @@ export class WorldScene extends Phaser.Scene {
     this.lastSortKey = '';
   }
 
-  /** Re-sorts what's on screen when the set changed or Signe's footprint did. */
+  /** Re-sorts what's on screen when the set changed, or Signe or anyone else moved. */
   private sortDepth(): void {
-    const f = this.walker.footprint;
-    const key = `${f.x},${f.y},${f.w},${f.h}`;
+    const key = [this.walker.footprint, ...this.people.map((p) => this.sim.footprintOf(p.id))]
+      .map((f) => `${f.x},${f.y},${f.w},${f.h}`)
+      .join('|');
     if (key === this.lastSortKey) return;
     this.lastSortKey = key;
     const footprints = this.onScreen.map((s) => s.footprint());
@@ -430,8 +518,10 @@ export class WorldScene extends Phaser.Scene {
 
   private talkTo(who: Person): void {
     this.tapped = null;
+    this.talkingWith = who.id;
     dialogueBox.open(who.id, () => {
       this.tapped = null;
+      this.talkingWith = null;
       // Conversations change the game (Offerings, promises, flags): keep them.
       this.autosave();
     });
@@ -439,7 +529,7 @@ export class WorldScene extends Phaser.Scene {
 
   private talkToSomeoneBeside(): void {
     if (dialogueBox.isOpen || weaveScreen.isOpen || this.walker.isMoving) return;
-    const who = this.people.find((p) => isBeside(this.walker.tile, p.tile));
+    const who = this.people.find((p) => isBeside(this.walker.tile, this.sim.tileOf(p.id)));
     if (who) this.talkTo(who);
   }
 
@@ -458,24 +548,27 @@ export class WorldScene extends Phaser.Scene {
   }
 
   private onPointerDown(pointer: Phaser.Input.Pointer): void {
-    if (dialogueBox.isOpen || weaveScreen.isOpen) return;
+    if (dialogueBox.isOpen || weaveScreen.isOpen || deathScreen.isOpen) return;
     if (this.spell) return this.aimAt(pointer.worldX, pointer.worldY);
     this.pendingVisit = null;
     const tile = this.proj.pick({ x: pointer.worldX, y: pointer.worldY });
     const tapped = this.spriteAt(pointer.worldX, pointer.worldY, (s) => !!s.obj?.npc || !!s.obj?.rest) ?? this.world.objectAt(tile.x, tile.y);
     const person = tapped?.npc ? this.people.find((p) => p.id === tapped.npc) : undefined;
-    if (person) return this.walkBeside({ ...person.tile, w: 1, h: 1 }, () => this.talkTo(person));
-    if (tapped?.rest) return this.walkBeside(this.world.footprintOf(tapped), () => this.offerRest());
+    if (person) return this.walkBeside(() => this.sim.footprintOf(person.id), () => this.talkTo(person), person.id);
+    if (tapped?.rest) {
+      const home = tapped;
+      return this.walkBeside(() => this.world.footprintOf(home), () => this.offerRest());
+    }
     this.walkTo(tile);
   }
 
-  /** Walks next to something, then does `arrive`; at once if already there. */
-  private walkBeside(target: Footprint, arrive: () => void): void {
-    const path = besidePath(this.routing, this.walker.planningTile, target);
+  /** Walks next to something (or someone, who then waits), then does `arrive`; at once if already there. */
+  private walkBeside(target: () => Footprint, arrive: () => void, who: NpcId | null = null): void {
+    const path = besidePath(this.routing, this.walker.planningTile, target());
     if (!path) return;
     if (path.length === 0 && !this.walker.isMoving) return arrive();
     this.walker.setPath(path);
-    this.pendingVisit = { tile: target, arrive };
+    this.pendingVisit = { target, arrive, who };
     const end = path.at(-1) ?? this.walker.planningTile;
     const top = this.proj.toWorld(end.x, end.y);
     this.marker.setPosition(top.x, top.y).setVisible(true);

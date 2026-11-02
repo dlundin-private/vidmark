@@ -41,6 +41,11 @@ export class TileWalker {
     return { ...last };
   }
 
+  /** The tiles still to walk, in order, including the one being entered. */
+  get route(): Tile[] {
+    return [...(this.next ? [this.next] : []), ...this.queue].map((t) => ({ ...t }));
+  }
+
   /** Where new routes should start: the tile being entered, or the current tile. */
   get planningTile(): Tile {
     return { ...(this.next ?? this.current) };

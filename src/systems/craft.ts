@@ -184,6 +184,11 @@ export function cast(world: WorldModel, state: GameState, t: Tuning, plan: Extra
       case 'mend':
         A.setObjectBroken(state, o.id, false);
         A.setObjectEffect(state, o.id, undefined);
+        if (o.type === 'net-rack') {
+          const racks = world.objects.filter((x) => x.type === 'net-rack' && x.broken);
+          A.setFlag(state, 'nets_total', racks.length);
+          A.setFlag(state, 'nets_mended', racks.filter((x) => !world.isBroken(x)).length);
+        }
         message = `You feel how the ${label(o)} was made, and it is whole again.`;
         break;
       case 'push': {

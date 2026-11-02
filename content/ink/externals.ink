@@ -11,7 +11,7 @@ EXTERNAL is_hollowed(who)
 EXTERNAL has_offered(who)      // gave Signe an Offering (true even if later hollowed)
 EXTERNAL in_hearth(who)        // offered, not hollowed, not faithless
 EXTERNAL name_known()          // false once "your name" is burned: then nobody says it
-EXTERNAL flag(name)            // a world flag; false if never set
+EXTERNAL flag(name)            // a world flag; 0 if never set (reads as false, and compares as a number)
 EXTERNAL promise_made(id)
 EXTERNAL power()               // Power Signe can spend right now
 

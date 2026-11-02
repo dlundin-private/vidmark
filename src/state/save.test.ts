@@ -72,6 +72,25 @@ describe('GameStore', () => {
     expect(store.state.flags.kept).toBe(true);
   });
 
+  it('returns to the last rest on death, overwriting the autosave', () => {
+    const storage = memoryStorage();
+    const store = new GameStore(storage, () => DEFAULT_TUNING);
+    store.update((s) => A.setFlag(s, 'beforeRest', true));
+    store.saveRestPoint();
+    store.update((s) => A.setFlag(s, 'afterRest', true));
+    store.save();
+    store.returnToLastRest();
+    expect(store.state.flags).toEqual({ beforeRest: true });
+    expect(JSON.parse(storage.data.get(SAVE_KEY)!).state.flags).toEqual({ beforeRest: true });
+  });
+
+  it('starts over on death if Signe never rested', () => {
+    const store = new GameStore(memoryStorage(), () => DEFAULT_TUNING);
+    store.update((s) => A.setFlag(s, 'x', true));
+    store.returnToLastRest();
+    expect(store.state.flags).toEqual({});
+  });
+
   it('works without storage (private mode)', () => {
     const store = new GameStore(null, () => DEFAULT_TUNING);
     expect(store.save()).toBe(false);

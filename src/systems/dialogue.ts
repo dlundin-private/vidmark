@@ -26,8 +26,8 @@ export class DialogueRunner {
     private readonly store: GameStore,
   ) {}
 
-  /** Starts the conversation for a person (their knot in content/ink). */
-  start(who: NpcId): void {
+  /** Starts a conversation at a knot: a person's id (=== ebbe ===), or any other knot. */
+  start(who: NpcId | string): void {
     const story = new Story(this.storyJson);
     story.onError = (message) => {
       throw new Error(`Ink error in "${who}": ${message}`);
@@ -64,6 +64,17 @@ export class DialogueRunner {
     this.story = null;
   }
 
+  /** Plays a knot with no choices to its end and returns its lines (meetings, the death text). */
+  linesOf(knot: string): Extract<DialogueStep, { kind: 'line' }>[] {
+    this.start(knot);
+    const lines: Extract<DialogueStep, { kind: 'line' }>[] = [];
+    for (let step = this.next(); step.kind !== 'end'; step = this.next()) {
+      if (step.kind === 'line') lines.push(step);
+      else this.choose(0);
+    }
+    return lines;
+  }
+
   /** "Ebbe: Hello." -> speaker Ebbe. Signe's label disappears once her name is burned. */
   private toLine(raw: string): DialogueStep {
     const match = /^([^:]{1,24}): (.+)$/.exec(raw);
@@ -86,7 +97,7 @@ export class DialogueRunner {
     story.BindExternalFunction('has_offered', (id: unknown) => s().npcs[npc(id)].offered, true);
     story.BindExternalFunction('in_hearth', (id: unknown) => A.hearth(s()).includes(npc(id)), true);
     story.BindExternalFunction('name_known', () => A.hasKeepsake(s(), 'name'), true);
-    story.BindExternalFunction('flag', (name: unknown) => A.getFlag(s(), String(name)) ?? false, true);
+    story.BindExternalFunction('flag', (name: unknown) => A.getFlag(s(), String(name)) ?? 0, true);
     story.BindExternalFunction('promise_made', (id: unknown) => s().promises.some((p) => p.id === id), true);
     story.BindExternalFunction('power', () => A.availablePower(s()), true);
 

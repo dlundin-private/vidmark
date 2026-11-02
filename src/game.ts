@@ -11,6 +11,8 @@ export const tuning = new LiveTuning(storage);
 export const store = new GameStore(storage, () => tuning.values);
 export const dialogue = new DialogueRunner(storyJson, store);
 export const dialogueBox = new DialogueBox(dialogue);
+/** A second runner for lines that play beside a conversation: meetings, the death text. */
+export const ambientDialogue = new DialogueRunner(storyJson, store);
 
 // Continue where the player left off. A broken save is kept in storage
 // (not overwritten) until the player saves again, and reported in the panel.

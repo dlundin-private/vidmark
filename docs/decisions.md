@@ -60,7 +60,21 @@ The design gives the four actions, their costs and the Weave parts. Everything b
 | An Offering from Ebbe raises Mend by one level; hollowing him would raise it by two. | Draft. **Question:** the design says Ebbe's memory teaches Mend, but the memory he offers is of his wife. Should that memory teach Mend, or should another memory of his do it? |
 | **Anchoring** consumes a memory into a Weave for good: its effects never fade. A Keepsake is lost as if burned; an Offering costs a point of max Power for good; an Echo lives on in the Weave. Anchored Weaves can't be deleted. "Your name" is never offered. | Draft, from the design |
 | **Resting** happens at Signe's home: tap the house. Power refills (the reserve doesn't), one wound heals, Craft effects tick down, broken ice refreezes. | Draft |
-| With 3 wounds outside a fight, Signe blacks out and wakes at home, rested. | Draft, being replaced: Daniel asked for 3 wounds to kill her |
+| At 3 wounds Signe dies. The game goes back to her last rest at home; everything since is undone. With no rest yet, it starts over. | Decided by Daniel |
+| Death is told as a memory she had wrong: "No. That isn't how it went. You're remembering it wrong", then "Remember it again". The text is in `content/ink/death.ink`, three variants per line. | Daniel's idea, wording drafted by Claude |
+
+## People moving and meeting
+
+Daniel asked for people to move about near their spots, and for nearby people to walk over to each other, talk a little and part again.
+
+| Decision | Status |
+| --- | --- |
+| Each person wanders within a few tiles of their spot (in `content/data/npcs.ts`): Lilja 5 tiles and only on the ice, Olle and the hermit 4, Ebbe 3, Gerda 2. Torvald stays at his fishing hole and the Hollow doesn't move. | Draft |
+| Every 14–30 seconds, two people whose spots are near each other may meet: one walks over (whoever wanders further; Torvald is always visited, never leaves his hole), they say two or three lines in speech bubbles, then both go back. Pairs are in `content/data/meetings.ts`, lines in `content/ink/meetings.ink`. | Draft |
+| Nobody walks into Signe or her next steps. Someone Signe is talking to, or walking over to, holds still. | Draft |
+| People steer around Signe's armed trap ice, so a villager never falls through it. | Draft. **Question:** should people be able to fall through Signe's traps? That would make traps a real moral risk in the village. |
+| Where people stand isn't saved: after a reload they're back at their spots. | Draft |
+| Ebbe notices when Signe mends his nets, one rack or both. Once both are whole he no longer asks for help or offers his memory. Gerda's meeting with him mentions it too. | Draft (dialogue), from Daniel's playtest note |
 
 ## The Kallsjö map (step 1, rebuilt)
 

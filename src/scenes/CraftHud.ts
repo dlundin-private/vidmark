@@ -168,7 +168,7 @@ function button(text: string, onClick: () => void): HTMLButtonElement {
 }
 
 const CSS = `
-.hud { position: fixed; inset: 0; z-index: 5; pointer-events: none; font: 13px/1.3 system-ui, sans-serif; color: #e4e9ef; }
+.hud { position: fixed; inset: 0; z-index: 5; pointer-events: none; font: 16px/1.35 system-ui, sans-serif; color: #e4e9ef; }
 .hud[hidden] { display: none; }
 .hud-status { position: absolute; top: 8px; left: 8px; padding: 6px 10px; background: rgba(12, 14, 18, 0.78);
   border: 1px solid #2c333d; border-radius: 6px; white-space: pre; }
@@ -184,9 +184,11 @@ const CSS = `
 .hud-bar { position: absolute; left: 0; right: 0; bottom: max(8px, env(safe-area-inset-bottom)); display: flex; flex-wrap: wrap;
   justify-content: center; gap: 6px; padding: 0 8px; pointer-events: none; }
 .hud-btn { pointer-events: auto; background: rgba(20, 24, 30, 0.88); color: #e4e9ef; border: 1px solid #3a4250; border-radius: 6px;
-  padding: 7px 10px; font: inherit; cursor: pointer; touch-action: manipulation; }
+  padding: 9px 13px; font: inherit; cursor: pointer; touch-action: manipulation; }
 .hud-btn.active { border-color: #f0c674; color: #f0c674; background: rgba(40, 34, 20, 0.92); }
 .hud-weaves { color: #b7c4d1; }
-.hud-key { display: inline-block; min-width: 14px; margin-right: 5px; color: #6f7c8a; font-size: 11px; }
-@media (max-width: 520px) { .hud-key { display: none; } .hud-btn { padding: 6px 8px; font-size: 12px; } }
+.hud-key { display: inline-block; min-width: 14px; margin-right: 5px; color: #6f7c8a; font-size: 13px; }
+/* Touch screens have no keyboard: hide the key hints. */
+@media (pointer: coarse) { .hud-key { display: none; } }
+@media (max-width: 520px) { .hud-btn { padding: 8px 10px; font-size: 15px; } }
 `;

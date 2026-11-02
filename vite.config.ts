@@ -13,5 +13,8 @@ export default defineConfig({
   test: {
     include: ['src/**/*.test.ts', 'content/**/*.test.ts'],
     environment: 'node',
+    // The persistent module cache can't see Ink INCLUDEs, so edits to included
+    // .ink files would run against a stale compile. Tests are fast without it.
+    fsModuleCache: false,
   },
 });

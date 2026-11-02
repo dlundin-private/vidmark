@@ -13,15 +13,17 @@ export interface NpcDef {
   startsHollow?: boolean;
   /** The skill their memories deepen (design: "memories teach"). */
   teaches?: CraftAction;
+  /** How they move around their spot on the map. Radius 0: they stay put, but others can walk over to them. */
+  wander: { radius: number; onIce?: boolean };
 }
 
 // People in the vertical slice (docs/design.md, "Vertical slice: content").
 export const NPCS: readonly NpcDef[] = [
-  { id: 'ebbe', name: 'Ebbe', role: 'Net-mender who has forgotten his craft', domain: 'craft', teaches: 'mend' },
-  { id: 'hermit', name: 'The hermit', role: 'Remembers the old safe route across the ice', domain: 'kin' },
-  { id: 'gerda', name: 'Old Gerda', role: 'Her grandmother knew Maren as a girl', domain: 'thought' },
-  { id: 'olle', name: 'Reeve Olle', role: 'The Tithe-collector', domain: 'thought' },
-  { id: 'hollow', name: 'The Hollow', role: 'The blank man in the boathouse', domain: 'craft', startsHollow: true },
-  { id: 'lilja', name: 'Lilja', role: "Signe's little sister", domain: 'kin' },
-  { id: 'torvald', name: 'Torvald', role: "Signe's father, a fisherman", domain: 'craft' },
+  { id: 'ebbe', name: 'Ebbe', role: 'Net-mender who has forgotten his craft', domain: 'craft', teaches: 'mend', wander: { radius: 3 } },
+  { id: 'hermit', name: 'The hermit', role: 'Remembers the old safe route across the ice', domain: 'kin', wander: { radius: 4 } },
+  { id: 'gerda', name: 'Old Gerda', role: 'Her grandmother knew Maren as a girl', domain: 'thought', wander: { radius: 2 } },
+  { id: 'olle', name: 'Reeve Olle', role: 'The Tithe-collector', domain: 'thought', wander: { radius: 4 } },
+  { id: 'hollow', name: 'The Hollow', role: 'The blank man in the boathouse', domain: 'craft', startsHollow: true, wander: { radius: 0 } },
+  { id: 'lilja', name: 'Lilja', role: "Signe's little sister", domain: 'kin', wander: { radius: 5, onIce: true } },
+  { id: 'torvald', name: 'Torvald', role: "Signe's father, a fisherman", domain: 'craft', wander: { radius: 0 } },
 ];

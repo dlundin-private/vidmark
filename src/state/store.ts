@@ -1,6 +1,6 @@
 import type { Tuning } from '../../content/data/tuning';
 import { createNewGame, type GameState } from './GameState';
-import { SAVE_KEY, SaveError, deserialize, serialize, type SaveStorage } from './save';
+import { REST_KEY, SAVE_KEY, SaveError, deserialize, serialize, type SaveStorage } from './save';
 
 type Listener = (state: Readonly<GameState>) => void;
 
@@ -47,6 +47,7 @@ export class GameStore {
   }
 
   newGame(): void {
+    this.storage?.removeItem(REST_KEY);
     this.current = createNewGame(this.tuning().basePower);
     this.replacedCount++;
     this.emit();
@@ -87,6 +88,25 @@ export class GameStore {
     } catch (e) {
       return e instanceof SaveError ? e.message : 'The save could not be read.';
     }
+  }
+
+  /** Remembers the game as it is now, at a rest, for death to return to. */
+  saveRestPoint(): void {
+    try {
+      this.storage?.setItem(REST_KEY, serialize(this.current));
+    } catch {
+      // Storage full or blocked: death falls back to a new game.
+    }
+  }
+
+  /**
+   * Death: back to the last rest (decided by Daniel). With no rest yet, the
+   * game starts over. Also overwrites the autosave, so a reload can't skip it.
+   */
+  returnToLastRest(): void {
+    const text = this.storage?.getItem(REST_KEY);
+    if (text == null || this.loadFrom(text) !== null) this.newGame();
+    this.save();
   }
 
   exportJson(): string {

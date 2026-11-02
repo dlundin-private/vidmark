@@ -60,6 +60,26 @@ describe('dialogue', () => {
     expect(text(play(runner, 'ebbe'))).toContain('someone used to sit with me');
   });
 
+  it('Ebbe notices when Signe mends his nets, one rack and then both', () => {
+    const { store, runner } = setup();
+    play(runner, 'ebbe');
+    store.update((s) => {
+      A.setFlag(s, 'nets_total', 2);
+      A.setFlag(s, 'nets_mended', 1);
+    });
+    expect(text(play(runner, 'ebbe', ['Tell him']))).toContain("The other's still in rags");
+    expect(text(play(runner, 'ebbe'))).toContain('One of them');
+    store.update((s) => A.setFlag(s, 'nets_mended', 2));
+    const all = play(runner, 'ebbe', ['Tell him']);
+    expect(text(all)).toContain('Every net on the racks, whole');
+    expect(text(all)).toContain('the village eats this winter');
+    // Once the nets are whole, he no longer asks for help or offers his memory.
+    const later = play(runner, 'ebbe');
+    expect(text(later)).toContain('The nets are holding');
+    const options = later.find((s) => s.kind === 'choices');
+    expect(options && options.kind === 'choices' && options.options.join()).not.toMatch(/mend the nets|another way/);
+  });
+
   it('does not change state when a choice is only offered, not taken', () => {
     const { store, runner } = setup();
     play(runner, 'ebbe', ['another way', 'Refuse']);

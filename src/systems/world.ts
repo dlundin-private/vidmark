@@ -20,6 +20,8 @@ export class WorldModel implements WalkGrid {
   readonly height: number;
   private readonly terrainBlocked: Uint8Array;
   private readonly byId = new Map<number, MapObject>();
+  /** Where moving people stand right now. Not saved: they return to their spots. */
+  private readonly dynamicAt = new Map<number, Tile>();
   /** Object id per tile (0 = none), rebuilt when the state changes. */
   private occupant = new Int32Array(0);
   private builtFor: GameState | null = null;
@@ -56,9 +58,19 @@ export class WorldModel implements WalkGrid {
     return this.byId.get(id);
   }
 
-  /** Where an object is now (Push moves things). */
+  /** Moves a person (a map object) to a tile, keeping the occupancy grid up to date. */
+  placeDynamic(id: number, tile: Tile): void {
+    const o = this.byId.get(id);
+    if (!o) return;
+    const built = this.builtFor === this.state() && this.builtVersion === this.version();
+    if (built) forTiles(this.footprintOf(o), (x, y) => this.inMap(x, y) && this.occupant[y * this.width + x] === id && (this.occupant[y * this.width + x] = 0));
+    this.dynamicAt.set(id, { x: tile.x, y: tile.y });
+    if (built) forTiles(this.footprintOf(o), (x, y) => this.inMap(x, y) && (this.occupant[y * this.width + x] = id));
+  }
+
+  /** Where an object is now (Push moves things; people walk about). */
   footprintOf(o: MapObject): Footprint {
-    const at = this.state().world.objects[o.id]?.at;
+    const at = this.dynamicAt.get(o.id) ?? this.state().world.objects[o.id]?.at;
     return at ? { ...o.footprint, x: at.x, y: at.y } : o.footprint;
   }
 

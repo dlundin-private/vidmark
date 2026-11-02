@@ -54,6 +54,12 @@ In the Weave screen she combines an action, a target (object, one tile of ice, o
 
 Power refills when she rests at home. Mend and Weaken grow surer with use on new things.
 
+Signe can take three wounds. The third kills her, and the game goes back to the last time she rested at home: resting is also where she'll pick up again.
+
+## The village
+
+People move about near their spots, and now and then two of them walk over to each other and talk for a moment (speech bubbles), then go back.
+
 ## Testing and tuning
 
 The debug panel shows the game state (Power, wounds, Hearth, echoes, Keepsakes) and lets you poke it, save, load, start over, and copy or paste a save as JSON. Its **Tuning** section changes Power, burn and wound values live; changes stay in that browser and are highlighted. Copy values that feel right into [content/data/tuning.ts](content/data/tuning.ts), where every tuning value lives.
