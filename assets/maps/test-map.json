@@ -10,7 +10,7 @@
  "tilewidth": 32,
  "tileheight": 16,
  "nextlayerid": 4,
- "nextobjectid": 12,
+ "nextobjectid": 19,
  "properties": [
   {
    "name": "spawnX",
@@ -835,6 +835,167 @@
        "value": "birch"
       }
      ]
+    },
+    {
+     "id": 12,
+     "name": "Ebbe",
+     "type": "npc",
+     "x": 256,
+     "y": 320,
+     "width": 16,
+     "height": 16,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "sprite",
+       "type": "string",
+       "value": "npc-ebbe"
+      },
+      {
+       "name": "npc",
+       "type": "string",
+       "value": "ebbe"
+      }
+     ]
+    },
+    {
+     "id": 13,
+     "name": "The hermit",
+     "type": "npc",
+     "x": 336,
+     "y": 48,
+     "width": 16,
+     "height": 16,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "sprite",
+       "type": "string",
+       "value": "npc-hermit"
+      },
+      {
+       "name": "npc",
+       "type": "string",
+       "value": "hermit"
+      }
+     ]
+    },
+    {
+     "id": 14,
+     "name": "Old Gerda",
+     "type": "npc",
+     "x": 320,
+     "y": 256,
+     "width": 16,
+     "height": 16,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "sprite",
+       "type": "string",
+       "value": "npc-gerda"
+      },
+      {
+       "name": "npc",
+       "type": "string",
+       "value": "gerda"
+      }
+     ]
+    },
+    {
+     "id": 15,
+     "name": "Reeve Olle",
+     "type": "npc",
+     "x": 128,
+     "y": 336,
+     "width": 16,
+     "height": 16,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "sprite",
+       "type": "string",
+       "value": "npc-olle"
+      },
+      {
+       "name": "npc",
+       "type": "string",
+       "value": "olle"
+      }
+     ]
+    },
+    {
+     "id": 16,
+     "name": "The Hollow",
+     "type": "npc",
+     "x": 160,
+     "y": 304,
+     "width": 16,
+     "height": 16,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "sprite",
+       "type": "string",
+       "value": "npc-hollow"
+      },
+      {
+       "name": "npc",
+       "type": "string",
+       "value": "hollow"
+      }
+     ]
+    },
+    {
+     "id": 17,
+     "name": "Lilja",
+     "type": "npc",
+     "x": 192,
+     "y": 224,
+     "width": 16,
+     "height": 16,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "sprite",
+       "type": "string",
+       "value": "npc-lilja"
+      },
+      {
+       "name": "npc",
+       "type": "string",
+       "value": "lilja"
+      }
+     ]
+    },
+    {
+     "id": 18,
+     "name": "Torvald",
+     "type": "npc",
+     "x": 112,
+     "y": 272,
+     "width": 16,
+     "height": 16,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "sprite",
+       "type": "string",
+       "value": "npc-torvald"
+      },
+      {
+       "name": "npc",
+       "type": "string",
+       "value": "torvald"
+      }
+     ]
     }
    ]
   },
@@ -942,7 +1103,7 @@
     0,
     0,
     0,
-    0,
+    8,
     0,
     0,
     0,
@@ -1197,7 +1358,7 @@
     0,
     0,
     0,
-    0,
+    8,
     0,
     0,
     0,
@@ -1253,6 +1414,7 @@
     0,
     0,
     0,
+    8,
     0,
     0,
     0,
@@ -1263,8 +1425,7 @@
     0,
     0,
     0,
-    0,
-    0,
+    8,
     0,
     8,
     8,
@@ -1315,11 +1476,7 @@
     0,
     0,
     0,
-    0,
-    0,
-    0,
-    0,
-    0,
+    8,
     0,
     0,
     0,
@@ -1353,6 +1510,10 @@
     0,
     0,
     0,
+    8,
+    0,
+    0,
+    0,
     0,
     0,
     0,
@@ -1361,7 +1522,7 @@
     0,
     8,
     0,
-    0,
+    8,
     0,
     0,
     0,

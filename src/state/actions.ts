@@ -126,6 +126,12 @@ export function getFlag(state: GameState, name: string): FlagValue | undefined {
   return state.flags[name];
 }
 
+/** Records a promise Signe made; whether it was kept is decided later (chapter 5 tests them). */
+export function makePromise(state: GameState, id: string, to: NpcId): void {
+  if (state.promises.some((p) => p.id === id)) return;
+  state.promises.push({ id, to, kept: null });
+}
+
 export function setPosition(state: GameState, tile: Tile): void {
   state.position = { x: tile.x, y: tile.y };
 }

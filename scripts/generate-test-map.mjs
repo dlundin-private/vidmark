@@ -30,6 +30,16 @@ const OBJECTS = [
   // These two wall off the corner tile (23, 23), so it is unreachable.
   { name: 'birch', x: 22, y: 23, w: 1, h: 1 },
   { name: 'birch', x: 23, y: 22, w: 1, h: 1 },
+
+  // People. Placeholder spots; the real village layout comes with the quests (step 7).
+  { name: 'Ebbe', npc: 'ebbe', x: 16, y: 20, w: 1, h: 1 },
+  { name: 'The hermit', npc: 'hermit', x: 21, y: 3, w: 1, h: 1 },
+  { name: 'Old Gerda', npc: 'gerda', x: 20, y: 16, w: 1, h: 1 },
+  { name: 'Reeve Olle', npc: 'olle', x: 8, y: 21, w: 1, h: 1 },
+  // Outside the boathouse door: the boathouse has no interior yet.
+  { name: 'The Hollow', npc: 'hollow', x: 10, y: 19, w: 1, h: 1 },
+  { name: 'Lilja', npc: 'lilja', x: 12, y: 14, w: 1, h: 1 },
+  { name: 'Torvald', npc: 'torvald', x: 7, y: 17, w: 1, h: 1 },
 ];
 
 // A hole in the ice: open water, blocked.
@@ -81,14 +91,19 @@ const tileLayer = (id, name, data, visible = true) => ({
 const objects = OBJECTS.map((o, i) => ({
   id: i + 1,
   name: o.name,
-  type: o.name,
+  type: o.npc ? 'npc' : o.name,
   x: o.x * TILE_H,
   y: o.y * TILE_H,
   width: o.w * TILE_H,
   height: o.h * TILE_H,
   rotation: 0,
   visible: true,
-  properties: [{ name: 'sprite', type: 'string', value: o.name }],
+  properties: o.npc
+    ? [
+        { name: 'sprite', type: 'string', value: `npc-${o.npc}` },
+        { name: 'npc', type: 'string', value: o.npc },
+      ]
+    : [{ name: 'sprite', type: 'string', value: o.name }],
 }));
 
 const map = {

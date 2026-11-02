@@ -10,7 +10,9 @@ import { IsoProjection, depthOrder, roundPoint, type Footprint, type Tile } from
 import { TileWalker } from '../systems/movement';
 import { findPath, isWalkable } from '../systems/pathfinding';
 import { parseTiledMap, type IsoMap, type TiledJson } from '../systems/tiledMap';
-import { store } from '../game';
+import type { NpcId } from '../../content/data/npcs';
+import { dialogueBox, store } from '../game';
+import { isBeside, pathToBeside } from '../systems/interaction';
 import { setPosition } from '../state';
 import { TILESET_KEY } from './BootScene';
 import testMapJson from '../../assets/maps/test-map.json';
@@ -27,6 +29,13 @@ interface Sortable {
 }
 
 type DirectionKeys = Record<'up' | 'down' | 'left' | 'right', Phaser.Input.Keyboard.Key[]>;
+
+/** Someone Signe can talk to, standing on a tile. */
+interface Person {
+  id: NpcId;
+  tile: Tile;
+  sprite: Phaser.GameObjects.Image;
+}
 
 // Keys walk along the iso axes: up/down move on the y axis (up-right / down-left on
 // screen), left/right on the x axis (up-left / down-right).
@@ -50,6 +59,9 @@ export class WorldScene extends Phaser.Scene {
   private keys!: DirectionKeys;
   /** Last direction tapped, kept until used: a tap can go down and up within one frame. */
   private tapped: keyof DirectionKeys | null = null;
+  private people: Person[] = [];
+  /** Who Signe is walking over to talk to. */
+  private pendingTalk: Person | null = null;
 
   constructor() {
     super('World');
@@ -60,6 +72,8 @@ export class WorldScene extends Phaser.Scene {
     this.sortables = [];
     this.lastSortKey = '';
     this.tapped = null;
+    this.people = [];
+    this.pendingTalk = null;
     this.map = parseTiledMap(testMapJson as TiledJson);
     this.proj = IsoProjection.forMap(this.map.height, TILE_WIDTH, TILE_HEIGHT, WORLD_TOP_MARGIN);
     const world = this.proj.worldSize(this.map.width, this.map.height);
@@ -90,6 +104,7 @@ export class WorldScene extends Phaser.Scene {
       }
       this.entityLayer.add(sprite);
       this.sortables.push({ sprite, footprint: () => fp });
+      if (obj.npc) this.people.push({ id: obj.npc as NpcId, tile: { x: fp.x, y: fp.y }, sprite });
     }
 
     const saved = store.state.position;
@@ -108,6 +123,9 @@ export class WorldScene extends Phaser.Scene {
     this.input.on(Phaser.Input.Events.POINTER_DOWN, (pointer: Phaser.Input.Pointer) => this.onPointerDown(pointer));
     this.keys = this.createKeys();
     this.input.keyboard?.on('keydown-C', () => this.collisionOverlay.setVisible(!this.collisionOverlay.visible));
+    for (const key of ['keydown-E', 'keydown-SPACE', 'keydown-ENTER']) {
+      this.input.keyboard?.on(key, () => this.talkToSomeoneBeside());
+    }
 
     // A new game or a loaded save replaces the whole state: rebuild the scene from it.
     const generation = store.generation;
@@ -118,11 +136,14 @@ export class WorldScene extends Phaser.Scene {
   }
 
   update(_time: number, delta: number): void {
-    this.handleKeys();
+    if (!dialogueBox.isOpen) this.handleKeys();
     const entered = this.walker.update(delta);
     if (!this.walker.isMoving) {
       this.marker.setVisible(false);
       if (entered.length > 0) this.autosave();
+      const who = this.pendingTalk;
+      this.pendingTalk = null;
+      if (who && isBeside(this.walker.tile, who.tile)) this.talkTo(who);
     }
     this.placeSigne();
     this.sortDepth();
@@ -150,8 +171,57 @@ export class WorldScene extends Phaser.Scene {
     return rt;
   }
 
+  private talkTo(who: Person): void {
+    this.tapped = null;
+    dialogueBox.open(who.id, () => {
+      this.tapped = null;
+      // Conversations change the game (Offerings, promises, flags): keep them.
+      this.autosave();
+    });
+  }
+
+  private talkToSomeoneBeside(): void {
+    if (dialogueBox.isOpen || this.walker.isMoving) return;
+    const who = this.people.find((p) => isBeside(this.walker.tile, p.tile));
+    if (who) this.talkTo(who);
+  }
+
+  /** The person drawn under a world point, frontmost first, ignoring transparent pixels. */
+  private personAt(x: number, y: number): Person | null {
+    const hits = this.people.filter(({ sprite }) => {
+      const left = sprite.x - sprite.displayOriginX;
+      const top = sprite.y - sprite.displayOriginY;
+      const px = Math.floor(x - left);
+      const py = Math.floor(y - top);
+      if (px < 0 || py < 0 || px >= sprite.width || py >= sprite.height) return false;
+      return this.textures.getPixelAlpha(px, py, sprite.texture.key) > 0;
+    });
+    hits.sort((a, b) => b.sprite.depth - a.sprite.depth);
+    return hits[0] ?? null;
+  }
+
   private onPointerDown(pointer: Phaser.Input.Pointer): void {
-    const target = this.proj.pick({ x: pointer.worldX, y: pointer.worldY });
+    if (dialogueBox.isOpen) return;
+    this.pendingTalk = null;
+    const tile = this.proj.pick({ x: pointer.worldX, y: pointer.worldY });
+    const who = this.personAt(pointer.worldX, pointer.worldY) ?? this.people.find((p) => p.tile.x === tile.x && p.tile.y === tile.y);
+    if (who) return this.walkToTalk(who);
+    this.walkTo(tile);
+  }
+
+  /** Walks beside someone, then talks; talks at once if already beside them. */
+  private walkToTalk(who: Person): void {
+    const path = pathToBeside(this.map, this.walker.planningTile, who.tile);
+    if (!path) return;
+    if (path.length === 0 && !this.walker.isMoving) return this.talkTo(who);
+    this.walker.setPath(path);
+    this.pendingTalk = who;
+    const end = path.at(-1) ?? this.walker.planningTile;
+    const top = this.proj.toWorld(end.x, end.y);
+    this.marker.setPosition(top.x, top.y).setVisible(true);
+  }
+
+  private walkTo(target: Tile): void {
     const path = findPath(this.map, this.walker.planningTile, target);
     if (!path) return; // Blocked, outside the map or unreachable: do nothing.
     this.walker.setPath(path);
@@ -160,6 +230,9 @@ export class WorldScene extends Phaser.Scene {
   }
 
   private handleKeys(): void {
+    if (this.tapped || this.keys.up.concat(this.keys.down, this.keys.left, this.keys.right).some((k) => k.isDown)) {
+      this.pendingTalk = null;
+    }
     const directions = Object.keys(this.keys) as (keyof DirectionKeys)[];
     const down = directions.find((d) => this.keys[d].some((k) => k.isDown));
     if (this.walker.isMoving) {

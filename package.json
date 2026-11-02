@@ -5,18 +5,20 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc --noEmit && vite build",
+    "build": "tsc --noEmit && tsc --noEmit -p tsconfig.node.json && vite build",
     "preview": "vite preview",
     "test": "vitest run",
-    "lint": "tsc --noEmit && eslint .",
+    "lint": "tsc --noEmit && tsc --noEmit -p tsconfig.node.json && eslint .",
     "gen:art": "node scripts/generate-placeholders.mjs",
     "gen:map": "node scripts/generate-test-map.mjs"
   },
   "dependencies": {
+    "inkjs": "^2.4.0",
     "phaser": "^3.90.0"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@types/node": "^24.19.2",
     "eslint": "^10.14.0",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.72.1",

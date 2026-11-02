@@ -216,6 +216,31 @@ function generateSigne() {
   save('signe.png', drawBoxes(1, 1, 26, [legs, coat, head, hood]));
 }
 
+/** A standing figure on a 1 x 1 footprint, in the same style as Signe. */
+function figure({ coat, coatDark, hood, skin = '#d9b28c', skinLight = '#e8c6a3', skinDark = '#c49a73', scale = 1 }) {
+  const s = (z) => Math.round(z * scale);
+  return drawBoxes(1, 1, s(26), [
+    { u: 0.42, v: 0.42, du: 0.16, dv: 0.16, z: 0, dz: s(6), top: '#2a2420', left: '#2a2420', right: '#1d1916' },
+    { u: 0.36, v: 0.36, du: 0.28, dv: 0.28, z: s(5), dz: s(13), top: coat, left: coat, right: coatDark },
+    { u: 0.4, v: 0.4, du: 0.2, dv: 0.2, z: s(18), dz: s(6), top: skin, left: skinLight, right: skinDark },
+    { u: 0.38, v: 0.38, du: 0.24, dv: 0.24, z: s(22), dz: s(3), top: hood, left: hood, right: coatDark },
+  ]);
+}
+
+function generatePeople() {
+  // One placeholder per person: npc-<id>.png. Colours only tell them apart.
+  const people = {
+    ebbe: { coat: '#5b6b4a', coatDark: '#3f4b33', hood: '#8a8a82' },
+    hermit: { coat: '#6b5a44', coatDark: '#4a3d2e', hood: '#4a3d2e' },
+    gerda: { coat: '#4a4f6b', coatDark: '#33374a', hood: '#d6d6d0' },
+    olle: { coat: '#2f3a4f', coatDark: '#1f2735', hood: '#1f2735' },
+    hollow: { coat: '#9a9a96', coatDark: '#7a7a76', hood: '#b8b8b2', skin: '#c9c3bb', skinLight: '#d6d0c8', skinDark: '#b0aaa2' },
+    lilja: { coat: '#c26a3a', coatDark: '#8f4b28', hood: '#e0b040', scale: 0.8 },
+    torvald: { coat: '#3f5a6b', coatDark: '#2c3f4b', hood: '#6b5444' },
+  };
+  for (const [id, colours] of Object.entries(people)) save(`npc-${id}.png`, figure(colours));
+}
+
 function generateMarker() {
   // Tile-sized diamond outline for the click target.
   const canvas = new Canvas(TILE_W, TILE_H);
@@ -235,4 +260,5 @@ generateBirch();
 generateNetRack();
 generateStatue();
 generateSigne();
+generatePeople();
 generateMarker();

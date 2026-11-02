@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { parseTiledMap, type TiledJson } from './tiledMap';
 import { findPath } from './pathfinding';
 import testMap from '../../assets/maps/test-map.json';
+import { NPCS } from '../../content/data/npcs';
 
 function tinyMap(): TiledJson {
   return {
@@ -38,7 +39,7 @@ describe('parseTiledMap', () => {
 
   it('converts isometric object coordinates to tile footprints', () => {
     const [obj] = parseTiledMap(tinyMap()).objects;
-    expect(obj).toEqual({ id: 7, name: 'boathouse', sprite: 'boathouse', footprint: { x: 1, y: 0, w: 2, h: 1 } });
+    expect(obj).toEqual({ id: 7, name: 'boathouse', sprite: 'boathouse', npc: null, footprint: { x: 1, y: 0, w: 2, h: 1 } });
   });
 
   it('reads the spawn tile from map properties', () => {
@@ -78,6 +79,16 @@ describe('the step 1 test map', () => {
       // Objects at the map edge or walling off the test corner may lose a side; the others keep all four.
       if (o.name === 'boathouse' || o.name === 'statue' || o.name === 'net-rack') expect(sides.length).toBe(4);
       for (const s of sides) expect(findPath(map, map.spawn, s)).not.toBeNull();
+    }
+  });
+
+  it('puts every person on the map, each with a reachable tile beside them to talk from', () => {
+    const people = map.objects.filter((o) => o.npc);
+    expect(people.map((o) => o.npc).sort()).toEqual(NPCS.map((n) => n.id).sort());
+    for (const p of people) {
+      const { x, y } = p.footprint;
+      const beside = [{ x: x + 1, y }, { x: x - 1, y }, { x, y: y + 1 }, { x, y: y - 1 }];
+      expect(beside.some((t) => findPath(map, map.spawn, t) !== null)).toBe(true);
     }
   });
 

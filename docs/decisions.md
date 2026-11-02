@@ -38,3 +38,28 @@ All in `content/data/tuning.ts`, changeable live in the debug panel.
 | Burn: swim / coat / story | 4 / 3 / 3 | Draft |
 | Burn: shame / why you left / your name | 6 / 5 / 6 | Draft, following "pain pays best" |
 | Wounds before Signe falls | 3 | From the design |
+
+## Dialogue drafts (step 3)
+
+All lines in `content/ink/` are Claude's first drafts. They stay within the design doc's facts, except for the details below, which are invented and need your call.
+
+| Where | Invented detail | Why it's there |
+| --- | --- | --- |
+| Ebbe | He has mended nets for "forty winters". His memory of his wife: on the jetty, the first spring, laughing at his bad knots. | The design says he offers his last memory of his wife; it needed a concrete memory. |
+| Old Gerda | Her grandmother says Maren loved her little brother, and that the winter Maren saved the lake she stopped knowing her mother's face. | Gerda is the slice's lore source. This hints at Maren's first burn (her mother's face, to save her brother) and contradicts Torvald's story. It may reveal too much too early. |
+| Torvald | His story has "the saint, the starving lake, the miracle on the ice". | The design only calls it a garbled history of the predecessor. |
+| Reeve Olle | He calls the Tithe "a share of what you know, for the Hearth at Kronvall" and says "Saint Maren carries all of us". If a village can't pay, "Kronvall decides". | Shows he believes in his duty without spoiling the end of chapter 1. |
+| The hermit | He lives apart because "out here they forget to count" heads for the Tithe. | Gives him a reason to be alone. |
+| Lilja | Signe's promise to take her across the ice once the road is safe. | A promise to exercise the promise system; chapter 5 tests promises. |
+| The Hollow | Placed outside the boathouse door, since the boathouse has no interior yet. | Placeholder until step 7. |
+
+## Dialogue system (step 3)
+
+| Decision | Status |
+| --- | --- |
+| A line written `Name: text` is spoken by that person; anything else is narration. | Draft |
+| Once "your name" is burned, nobody says "Signe" and her speaker label disappears. | Draft, from the design ("the game stops using your name") |
+| Dialogue shows in an HTML box over the game, not in pixel text, so it stays readable on phones. | Draft |
+| Each conversation starts fresh from GameState; "have we met" is a world flag (`met_ebbe`), never Ink state. | From CLAUDE.md |
+| The game saves after every conversation, as well as whenever Signe stops walking. | Draft |
+| Tap someone to walk beside them and talk; or stand beside them and press E, Space or Enter. | Draft |

@@ -57,6 +57,8 @@ export function installDebugPanel(): void {
         row('Hearth', A.hearth(s).map(npcName).join(', ') || 'nobody'),
         row('Echoes', A.echoes(s).map(npcName).join(', ') || 'none'),
         row('Keepsakes', KEEPSAKES.map((k) => `${k.title}: ${keepsakeLabel(k.id)}`).join(' · ')),
+        row('Promises', s.promises.map((p) => `${p.id} (to ${npcName(p.to)})`).join(', ') || 'none'),
+        row('Flags', Object.entries(s.flags).map(([k, v]) => (v === true ? k : `${k}=${String(v)}`)).join(', ') || 'none'),
         row('Position', s.position ? `${s.position.x}, ${s.position.y}` : 'map spawn'),
       ]),
 

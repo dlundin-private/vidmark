@@ -1,0 +1,113 @@
+import { describe, expect, it } from 'vitest';
+import storyJson from '../../content/ink/main.ink';
+import { DEFAULT_TUNING } from '../../content/data/tuning';
+import { NPCS } from '../../content/data/npcs';
+import * as A from '../state/actions';
+import { GameStore } from '../state/store';
+import { DialogueRunner, type DialogueStep } from './dialogue';
+
+function setup() {
+  const store = new GameStore(null, () => DEFAULT_TUNING);
+  return { store, runner: new DialogueRunner(storyJson, store) };
+}
+
+/** Plays a conversation, picking choices whose text includes the given words, in order. Returns every step. */
+function play(runner: DialogueRunner, who: Parameters<DialogueRunner['start']>[0], picks: string[] = []): DialogueStep[] {
+  runner.start(who);
+  const steps: DialogueStep[] = [];
+  const queue = [...picks];
+  for (let guard = 0; guard < 200; guard++) {
+    const step = runner.next();
+    steps.push(step);
+    if (step.kind === 'end') return steps;
+    if (step.kind === 'choices') {
+      const want = queue.shift() ?? 'Leave';
+      const index = step.options.findIndex((o) => o.includes(want));
+      if (index < 0) throw new Error(`No choice "${want}" in: ${step.options.join(' | ')}`);
+      runner.choose(index);
+    }
+  }
+  throw new Error('Conversation did not end');
+}
+
+const text = (steps: DialogueStep[]) => steps.filter((s) => s.kind === 'line').map((s) => s.text).join('\n');
+const speakers = (steps: DialogueStep[]) => steps.filter((s) => s.kind === 'line').map((s) => s.speaker);
+
+describe('dialogue', () => {
+  it('has a conversation for every person, and each one can be left', () => {
+    const { runner } = setup();
+    for (const n of NPCS) expect(play(runner, n.id).at(-1)).toEqual({ kind: 'end' });
+  });
+
+  it('splits speaker names from narration', () => {
+    const { runner } = setup();
+    const steps = play(runner, 'ebbe');
+    expect(speakers(steps)).toContain('Ebbe');
+    expect(speakers(steps)).toContain(null);
+  });
+
+  it('remembers meetings in GameState, not in Ink', () => {
+    const { store, runner } = setup();
+    play(runner, 'ebbe');
+    expect(store.state.flags.met_ebbe).toBe(true);
+    expect(text(play(runner, 'ebbe'))).toContain('Back again.');
+  });
+
+  it('records an Offering through dialogue, and Ebbe then lacks the memory', () => {
+    const { store, runner } = setup();
+    play(runner, 'ebbe', ['another way', 'Accept']);
+    expect(A.hearth(store.state)).toEqual(['ebbe']);
+    expect(text(play(runner, 'ebbe'))).toContain('someone used to sit with me');
+  });
+
+  it('does not change state when a choice is only offered, not taken', () => {
+    const { store, runner } = setup();
+    play(runner, 'ebbe', ['another way', 'Refuse']);
+    expect(A.hearth(store.state)).toEqual([]);
+  });
+
+  describe('reads Keepsakes', () => {
+    it('Signe knows Lilja while she has the swim', () => {
+      const { runner } = setup();
+      const t = text(play(runner, 'lilja'));
+      expect(t).toContain('I slid all the way');
+      expect(t).not.toContain('Are you lost?');
+    });
+
+    it('greets Lilja as a stranger once the swim is burned', () => {
+      const { store, runner } = setup();
+      store.update((s, t) => A.burnKeepsake(s, 'swim', t));
+      expect(text(play(runner, 'lilja'))).toContain('Are you lost?');
+    });
+
+    it("no longer knows her father's story once it is burned", () => {
+      const { store, runner } = setup();
+      expect(text(play(runner, 'torvald', ['old story']))).toContain('You know every word');
+      store.update((s, t) => A.burnKeepsake(s, 'story', t));
+      expect(text(play(runner, 'torvald', ['old story']))).toContain("You've never heard it before");
+    });
+
+    it('stops using her name once it is burned, including her speaker label', () => {
+      const { store, runner } = setup();
+      expect(text(play(runner, 'lilja'))).toContain('Signe!');
+      store.update((s, t) => A.burnKeepsake(s, 'name', t));
+      const steps = play(runner, 'lilja', ['careful']);
+      expect(text(steps)).not.toContain('Signe');
+      expect(speakers(steps)).not.toContain('Signe');
+    });
+  });
+
+  it('reads hollowed people', () => {
+    const { store, runner } = setup();
+    store.update((s, t) => A.recordHollowing(s, 'hermit', t));
+    expect(text(play(runner, 'hermit'))).toContain('There is nobody behind the eyes');
+  });
+
+  it('records promises and lets others react to them', () => {
+    const { store, runner } = setup();
+    expect(() => play(runner, 'torvald', ['promise to Lilja'])).toThrow(/No choice/);
+    play(runner, 'lilja', ['Promise']);
+    expect(store.state.promises).toEqual([{ id: 'lilja_ice', to: 'lilja', kept: null }]);
+    expect(text(play(runner, 'torvald', ['promise to Lilja']))).toContain('keep it');
+  });
+});

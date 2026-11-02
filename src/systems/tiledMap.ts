@@ -41,6 +41,8 @@ export interface MapObject {
   /** Texture key of the sprite to draw. */
   sprite: string;
   footprint: Footprint;
+  /** Person id (content/data/npcs.ts) if this object is someone Signe can talk to. */
+  npc: string | null;
 }
 
 /** A Tiled map reduced to what the world needs: ground frames, collision and objects. */
@@ -80,6 +82,7 @@ export function parseTiledMap(json: TiledJson): IsoMap {
     id: o.id,
     name: o.name,
     sprite: stringProperty(o.properties, 'sprite') ?? o.name,
+    npc: stringProperty(o.properties, 'npc') ?? null,
     // Isometric object coordinates are measured along the tile axes in tile-height units.
     footprint: {
       x: Math.round(o.x / json.tileheight),
