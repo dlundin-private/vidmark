@@ -139,6 +139,15 @@ export function echoes(state: GameState): NpcId[] {
   return NPCS.filter((n) => !n.startsHollow && state.npcs[n.id].hollowed).map((n) => n.id);
 }
 
+/** Someone saw Signe hollow a person: the village knows (Daniel: only by evidence). */
+export const FLAG_VILLAGE_KNOWS = 'village_knows';
+
+export function seenHollowing(state: GameState, victim: NpcId, witness: NpcId): void {
+  state.flags[FLAG_VILLAGE_KNOWS] = true;
+  state.flags.seen_hollowing = NPCS.find((n) => n.id === victim)!.name;
+  state.flags.seen_by = witness;
+}
+
 /** Flag counting the wolves Signe has hollowed. */
 export const FLAG_HOLLOWED_WOLVES = 'hollowed_wolves';
 

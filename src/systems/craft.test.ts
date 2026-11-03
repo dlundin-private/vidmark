@@ -1,3 +1,4 @@
+import { showing } from './world';
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_TUNING, type Tuning } from '../../content/data/tuning';
 import * as A from '../state/actions';
@@ -294,3 +295,14 @@ describe('anchored Weaves', () => {
     expect(s.weaves.map((w) => w.id)).toEqual(['w1']);
   });
 });
+
+describe('objects that appear when quests end', () => {
+  it('reads show conditions: any true value, or one of a few values', () => {
+    expect(showing(null, {})).toBe(true);
+    expect(showing('played_maren', {})).toBe(false);
+    expect(showing('played_maren', { played_maren: true })).toBe(true);
+    expect(showing('quest_nets=mended|offering', { quest_nets: 'hollowed' })).toBe(false);
+    expect(showing('quest_nets=mended|offering', { quest_nets: 'offering' })).toBe(true);
+  });
+});
+

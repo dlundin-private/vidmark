@@ -322,4 +322,26 @@ describe('dialogue', () => {
     expect(store.state.promises[0]!.kept).toBe(true);
     expect(() => play(runner, 'lilja', ['across the ice road'])).toThrow(/No choice/);
   });
+
+  it('once someone saw a hollowing, the village knows: they say so, and nobody offers', () => {
+    const { store, runner } = setup();
+    store.update((s, t) => {
+      A.recordHollowing(s, 'olle', t);
+      A.seenHollowing(s, 'olle', 'gerda');
+      A.setFlag(s, 'knows_tithe_takes_people', true);
+      A.setFlag(s, 'quest_marens-winter', 'played');
+    });
+    expect(text(play(runner, 'torvald'))).toContain('About Reeve Olle?');
+    expect(() => play(runner, 'ebbe', ["another way"])).toThrow(/No choice/);
+    expect(() => play(runner, 'gerda', ["when she's gone"])).toThrow(/No choice/);
+    expect(() => play(runner, 'lilja', ['stay close to home'])).toThrow(/No choice/);
+  });
+
+  it('Torvald notices the nets out by the hole', () => {
+    const { store, runner } = setup();
+    expect(() => play(runner, 'torvald', ['nets by the hole'])).toThrow(/No choice/);
+    store.update((s) => A.setFlag(s, 'quest_nets', 'mended'));
+    expect(text(play(runner, 'torvald', ['nets by the hole']))).toContain("We'll eat this winter");
+  });
 });
+

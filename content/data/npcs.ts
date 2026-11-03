@@ -1,4 +1,5 @@
 import type { CraftAction } from './craft';
+import type { QuestView } from './quests';
 import type { Domain } from './keepsakes';
 
 export type NpcId = 'ebbe' | 'hermit' | 'gerda' | 'olle' | 'hollow' | 'lilja' | 'torvald';
@@ -17,15 +18,32 @@ export interface NpcDef {
   offering?: string;
   /** How they move around their spot on the map. Radius 0: they stay put, but others can walk over to them. */
   wander: { radius: number; onIce?: boolean };
+  /** A new spot once the world has changed (step 7); the first that holds wins. They walk there. */
+  moves?: { when: (v: QuestView) => boolean; to: SpotName; radius: number; onIce?: boolean }[];
 }
+
+/** Named spots on the map that people move to; the scene finds them from the map's numbers. */
+export type SpotName = 'village-fire' | 'ice-road-near' | 'ice-road-far';
+
+const roadOpen = (v: QuestView) => !!v.flag('ice_road_open');
 
 // People in the vertical slice (docs/design.md, "Vertical slice: content").
 export const NPCS: readonly NpcDef[] = [
   { id: 'ebbe', name: 'Ebbe', role: 'Net-mender who has forgotten his craft', domain: 'craft', teaches: 'mend', offering: 'His wife on the jetty, the first spring, laughing at his clumsy knots', wander: { radius: 3 } },
-  { id: 'hermit', name: 'The hermit', role: 'Remembers the old safe route across the ice', domain: 'kin', offering: 'The one safe way across the cracked ice', wander: { radius: 4 } },
+  {
+    id: 'hermit', name: 'The hermit', role: 'Remembers the old safe route across the ice', domain: 'kin', offering: 'The one safe way across the cracked ice', wander: { radius: 4 },
+    // He gave away what kept him on the headland, and comes in to the village fire (Daniel). Hollowed, he stays in his doorway.
+    moves: [{ when: (v) => v.offered('hermit') && !v.hollowed('hermit'), to: 'village-fire', radius: 2 }],
+  },
   { id: 'gerda', name: 'Old Gerda', role: 'Her grandmother knew Maren as a girl', domain: 'thought', offering: "Her grandmother's Maren: chapped hands, a little brother, a mother's face", wander: { radius: 2 } },
-  { id: 'olle', name: 'Reeve Olle', role: 'The Tithe-collector', domain: 'thought', wander: { radius: 4 } },
+  {
+    id: 'olle', name: 'Reeve Olle', role: 'The Tithe-collector', domain: 'thought', wander: { radius: 4 },
+    // The road to Kronvall is open again: the Tithe can travel (Daniel: villagers start walking it).
+    moves: [{ when: roadOpen, to: 'ice-road-far', radius: 8 }],
+  },
   { id: 'hollow', name: 'The Hollow', role: 'The blank man in the boathouse', domain: 'craft', startsHollow: true, wander: { radius: 0 } },
-  { id: 'lilja', name: 'Lilja', role: "Signe's little sister", domain: 'kin', offering: 'You holding her up in the water, then letting go, and she did not sink', wander: { radius: 5, onIce: true } },
+  { id: 'lilja', name: 'Lilja', role: "Signe's little sister", domain: 'kin', offering: 'You holding her up in the water, then letting go, and she did not sink', wander: { radius: 5, onIce: true },
+    moves: [{ when: roadOpen, to: 'ice-road-near', radius: 6, onIce: true }],
+  },
   { id: 'torvald', name: 'Torvald', role: "Signe's father, a fisherman", domain: 'craft', wander: { radius: 0 } },
 ];

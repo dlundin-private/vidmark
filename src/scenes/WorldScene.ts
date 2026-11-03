@@ -14,7 +14,7 @@ import {
   WORLD_TOP_MARGIN,
 } from '../config';
 import { MEETINGS } from '../../content/data/meetings';
-import { NPCS } from '../../content/data/npcs';
+import { NPCS, type SpotName } from '../../content/data/npcs';
 import { KEEPSAKES } from '../../content/data/keepsakes';
 import { ACTIONS, CRAFTABLES } from '../../content/data/craft';
 import type { NpcId } from '../../content/data/npcs';
@@ -33,11 +33,11 @@ import { isBeside, pathToBeside } from '../systems/interaction';
 import * as A from '../state/actions';
 import { CraftHud, WEAVES_TAUGHT_FLAG, type Selection } from './CraftHud';
 import { Journal } from './Journal';
-import { questsWouldChange, updateQuests } from '../systems/quests';
+import { questsWouldChange, updateQuests, view as questView } from '../systems/quests';
 import { personStepsOnto, wouldBreakUnderPerson, wouldBreakUnderSigne } from '../systems/craft';
 import { WeaveScreen } from './WeaveScreen';
 import { FightView } from './FightView';
-import { WolfFight, wolfStarts, type FightEvent } from '../systems/combat';
+import { WolfFight, encodeTrackStarts, trackTiles, wolfStarts, type FightEvent } from '../systems/combat';
 import { TILESET_KEY } from './BootScene';
 import mapJson from '../../assets/maps/kallsjo.json';
 
@@ -45,6 +45,8 @@ const SIGNE_SPRITE = 'signe';
 /** The wolf fight is on (saved, so a reload brings the pack back), and it is over. */
 const FLAG_WOLVES_HUNTING = 'wolves_hunting';
 const FLAG_WOLVES_GONE = 'wolves_gone';
+/** Where the fled wolves turned; their tracks run north from there. */
+const FLAG_WOLF_TRACKS = 'wolf_tracks';
 const MARKER_SPRITE = 'marker';
 /** Tileset frame drawn by the collision debug overlay (the "blocked" tile). */
 const BLOCKED_FRAME = 7;
@@ -111,6 +113,8 @@ export class WorldScene extends Phaser.Scene {
   private fxArmed!: Phaser.GameObjects.Blitter;
   private fxTarget!: Phaser.GameObjects.Blitter;
   private fxRoute!: Phaser.GameObjects.Blitter;
+  private fxTracks!: Phaser.GameObjects.Blitter;
+  private tracks: { from: string; tiles: Set<string> } = { from: '', tiles: new Set() };
   private entityLayer!: Phaser.GameObjects.Layer;
   private sortables: Sortable[] = [];
   private sortableById = new Map<number, Sortable>();
@@ -190,8 +194,9 @@ export class WorldScene extends Phaser.Scene {
     this.fxArmed = this.add.blitter(0, 0, 'fx-armed');
     this.fxTarget = this.add.blitter(0, 0, 'fx-target');
     this.fxRoute = this.add.blitter(0, 0, 'fx-route');
+    this.fxTracks = this.add.blitter(0, 0, 'fx-tracks');
     this.collisionOverlay = this.add.blitter(0, 0, TILESET_KEY).setVisible(false);
-    overlayLayer.add([this.fxStrengthened, this.fxArmed, this.fxRoute, this.fxTarget, this.collisionOverlay]);
+    overlayLayer.add([this.fxTracks, this.fxStrengthened, this.fxArmed, this.fxRoute, this.fxTarget, this.collisionOverlay]);
 
     this.marker = this.add.image(0, 0, MARKER_SPRITE).setOrigin(0.5, 0).setVisible(false);
     overlayLayer.add(this.marker);
@@ -582,7 +587,8 @@ export class WorldScene extends Phaser.Scene {
       if (!deathScreen.isOpen) hud.say('Teeth in your arm. You tear free.', 2500);
     }
     if (e.kind === 'drowned') {
-      store.update((s) => A.breakIce(s, e.at.x, e.at.y, t.iceRefreezeRests));
+      // It stays open: a dark patch on the road where a wolf went through (step 7).
+      store.update((s) => A.breakIce(s, e.at.x, e.at.y, Number.MAX_SAFE_INTEGER));
       hud.say('The ice opens under the wolf. It does not come up.', 3000);
     }
     if (e.kind === 'fled') hud.say('A wolf turns tail and runs for the far shore.', 2500);
@@ -600,9 +606,11 @@ export class WorldScene extends Phaser.Scene {
 
   private endFight(): void {
     const fight = this.fight!;
+    const fled = fight.logic.wolves.filter((w) => w.state === 'fled').map((w) => w.at);
     store.update((s) => {
       A.setFlag(s, FLAG_WOLVES_HUNTING, false);
       A.setFlag(s, FLAG_WOLVES_GONE, true);
+      A.setFlag(s, FLAG_WOLF_TRACKS, encodeTrackStarts(fled));
     });
     store.save();
     hud.announce('The wolves are gone', 'The rest of the pack slinks off toward the far shore. The road is quiet.');
@@ -738,6 +746,7 @@ export class WorldScene extends Phaser.Scene {
         return bubbles.play(lines.map((l) => ({ who: NPC_BY_NAME.get(l.speaker ?? '') ?? m.a, text: l.text })));
       },
     });
+    if (this.worldVersion !== this.movesCheckedAt) this.applyMoves();
     for (const p of this.people) {
       const hollow = store.state.npcs[p.id].hollowed;
       this.sim.setHollow(p.id, hollow);
@@ -773,6 +782,43 @@ export class WorldScene extends Phaser.Scene {
     const who = echoes[Math.floor(Math.random() * echoes.length)]!;
     const line = ambientDialogue.linesOf(`echo_${who}`)[0];
     if (line) hud.say(`An Echo: “${line.text}”`, 5000);
+  }
+
+  /** Someone close enough to see Signe hollow a person (not the person, not another Hollow). */
+  private witnessOf(victim: NpcId): Person | undefined {
+    const range = tuning.values.seenRange;
+    return this.people.find(
+      (p) => p.id !== victim && !store.state.npcs[p.id].hollowed && distance(this.walker.tile, this.sim.tileOf(p.id)) <= range,
+    );
+  }
+
+  private movesCheckedAt = -1;
+
+  /** The world changed: people whose spot moves with it (the hermit to the fire, Lilja and Olle onto the open road). */
+  private applyMoves(): void {
+    this.movesCheckedAt = this.worldVersion;
+    const v = questView(store.state);
+    for (const p of this.people) {
+      const def = NPCS.find((n) => n.id === p.id)!;
+      const move = def.moves?.find((m) => m.when(v));
+      const spot = move ? this.spot(move.to) : null;
+      if (move && spot) this.sim.moveTo(p.id, spot, move.radius, move.onIce ?? false);
+      else this.sim.moveTo(p.id, { x: p.obj.footprint.x, y: p.obj.footprint.y }, def.wander.radius, def.wander.onIce ?? false);
+    }
+  }
+
+  private spot(name: SpotName): Tile | null {
+    const n = this.world.map.numbers;
+    const band = this.world.band;
+    const roadX = n.iceRoadX0 !== undefined ? n.iceRoadX0 + 1 : undefined;
+    switch (name) {
+      case 'village-fire':
+        return n.hermitVillageX !== undefined && n.hermitVillageY !== undefined ? { x: n.hermitVillageX, y: n.hermitVillageY } : null;
+      case 'ice-road-near':
+        return roadX !== undefined && band ? { x: roadX, y: band.y1 + 6 } : null;
+      case 'ice-road-far':
+        return roadX !== undefined && band ? { x: roadX, y: band.y0 - 6 } : null;
+    }
   }
 
   /** CSS-pixel point just above someone's head, or null if they are off screen. */
@@ -857,7 +903,9 @@ export class WorldScene extends Phaser.Scene {
 
     // The margin is at least one key step, so the area drawn always covers the real view.
     const view: Rect = { x: v.x - VIEW_MARGIN, y: v.y - VIEW_MARGIN, width: v.width + 2 * VIEW_MARGIN, height: v.height + 2 * VIEW_MARGIN };
-    for (const b of [this.ground, this.collisionOverlay, this.fxStrengthened, this.fxArmed, this.fxRoute, this.fxTarget]) b.clear();
+    for (const b of [this.ground, this.collisionOverlay, this.fxStrengthened, this.fxArmed, this.fxRoute, this.fxTarget, this.fxTracks]) b.clear();
+    const trackFrom = String(store.state.flags[FLAG_WOLF_TRACKS] ?? '');
+    if (trackFrom !== this.tracks.from) this.tracks = { from: trackFrom, tiles: trackTiles(trackFrom) };
     const knowsRoute = !!store.state.flags[FLAG_KNOWS_SAFE_ROUTE];
     const reach = this.spell ? (this.spell.modifier === 'range' ? tuning.values.craftRangeExtended : tuning.values.craftRange) : -1;
     for (const t of tilesInView(this.proj, view, this.world.width, this.world.height)) {
@@ -869,12 +917,16 @@ export class WorldScene extends Phaser.Scene {
       if (effect?.kind === 'strengthened') this.fxStrengthened.create(x, top.y);
       if (effect?.armed) this.fxArmed.create(x, top.y);
       if (knowsRoute && this.world.isSafeRoute(t.x, t.y)) this.fxRoute.create(x, top.y);
+      if (this.tracks.tiles.has(`${t.x},${t.y}`) && this.world.isIce(t.x, t.y)) this.fxTracks.create(x, top.y);
       if (reach >= 0 && Math.abs(t.x - signe.x) + Math.abs(t.y - signe.y) <= reach) this.fxTarget.create(x, top.y);
       if (this.collisionOverlay.visible && this.world.isBlocked(t.x, t.y)) this.collisionOverlay.create(x, top.y, BLOCKED_FRAME);
     }
 
     for (const s of this.onScreen) s.sprite.setVisible(false);
-    this.onScreen = [...this.sortables, ...(this.fight?.sortables ?? [])].filter((s) => !s.bounds || rectsOverlap(s.bounds, view));
+    // Some objects only exist once a quest has ended a certain way (step 7).
+    this.onScreen = [...this.sortables, ...(this.fight?.sortables ?? [])].filter(
+      (s) => (!s.bounds || rectsOverlap(s.bounds, view)) && (!s.obj || this.world.isShown(s.obj)),
+    );
     for (const s of this.onScreen) s.sprite.setVisible(true);
     this.lastSortKey = '';
   }
@@ -916,7 +968,16 @@ export class WorldScene extends Phaser.Scene {
       const name = NPCS.find((n) => n.id === who.id)!.name;
       if (!wasHollow && store.state.npcs[who.id].hollowed) {
         // Not the Hearth: a one-time reserve, so tell the player where the Power went.
-        hud.say(`+${tuning.values.hollowingReserve} Power, once. Your Hearth will refill less from now on. (Journal: Hearth)`, 6000);
+        const gained = `+${tuning.values.hollowingReserve} Power, once. Your Hearth will refill less from now on.`;
+        // Anyone close by sees it, and then the village knows (Daniel: only by evidence).
+        const witness = this.witnessOf(who.id);
+        if (witness) {
+          store.update((s) => A.seenHollowing(s, who.id, witness.id));
+          bubbles.play([{ who: witness.id, text: '...' }]);
+          hud.say(`${NPCS.find((n) => n.id === witness.id)!.name} saw. ${gained}`, 7000);
+        } else {
+          hud.say(`${gained} (Journal: Hearth)`, 6000);
+        }
       } else if ((store.state.impressions[who.id]?.length ?? 0) > knewBefore) {
         hud.say(`You'll remember this about ${name}. (Journal: People)`, 3500);
       }

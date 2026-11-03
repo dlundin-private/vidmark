@@ -23,6 +23,16 @@ It would be yours. All of it, at once.
 // How people react when someone they know has been hollowed. Called at the
 // start of their conversations: -> reacts("gerda") ->
 === reacts(who) ===
+// Someone saw Signe hollow a person, so the village knows (Daniel: "only by evidence").
+// They react; the game never judges. Nobody offers from now on.
+{ has_flag("village_knows"):
+    { who == "ebbe": Ebbe: They're saying it was you, with {flag("seen_hollowing")}. I don't want to believe it. So don't tell me. }
+    { who == "gerda": Old Gerda: I know what you did to {flag("seen_hollowing")}. Sit, if you must. Don't come near me. }
+    { who == "olle": Reeve Olle: You take without a ledger, girl. Kronvall will hear of it. }
+    { who == "lilja": Lilja: Everyone says you did something to {flag("seen_hollowing")}. You didn't. Did you? }
+    { who == "torvald": Torvald: Is it true? About {flag("seen_hollowing")}? ...Don't answer me. Go home. }
+    { who == "hermit": The hermit: Word reached me, even here. Stay on your side of the fire. }
+}
 { who == "gerda":
     { is_hollowed("ebbe"): Old Gerda: Ebbe sits by his racks and doesn't know what they're for. Who would do that to a man? }
     { is_hollowed("lilja"): Old Gerda: That poor child. I can't look at her. }
@@ -31,20 +41,20 @@ It would be yours. All of it, at once.
     { is_hollowed("lilja"):
         Torvald: Lilja doesn't know me. She looks at me the way she looks at the ice.
     - else:
-        { emptied_someone(): Torvald: Folk are saying someone's emptying people. Stay close to home. }
+        { emptied_someone() and not has_flag("village_knows"): Torvald: Folk are saying someone's emptying people. Stay close to home. }
     }
 }
 { who == "lilja":
     { is_hollowed("torvald"): Lilja: Papa won't talk to me. He just sits there. }
 }
 { who == "olle":
-    { emptied_someone(): Reeve Olle: Someone in Kallsjö is taking without a ledger. That isn't how it's done. }
+    { emptied_someone() and not has_flag("village_knows"): Reeve Olle: Someone in Kallsjö is taking without a ledger. That isn't how it's done. }
 }
 { who == "ebbe":
     { is_hollowed("gerda"): Ebbe: Gerda's gone blank. Somebody took her stories. All of them. }
 }
 { who == "hermit":
-    { emptied_someone(): The hermit: Word gets out here, even. Somebody's emptying people in the village. }
+    { emptied_someone() and not has_flag("village_knows"): The hermit: Word gets out here, even. Somebody's emptying people in the village. }
 }
 ->->
 

@@ -106,6 +106,7 @@ export const MEMORIES: Record<NpcId, PersonMemory> = {
       },
       { key: 'ice_road', text: 'Rotten ice halfway over, he says. "Don\'t you go trying it."' },
       { key: 'fishing', text: 'Thin catch. Nobody remembers how to salt fish any more, so half of it spoils.' },
+      { key: 'nets_out', text: "Ebbe's nets are out by the hole. First proper haul since autumn: we'll eat this winter.", cold: 'The nets are out. The village will eat, and stay here, within reach.' },
     ],
   },
 };

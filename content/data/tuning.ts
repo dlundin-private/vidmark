@@ -20,6 +20,8 @@ export const DEFAULT_TUNING = {
   burnWhyYouLeft: 5,
   burnName: 6,
 
+  /** Anyone this close (tiles) when Signe hollows someone sees it, and then the village knows. */
+  seenRange: 6,
   /** At or below this much Power, an Echo points out who is close and full of memories. */
   hungerAtPower: 1,
 
@@ -95,6 +97,7 @@ export const TUNING_LABELS: Record<TuningKey, string> = {
   burnShame: 'Burn: the shame',
   burnWhyYouLeft: 'Burn: why you left',
   burnName: 'Burn: your name',
+  seenRange: 'A hollowing is seen within (tiles)',
   hungerAtPower: 'Echoes murmur at or below this Power',
   maxWounds: 'Wounds before Signe falls',
   woundsHealedByRest: 'Wounds healed per rest',

@@ -51,7 +51,7 @@
     ** [Not this year] Signe: Ask someone else.
         Old Gerda: There's nobody else who remembers the lines. Never mind. I'll do it myself, and creak.
         -> talk
-* {has_flag("quest_marens-winter") and not has_offered("gerda")} [Ask who will read the saint's part when she's gone] Signe: Who'll read Maren's part, when you're gone?
+* {has_flag("quest_marens-winter") and not has_offered("gerda") and not has_flag("village_knows")} [Ask who will read the saint's part when she's gone] Signe: Who'll read Maren's part, when you're gone?
     Old Gerda: Nobody. That's the trouble.
     Old Gerda: When I go, my grandmother's Maren goes with me. The chapped hands, the brother, her mother's face. All of it.
     Old Gerda: Take it. I'd rather it lived in you than died with me.

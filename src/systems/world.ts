@@ -81,6 +81,11 @@ export class WorldModel implements WalkGrid {
     return at ? { ...o.footprint, x: at.x, y: at.y } : o.footprint;
   }
 
+  /** Whether an object is there at all: some only appear once a quest has ended a certain way. */
+  isShown(o: MapObject): boolean {
+    return showing(o.show, this.state().flags);
+  }
+
   isBroken(o: MapObject): boolean {
     return this.state().world.objects[o.id]?.broken ?? o.broken;
   }
@@ -178,11 +183,21 @@ export class WorldModel implements WalkGrid {
     this.builtVersion = this.version();
     this.occupant = new Int32Array(this.width * this.height);
     for (const o of this.map.objects) {
+      if (!this.isShown(o)) continue;
       forTiles(this.footprintOf(o), (x, y) => {
         if (this.inMap(x, y)) this.occupant[y * this.width + x] = o.id;
       });
     }
   }
+}
+
+/** Reads a map object's show condition against the world flags (see MapObject.show). */
+export function showing(condition: string | null, flags: Readonly<Record<string, unknown>>): boolean {
+  if (!condition) return true;
+  const [flag, values] = condition.split('=');
+  const v = flags[flag!];
+  if (values === undefined) return v !== undefined && v !== false && v !== 0 && v !== '';
+  return values.split('|').includes(String(v));
 }
 
 export function forTiles(f: Footprint, fn: (x: number, y: number) => void): void {

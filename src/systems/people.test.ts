@@ -163,4 +163,24 @@ describe('PeopleSim meetings', () => {
     });
     expect(meetings).toBe(0);
   });
+
+  it('walks someone to a new spot when the world changes, and they wander there from then on', () => {
+    const w = world(open(30, 5));
+    const setups: PersonSetup[] = [{ id: 'hermit', home: { x: 2, y: 2 }, radius: 2 }];
+    place(w, setups);
+    const sim = new PeopleSim(w, setups, [], timing, seeded(9));
+    sim.moveTo('hermit', { x: 25, y: 2 }, 2, false);
+    run(sim, 8000, ctx());
+    const t = sim.tileOf('hermit');
+    expect(Math.abs(t.x - 25) + Math.abs(t.y - 2)).toBeLessThanOrEqual(2);
+  });
+
+  it('puts someone straight on their new spot when there is no way to walk there', () => {
+    const w = world(['.....#.....']);
+    const setups: PersonSetup[] = [{ id: 'hermit', home: { x: 1, y: 0 }, radius: 0 }];
+    place(w, setups);
+    const sim = new PeopleSim(w, setups, [], timing, seeded(10));
+    sim.moveTo('hermit', { x: 9, y: 0 }, 1, false);
+    expect(sim.tileOf('hermit')).toEqual({ x: 9, y: 0 });
+  });
 });

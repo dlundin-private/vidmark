@@ -161,7 +161,7 @@ const free = (x, y, w, h) => {
 function place(name, x, y, w = 1, h = 1, extra = {}) {
   if (!free(x, y, w, h)) throw new Error(`Can't place ${name} at ${x},${y}: occupied`);
   for (let ty = y; ty < y + h; ty++) for (let tx = x; tx < x + w; tx++) occupied[idx(tx, ty)] = 1;
-  objects.push({ name, sprite: extra.sprite ?? name, x, y, w, h, npc: extra.npc, broken: extra.broken, rest: extra.rest, inspect: extra.inspect });
+  objects.push({ name, sprite: extra.sprite ?? name, x, y, w, h, npc: extra.npc, broken: extra.broken, rest: extra.rest, inspect: extra.inspect, show: extra.show });
 }
 
 /** Clears an area of terrain to plain snow (a yard or clearing), keeping roads. */
@@ -308,16 +308,39 @@ const nearRoad = (x, y, r) => {
   }
   return false;
 };
+// Places to visit stay open: no tree within a few tiles of a building, ruin or place to look at,
+// so none is hidden behind trees or blocked (Daniel: Maren's house and the shelter were).
+const KEEP_CLEAR = 3;
+const clearings = objects.filter((o) => o.inspect || o.rest || o.name === 'ruin' || o.name === 'shelter');
+const inClearing = (x, y) => clearings.some((o) => x >= o.x - KEEP_CLEAR && x < o.x + o.w + KEEP_CLEAR && y >= o.y - KEEP_CLEAR && y < o.y + o.h + KEEP_CLEAR);
 for (let y = 0; y < SIZE; y++) {
   for (let x = 0; x < SIZE; x++) {
     if (get(x, y) !== 'snow' || occupied[idx(x, y)]) continue;
     if (Math.abs(x - V.x) < 26 && y > sy - 2 && y < V.y + 16) continue; // village clearing
+    if (Math.abs(x - WV.x) <= 7 && Math.abs(y - WV.y) <= 7) continue; // the empty village's own clearing
+    if (inClearing(x, y)) continue;
     if (Math.abs(x - hermitHut.x) < 5 && Math.abs(y - hermitHut.y) < 6) continue;
     if (nearRoad(x, y, 1)) continue;
     const density = fbm(x, y, 31);
     const chance = density > 0.55 ? 0.45 : density > 0.45 ? 0.18 : 0.04;
     if (random() < chance) place(random() < 0.3 ? 'birch-2' : 'birch', x, y);
   }
+}
+
+// --- Step 7: what quest endings add to the world ------------------------------------
+// Placed last, so every older object keeps its id (saves refer to objects by id).
+// The village fire, in the street. Where the hermit sits once he has given away his route.
+place('firepit', ...at(-1, 1));
+const hermitInVillage = { x: V.x - 1, y: V.y + 2 };
+// Once the nets are whole again (mended or given), Ebbe's nets go out by the fishing hole.
+place('net-ice', hole.x - 2, hole.y - 1, 1, 1, { show: 'quest_nets=mended|offering' });
+place('net-ice', hole.x - 1, hole.y + 2, 1, 1, { show: 'quest_nets=mended|offering' });
+// After the play: burnt-out torches either side of Saint Maren.
+place('torch-burnt', V.x + 7, sy, 1, 1, { show: 'played_maren' });
+place('torch-burnt', V.x + 9, sy, 1, 1, { show: 'played_maren' });
+// When the road opens, the village marks it again across the cracked band with fresh spruce.
+for (const y of [BAND.y0 - 1, BAND.y0 + 1, BAND.y1 + 1]) {
+  for (const x of [V.x + 2, V.x + 6]) if (free(x, y, 1, 1)) place('ice-marker', x, y, 1, 1, { show: 'ice_road_open' });
 }
 
 // --- Output ------------------------------------------------------------------
@@ -364,6 +387,7 @@ const tiledObjects = objects.map((o, i) => ({
     ...(o.broken ? [{ name: 'broken', type: 'bool', value: true }] : []),
     ...(o.rest ? [{ name: 'rest', type: 'bool', value: true }] : []),
     ...(o.inspect ? [{ name: 'inspect', type: 'string', value: o.inspect }] : []),
+    ...(o.show ? [{ name: 'show', type: 'string', value: o.show }] : []),
   ],
 }));
 
@@ -380,6 +404,8 @@ const map = {
     { name: 'safeRouteX', type: 'int', value: SAFE_ROUTE_X },
     // Ice road columns, which the village marks safe once the road is open again.
     { name: 'iceRoadX0', type: 'int', value: V.x + 3 },
+    { name: 'hermitVillageX', type: 'int', value: hermitInVillage.x },
+    { name: 'hermitVillageY', type: 'int', value: hermitInVillage.y },
     { name: 'iceRoadX1', type: 'int', value: V.x + 5 },
   ],
   tilesets: [{
@@ -403,7 +429,7 @@ const map = {
 
 // --- Checks: nothing stands on the wrong ground ----------------------------------
 // Only these may stand on the ice; everything else needs land under every tile.
-const ON_ICE_ALLOWED = new Set(['ice-marker', 'reeds']);
+const ON_ICE_ALLOWED = new Set(['ice-marker', 'reeds', 'net-ice']);
 const ICE_PEOPLE = new Set(['lilja', 'torvald']);
 const LAKE_PLACES = new Set(['fishing', 'ice-road', 'cracked-ice', 'open-water']);
 const problems = [];

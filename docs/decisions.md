@@ -65,7 +65,7 @@ The design gives the four actions, their costs and the Weave parts. Everything b
 
 ## World changes and playtesting (step 7)
 
-Daniel's answers before step 7. Not built yet.
+Daniel's answers before step 7, and how they were built.
 
 | Decision | Status |
 | --- | --- |
@@ -73,6 +73,11 @@ Daniel's answers before step 7. Not built yet.
 | Being seen: hollowing someone while others are close by gets seen; the village then knows it was Signe (see above). | Daniel; "close by" is a tuning value to draft |
 | Quest endings change the village visibly: Ebbe's nets out at the fishing holes when mended or given (torn, empty racks when he is hollowed); burnt-out torches at the statue after the play (nothing if Gerda was hollowed first); fresh spruce markers along the opened ice road, with villagers walking it; open water where a wolf went through and tracks north where the pack fled. | Daniel; the look is Claude's draft |
 | Playtesting: Daniel plays the slice straight from a new game, as a new player would, against the design's slice questions. No jump points or checklist page. | Daniel |
+| Built: objects can carry a show condition ("flag" or "flag=a|b") and only exist once it holds. New ones are appended to the map so every older object keeps its id (saves refer to objects by id). | Claude |
+| Built: the hermit walks to a new village fire in the street; Lilja plays out on the near half of the opened road and Olle walks the far half, toward Kronvall. Anyone with no way to walk to their new spot is simply there. | Claude's draft |
+| Built: "seen" means another unhollowed villager within 6 tiles (tuning). Ebbe, Gerda and Lilja then never offer (the hermit already refuses anyone who has emptied someone), and each person says they know. Hollowing a wolf on the ice is never seen. | Claude's draft |
+| Built: a wolf's hole on the road never freezes over; tracks run 12 tiles north from where each fled wolf turned. Torvald has a line for the nets out by the hole. | Claude's draft |
+| Fixed (Daniel's playtest): trees no longer grow within 3 tiles of ruins, the shelter or places to look at, so Maren's house and the shelter door are reachable; the empty village's shelter has a dark window. A map test keeps it so. | Daniel's report |
 
 ## The hunger: hollowing made tempting
 

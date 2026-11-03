@@ -24,7 +24,7 @@ Lilja: I slid all the way from the jetty to the reeds and I didn't fall once.
     Lilja: Promise?
     Signe: Promise.
     -> talk
-* {has_flag("knows_tithe_takes_people") and not has_offered("lilja")} [Tell her to stay close to home] Signe: Stay close to home for a while. Near Father.
+* {has_flag("knows_tithe_takes_people") and not has_offered("lilja") and not has_flag("village_knows")} [Tell her to stay close to home] Signe: Stay close to home for a while. Near Father.
     Lilja: Because of the Tithe-men? I heard what they do. Olle's men count the children.
     Lilja: If they take me, I want you to have something of me. Something real.
     Lilja: The swim. When you held me up in the water and let go, and I didn't sink. Take it. Then you'll always remember me.

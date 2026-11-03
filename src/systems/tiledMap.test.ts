@@ -39,7 +39,7 @@ describe('parseTiledMap', () => {
 
   it('converts isometric object coordinates to tile footprints', () => {
     const [obj] = parseTiledMap(tinyMap()).objects;
-    expect(obj).toEqual({ id: 7, name: 'boathouse', type: 'boathouse', sprite: 'boathouse', npc: null, broken: false, rest: false, inspect: null, footprint: { x: 1, y: 0, w: 2, h: 1 } });
+    expect(obj).toEqual({ id: 7, name: 'boathouse', type: 'boathouse', sprite: 'boathouse', npc: null, broken: false, rest: false, inspect: null, show: null, footprint: { x: 1, y: 0, w: 2, h: 1 } });
   });
 
   it('reads the spawn tile from map properties', () => {
@@ -99,7 +99,7 @@ describe('the Kallsjö map', () => {
   const onLake = (x: number, y: number) => LAKE.has(frameAt(x, y));
 
   it('stands every building, ruin, sled, boat, crate and cairn on land', () => {
-    const allowedOnIce = new Set(['ice-marker', 'reeds', 'npc']);
+    const allowedOnIce = new Set(['ice-marker', 'reeds', 'npc', 'net-ice']);
     const wrong: string[] = [];
     for (const o of map.objects) {
       if (allowedOnIce.has(o.type)) continue;
@@ -118,6 +118,15 @@ describe('the Kallsjö map', () => {
     const lakePlaces = new Set(['fishing', 'ice-road', 'cracked-ice', 'open-water']);
     const wrong = map.places.filter((p) => lakePlaces.has(p.id) !== onLake(p.tile.x, p.tile.y)).map((p) => p.id);
     expect(wrong).toEqual([]);
+  });
+
+  it('keeps trees away from ruins and places to visit, so none is hidden or blocked', () => {
+    const visit = map.objects.filter((o) => o.inspect || o.rest || o.type === 'ruin' || o.type === 'shelter');
+    const near = (a: (typeof map.objects)[number], b: (typeof map.objects)[number]) =>
+      a.footprint.x >= b.footprint.x - 3 && a.footprint.x < b.footprint.x + b.footprint.w + 3 &&
+      a.footprint.y >= b.footprint.y - 3 && a.footprint.y < b.footprint.y + b.footprint.h + 3;
+    const hidden = map.objects.filter((t) => t.type.startsWith('birch') && visit.some((v) => near(t, v))).map((t) => `${t.footprint.x},${t.footprint.y}`);
+    expect(hidden).toEqual([]);
   });
 
   it('has Lilja out on the ice, as her dialogue says', () => {

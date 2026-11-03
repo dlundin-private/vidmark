@@ -350,7 +350,7 @@ function rng(seed) {
 
 function generateHouses() {
   // Timber houses with snowy roofs. A roof is a stack of shrinking boxes (a stepped gable).
-  const house = (w, h, wallH, wall, wallDark, door) => {
+  const house = (w, h, wallH, wall, wallDark, door, lit = true) => {
     const boxes = [{
       u: 0.15, v: 0.15, du: w - 0.3, dv: h - 0.3, z: 0, dz: wallH,
       pattern: (hit) => {
@@ -359,7 +359,7 @@ function generateHouses() {
         const isDoor = hit.face === 'left' && Math.abs(hit.u - door) < (wall === '#4d4237' ? 0.42 : 0.28) && hit.z < wallH * (wall === '#4d4237' ? 0.85 : 0.7);
         const isWindow = hit.face === 'right' && Math.abs(hit.v - h / 2) < 0.22 && hit.z > wallH * 0.35 && hit.z < wallH * 0.7;
         if (isDoor) return '#1d1612';
-        if (isWindow) return '#e8c27a';
+        if (isWindow) return lit ? '#e8c27a' : '#1d1814'; // nobody lives in the empty village: no light
         return Math.floor(hit.z) % 4 === 0 ? '#2a201a' : base;
       },
     }];
@@ -377,8 +377,8 @@ function generateHouses() {
   save('house-small.png', house(2, 2, 16, '#5d4636', '#41312a', 1));
   save('hut.png', house(2, 2, 12, '#55493d', '#3b332b', 0.9));
   // The shelter in the abandoned village: the same hut, door broken in and snow drifted against it.
-  const broken = house(2, 2, 12, '#4d4237', '#352d26', 0.9);
-  save('shelter.png', house(2, 2, 12, '#55493d', '#3b332b', 0.9));
+  const broken = house(2, 2, 12, '#4d4237', '#352d26', 0.9, false);
+  save('shelter.png', house(2, 2, 12, '#55493d', '#3b332b', 0.9, false));
   save('shelter-broken.png', broken);
 }
 
@@ -483,6 +483,10 @@ function generateFightMarks() {
   overlay('fx-intent.png', (c, x, y) => {
     if (Math.hypot(x - 15.5, (y - 7.5) * 2) < 3) c.set(x, y, '#b8402f', 200);
   });
+  // What a fled pack leaves: pairs of paw prints in the snow on the ice.
+  overlay('fx-tracks.png', (c, x, y) => {
+    for (const [px, py] of [[11, 5], [14, 6], [18, 9], [21, 10]]) if (Math.hypot(x - px, (y - py) * 1.6) < 1.3) c.set(x, y, '#6f8394', 200);
+  });
   overlay('fx-bite.png', (c, x, y) => {
     const edge = !inDiamond(x - 1, y) || !inDiamond(x + 1, y) || !inDiamond(x, y - 1) || !inDiamond(x, y + 1);
     if (edge) c.set(x, y, '#d0442f', 230);
@@ -490,8 +494,28 @@ function generateFightMarks() {
   });
 }
 
+/** Step 7 marks in the village: nets out on the ice, burnt torches, the village fire. */
+function generateVillageMarks() {
+  const net = (hit, px, py) => ((px + py) % 3 === 0 ? '#3c3328' : null);
+  save('net-ice.png', drawBoxes(1, 1, 14, [
+    { u: 0.15, v: 0.3, du: 0.06, dv: 0.06, z: 0, dz: 12, top: '#6b5238', left: '#5a4430', right: '#46352a' },
+    { u: 0.8, v: 0.3, du: 0.06, dv: 0.06, z: 0, dz: 12, top: '#6b5238', left: '#5a4430', right: '#46352a' },
+    { u: 0.15, v: 0.32, du: 0.71, dv: 0.02, z: 2, dz: 9, top: null, left: '#3c3328', right: '#3c3328', pattern: net },
+  ]));
+  save('torch-burnt.png', drawBoxes(1, 1, 22, [
+    { u: 0.45, v: 0.45, du: 0.1, dv: 0.1, z: 0, dz: 16, top: '#4a3a2c', left: '#3d3026', right: '#2e241c' },
+    { u: 0.42, v: 0.42, du: 0.16, dv: 0.16, z: 16, dz: 4, top: '#1c1a18', left: '#242120', right: '#161413' },
+  ]));
+  save('firepit.png', drawBoxes(1, 1, 12, [
+    { u: 0.15, v: 0.15, du: 0.7, dv: 0.7, z: 0, dz: 3, top: '#5f5a55', left: '#6e6862', right: '#4f4a45' },
+    { u: 0.32, v: 0.32, du: 0.36, dv: 0.36, z: 3, dz: 3, top: '#d9772f', left: '#e89a3a', right: '#b85a24' },
+    { u: 0.42, v: 0.42, du: 0.16, dv: 0.16, z: 6, dz: 4, top: '#f2c25a', left: '#f7d77a', right: '#d9a03a' },
+  ]));
+}
+
 generateTileset();
 generateWolf();
+generateVillageMarks();
 generateFightMarks();
 generateBoathouse();
 generateBirch();

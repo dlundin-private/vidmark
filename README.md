@@ -8,7 +8,7 @@ This repo builds the **vertical slice**: one village by the frozen lake in Kalls
 
 ## Status
 
-Build steps 1–6 of 7 are done: Kallsjö, a 256×256 valley with a frozen lake, birch forest, mountains, an ice road and Signe's village to walk around; the game state with save/load; conversations with everyone in the slice that react to what Signe has lost; and Craft magic: Strengthen, Weaken, Push and Mend, Weave crafting, training and resting; and the two ways to get Power from people, asking (Offerings) and taking (hollowing), plus burning Keepsakes; and the one fight, starving wolves on the ice road. All art is placeholder, and all dialogue is a first draft.
+All 7 build steps are done: Kallsjö, a 256×256 valley with a frozen lake, birch forest, mountains, an ice road and Signe's village to walk around; the game state with save/load; conversations with everyone in the slice that react to what Signe has lost; and Craft magic: Strengthen, Weaken, Push and Mend, Weave crafting, training and resting; and the two ways to get Power from people, asking (Offerings) and taking (hollowing), plus burning Keepsakes; the one fight, starving wolves on the ice road; and a village that visibly changes with what Signe did. Next: playtesting. All art is placeholder, and all dialogue is a first draft.
 
 | Step | What | Status |
 | --- | --- | --- |
@@ -18,7 +18,7 @@ Build steps 1–6 of 7 are done: Kallsjö, a 256×256 valley with a frozen lake,
 | 4 | Craft abilities, Power, Weave crafting and skill training | Done |
 | 5 | Offering, hollowing and Keepsake burning | Done |
 | 6 | Turn-based combat and the wolf fight | Done |
-| 7 | Both quests, world changes and playtesting | Next |
+| 7 | Both quests, world changes and playtesting | Built; playtesting next |
 
 ## Controls
 
@@ -97,6 +97,15 @@ Cross the cracked ice anywhere except the hermit's safe route and starving wolve
 - There is no running away. A reload in the middle of the fight brings the pack back.
 
 Crossing by the hermit's route avoids the wolves altogether.
+
+## The village changes
+
+- Mend Ebbe's nets (or take his memory) and his nets go out by Torvald's fishing hole.
+- Play Maren's Winter and burnt-out torches stand at the statue.
+- Once the hermit gives his route, he leaves his hut and sits by the village fire.
+- When the ice road opens, fresh spruce markers line it across the cracked band, Lilja plays out on it and Reeve Olle walks it toward Kronvall.
+- After the wolf fight, the hole where a wolf went through stays open, and tracks run north where the pack fled.
+- Hollow someone while another villager is close by and they see it. Then the village knows: everyone says so, and nobody offers Signe a memory again.
 
 ## The map
 

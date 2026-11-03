@@ -6,7 +6,11 @@
 -> reacts("torvald") ->
 { flag("hurt_by_trap_torvald"): Torvald: Went through by my own hole this morning. Thirty years on this ice, and it's never done that. }
 ~ remember("torvald", "met")
-Torvald: {name_known(): There's my girl. | There you are.}
+{ has_flag("village_knows"):
+    Torvald looks at you a long moment, then back down at the hole.
+- else:
+    Torvald: {name_known(): There's my girl. | There you are.}
+}
 -> talk
 
 = talk
@@ -37,6 +41,11 @@ Torvald: {name_known(): There's my girl. | There you are.}
 * {not remembers("torvald", "fishing")} [Ask about the fishing] Signe: How's the catch?
     ~ remember("torvald", "fishing")
     Torvald: Thin. Nobody remembers how to salt it properly, so half of it spoils anyway.
+    -> talk
+* {(flag("quest_nets") == "mended" or flag("quest_nets") == "offering") and not remembers("torvald", "nets_out")} [Ask about the nets by the hole] Signe: Ebbe's nets are out.
+    ~ remember("torvald", "nets_out")
+    Torvald: First proper haul since autumn. Ebbe stood on the ice and cried, and nobody said a word about it.
+    Torvald: We'll eat this winter.
     -> talk
 * {(promise_made("lilja_ice")) and not remembers("torvald", "told_promise")} [Tell him your promise to Lilja] Signe: I promised Lilja I'd take her across the ice when it's safe.
     ~ remember("torvald", "told_promise")

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_TUNING } from '../../content/data/tuning';
 import type { Tile } from '../iso/types';
-import { WolfFight, wolfStarts, type FightGrid } from './combat';
+import { WolfFight, encodeTrackStarts, trackTiles, wolfStarts, type FightGrid } from './combat';
 
 /** '.' ice, '#' blocked, 'T' Signe's armed trap ice. */
 function grid(rows: string[]): FightGrid & { traps: Set<string> } {
@@ -109,5 +109,15 @@ describe('wolfStarts', () => {
       expect(g.isBlocked(s.x, s.y)).toBe(false);
     }
     expect(new Set(starts.map((s) => `${s.x},${s.y}`)).size).toBe(3);
+  });
+});
+
+describe('tracks', () => {
+  it('run north from where each wolf turned, and survive saving', () => {
+    const tiles = trackTiles(encodeTrackStarts([{ x: 5, y: 20 }, { x: 9, y: 18 }]), 6);
+    expect(tiles.size).toBe(12);
+    expect(tiles.has('5,19')).toBe(true);
+    expect([...tiles].every((k) => Number(k.split(',')[1]) < 20)).toBe(true);
+    expect(trackTiles('').size).toBe(0);
   });
 });

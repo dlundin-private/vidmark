@@ -107,6 +107,29 @@ export class PeopleSim {
     return this.person(id).walker.visual;
   }
 
+  /** Someone has a new spot (the world changed): they walk there and wander around it from now on. */
+  moveTo(id: NpcId, home: Tile, radius: number, onIce: boolean): void {
+    const p = this.person(id);
+    if (p.home.x === home.x && p.home.y === home.y && p.radius === radius) return;
+    if (p.meeting) this.endMeeting(p.meeting);
+    p.home = { ...home };
+    p.radius = radius;
+    p.onIce = onIce;
+    p.route = this.routeHome(p);
+    p.mode = p.route.length > 0 ? 'home' : 'idle';
+    // No way to walk there (across the lake, say): they are simply there next time she looks.
+    const at = p.walker.tile;
+    if (p.route.length === 0 && (at.x !== home.x || at.y !== home.y) && !this.world.isBlocked(home.x, home.y)) {
+      p.walker.teleport(home);
+      this.world.placePerson(id, home);
+    }
+  }
+
+  /** Where someone's spot is now. */
+  homeOf(id: NpcId): Tile {
+    return this.person(id).home;
+  }
+
   /** Someone became a Hollow (or is one from the start): they stop where they stand. */
   setHollow(id: NpcId, hollow: boolean): void {
     const p = this.person(id);
@@ -167,6 +190,13 @@ export class PeopleSim {
         return;
       case 'idle':
         if (this.now < p.until) return;
+        // Far from their spot (they were moved, or the way was blocked): head back first.
+        if (Math.abs(p.walker.tile.x - p.home.x) + Math.abs(p.walker.tile.y - p.home.y) > p.radius) {
+          p.route = this.routeHome(p);
+          p.mode = 'home';
+          if (p.route.length > 0) return;
+          p.mode = 'idle';
+        }
         if (p.radius > 0) this.wander(p);
         else p.until = this.now + this.between(this.timing.idleMs);
     }

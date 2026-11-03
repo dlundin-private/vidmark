@@ -223,3 +223,22 @@ export function wolfStarts(signe: Tile, count: number, free: (x: number, y: numb
   }
   return starts;
 }
+
+/** Saved form of where the fled wolves were: "x,y;x,y". */
+export function encodeTrackStarts(tiles: readonly Tile[]): string {
+  return tiles.map((t) => `${t.x},${t.y}`).join(';');
+}
+
+/**
+ * The tracks a fled pack leaves (step 7): from where each wolf turned, a
+ * wavering line north toward the far shore, `length` tiles long.
+ */
+export function trackTiles(encoded: string, length = 12): Set<string> {
+  const tiles = new Set<string>();
+  for (const part of encoded.split(';')) {
+    const [x, y] = part.split(',').map(Number);
+    if (!Number.isFinite(x) || !Number.isFinite(y)) continue;
+    for (let i = 1; i <= length; i++) tiles.add(`${x! + (Math.floor(i / 4) % 2)},${y! - i}`);
+  }
+  return tiles;
+}

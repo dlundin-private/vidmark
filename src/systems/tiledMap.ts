@@ -51,6 +51,11 @@ export interface MapObject {
   rest: boolean;
   /** Ink knot to play when Signe looks at it (places worth finding). */
   inspect: string | null;
+  /**
+   * Only there once a world flag holds (quest endings change the village):
+   * "flag" (any true value) or "flag=a|b" (one of these values). Null: always there.
+   */
+  show: string | null;
 }
 
 /** A Tiled map reduced to what the world needs: ground frames, collision and objects. */
@@ -106,6 +111,7 @@ export function parseTiledMap(json: TiledJson): IsoMap {
     broken: boolProperty(o.properties, 'broken'),
     rest: boolProperty(o.properties, 'rest'),
     inspect: stringProperty(o.properties, 'inspect') ?? null,
+    show: stringProperty(o.properties, 'show') ?? null,
     // Isometric object coordinates are measured along the tile axes in tile-height units.
     footprint: {
       x: Math.round(o.x / json.tileheight),

@@ -17,7 +17,7 @@ export type QuestEvent = { kind: 'started' | 'completed'; quest: QuestDef; text:
 const startedFlag = (id: string) => `quest_${id}_started`;
 const outcomeFlag = (id: string) => `quest_${id}`;
 
-function view(state: GameState): QuestView {
+export function view(state: GameState): QuestView {
   return {
     flag: (name) => state.flags[name],
     offered: (npc: NpcId) => state.npcs[npc].offered,

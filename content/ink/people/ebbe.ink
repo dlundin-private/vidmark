@@ -40,7 +40,7 @@
     Ebbe: If you can, do it. The ice won't hold forever, and nobody eats if the nets stay like this.
     ~ set_flag("ebbe_asked_mend", true)
     -> talk
-* {not has_offered("ebbe") and not all_nets()} [Ask if there's another way] Signe: Is there anything else that would help?
+* {not has_offered("ebbe") and not all_nets() and not has_flag("village_knows")} [Ask if there's another way] Signe: Is there anything else that would help?
     ~ remember("ebbe", "wife")
     Ebbe looks at the needle for a long time.
     Ebbe: There's one thing they didn't take. My wife, on the jetty, the first spring. Her laughing at how bad my knots were.
