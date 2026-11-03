@@ -44,6 +44,8 @@ export interface QuestDef {
 
 const num = (v: QuestView, name: string) => Number(v.flag(name) ?? 0);
 const allNets = (v: QuestView) => num(v, 'nets_total') > 0 && num(v, 'nets_mended') >= num(v, 'nets_total');
+/** Crossed where the hermit remembered thick ice: the wolves on the road never saw her (step 6). */
+const byRoute = (v: QuestView) => !!v.flag('crossed_by_route');
 
 export const QUESTS: readonly QuestDef[] = [
   {
@@ -78,20 +80,21 @@ export const QUESTS: readonly QuestDef[] = [
     outcomes: [
       {
         id: 'hollowed',
-        when: (v) => !!v.flag('crossed_cracked_ice') && !!v.flag('knows_safe_route') && v.hollowed('hermit'),
+        when: (v) => byRoute(v) && v.hollowed('hermit'),
         text: 'You crossed by the way you took from the hermit. He sits in his hut and does not look at the lake.',
         sets: 'ice_road_open',
       },
       {
         id: 'route',
-        when: (v) => !!v.flag('crossed_cracked_ice') && !!v.flag('knows_safe_route'),
+        when: byRoute,
         text: "You crossed by the hermit's old route. He no longer remembers it.",
         sets: 'ice_road_open',
       },
       {
         id: 'strengthened',
-        when: (v) => !!v.flag('crossed_cracked_ice'),
-        text: 'You made the ice hold and crossed. The village marks the road safe again.',
+        // Crossing anywhere else brings the starving wolves out onto the road; it ends once they are gone.
+        when: (v) => !!v.flag('crossed_cracked_ice') && !!v.flag('wolves_gone'),
+        text: 'You made the ice hold, crossed, and the wolves gave up the road. The village marks it safe again.',
         sets: 'ice_road_open',
       },
     ],

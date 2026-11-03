@@ -189,6 +189,7 @@ export class Journal {
     const pyramid = el('div', 'hearth-pyramid', [...blocks.reverse(), base]);
     const faithless = NPCS.filter((n) => s.npcs[n.id].offered && s.npcs[n.id].faithLost && !s.npcs[n.id].hollowed);
     const echoes = A.echoes(s);
+    const wolves = A.wolfEchoes(s);
     const hollowed = t.hollowingReserve;
     return el('div', 'journal-page', [
       el('p', 'journal-lead', `Your Hearth: the people who have given you a memory. Each one raises the Power you get back when you rest. Now: ${A.maxPower(s, t)} Power.`),
@@ -199,7 +200,9 @@ export class Journal {
         ? `${s.reserve} Power, from what you took and what you burned. You spend it after your Hearth's Power, and resting never refills it.`
         : 'None. Taking everything from someone, or burning a Keepsake, gives Power once; resting never brings it back.'),
       ...(faithless.length ? [el('h3', '', 'Lost faith in you'), ...faithless.map((n) => el('p', 'journal-line', `${n.name}: no longer part of your Hearth.`))] : []),
-      ...(echoes.length ? [el('h3', '', 'Echoes you carry'), ...echoes.map((id) => el('p', 'journal-line', `${NPCS.find((n) => n.id === id)!.name}: everything they were, inside you now. (+${hollowed} Power, once)`))] : []),
+      ...(echoes.length || wolves ? [el('h3', '', 'Echoes you carry')] : []),
+      ...echoes.map((id) => el('p', 'journal-line', `${NPCS.find((n) => n.id === id)!.name}: everything they were, inside you now. (+${hollowed} Power, once)`)),
+      ...(wolves ? [el('p', 'journal-line', `${wolves === 1 ? 'A wolf' : `${wolves} wolves`}: hunger, cold, the pack. No words. (+${t.wolfHollowingReserve} Power each, once)`)] : []),
     ]);
   }
 

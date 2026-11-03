@@ -81,13 +81,17 @@ describe('The ice road', () => {
 
   it("ends by the hermit's route or by strengthening, and opens the road", () => {
     const viaRoute = createNewGame(2);
-    for (const f of ['heard_ice_road', 'knows_safe_route', 'crossed_cracked_ice']) A.setFlag(viaRoute, f, true);
+    for (const f of ['heard_ice_road', 'knows_safe_route', 'crossed_cracked_ice', 'crossed_by_route']) A.setFlag(viaRoute, f, true);
     updateQuests(viaRoute);
     expect(status(viaRoute, 'ice-road').outcome?.id).toBe('route');
     expect(viaRoute.flags.ice_road_open).toBe(true);
 
     const viaCraft = createNewGame(2);
     for (const f of ['heard_ice_road', 'strengthened_cracked_ice', 'crossed_cracked_ice']) A.setFlag(viaCraft, f, true);
+    updateQuests(viaCraft);
+    // Crossing away from the route brings the wolves: not done until they are gone.
+    expect(status(viaCraft, 'ice-road').outcome).toBeNull();
+    A.setFlag(viaCraft, 'wolves_gone', true);
     updateQuests(viaCraft);
     expect(status(viaCraft, 'ice-road').outcome?.id).toBe('strengthened');
   });
@@ -109,6 +113,7 @@ describe('quests that end with someone hollowed', () => {
     A.recordHollowing(s, 'hermit', t);
     A.setFlag(s, 'knows_safe_route', true);
     A.setFlag(s, 'crossed_cracked_ice', true);
+    A.setFlag(s, 'crossed_by_route', true);
     updateQuests(s);
     expect(status(s, 'ice-road').outcome?.id).toBe('hollowed');
     expect(s.flags.ice_road_open).toBe(true);

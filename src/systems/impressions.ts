@@ -20,7 +20,7 @@ export interface RememberedPerson {
  */
 export function rememberedPeople(state: Readonly<GameState>): RememberedPerson[] {
   const s = state as GameState;
-  const crowded = A.echoes(s).length > 0;
+  const crowded = A.carriesEchoes(s);
   return A.peopleMet(s).map((id) => {
     const person = MEMORIES[id];
     const def = NPCS.find((n) => n.id === id)!;

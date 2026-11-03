@@ -63,6 +63,20 @@ The design gives the four actions, their costs and the Weave parts. Everything b
 | At 3 wounds Signe dies. The game goes back to her last rest at home; everything since is undone. With no rest yet, it starts over. | Decided by Daniel |
 | Death is told as a memory she had wrong: "No. That isn't how it went. You're remembering it wrong", then "Remember it again". The text is in `content/ink/death.ink`, three variants per line. | Daniel's idea, wording drafted by Claude |
 
+## The wolf fight (step 6)
+
+| Decision | Status |
+| --- | --- |
+| The wolves come out when Signe steps off the cracked ice on the far side anywhere but the hermit's route, while the road isn't open yet. Crossing by the route avoids them (design). | Daniel |
+| A wolf that goes through the ice is gone; a wolf hit twice runs; once half the pack is down, the rest flee. | Daniel |
+| Hollowing a wolf: +2 Power once (a smaller life than a person's), the wolf goes blank and wanders off, and a wordless Echo (hunger, cold, the pack) speaks up now and then. | Daniel |
+| No running from the fight. It ends with the wolves gone, or with Signe fallen (three wounds: "you remember it wrong", back to the last rest). | Daniel |
+| Two actions a turn: move up to 3 tiles, use Craft, or take everything from a wolf beside her. Wolves show their run and bite before acting, then run exactly that way, stopping short of anything now in the way. A wolf bites if it ends beside Signe. | Design; numbers are tuning values |
+| How a wolf is hurt: Weaken under it (it goes through), Signe's armed trap ice on its run, or a pushed crate or marker (one hit; the push stops at the wolf). Cracked ice holds a wolf: they are light. | Claude's draft |
+| Three wolves, 3 tiles a turn, one wound a bite, appearing 4–7 tiles ahead. "Take everything" from a wolf is offered whenever one is beside her, and again when a cast lacks Power. | Claude's draft; tuning values in the debug panel |
+| The ice road quest: crossing by the route ends it at once; crossing by strengthened ice ends it once the wolves are gone. | Claude's draft |
+| A reload in the middle of the fight brings the pack back where Signe stands. | Claude's draft |
+
 ## Offering, hollowing and burning (step 5)
 
 Daniel's answers to the step-5 questions, and the drafts built on them.

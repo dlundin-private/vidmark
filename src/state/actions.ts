@@ -111,6 +111,27 @@ export function echoes(state: GameState): NpcId[] {
   return NPCS.filter((n) => !n.startsHollow && state.npcs[n.id].hollowed).map((n) => n.id);
 }
 
+/** Flag counting the wolves Signe has hollowed. */
+export const FLAG_HOLLOWED_WOLVES = 'hollowed_wolves';
+
+/**
+ * Signe takes everything from a wolf (decided by Daniel): a smaller reserve than
+ * a person gives, and a wordless Echo of hunger and the pack.
+ */
+export function hollowWolf(state: GameState, t: Tuning): void {
+  state.reserve += t.wolfHollowingReserve;
+  state.flags[FLAG_HOLLOWED_WOLVES] = wolfEchoes(state) + 1;
+}
+
+export function wolfEchoes(state: GameState): number {
+  return Number(state.flags[FLAG_HOLLOWED_WOLVES] ?? 0);
+}
+
+/** Other lives crowd her own: anyone or anything she has hollowed. */
+export function carriesEchoes(state: GameState): boolean {
+  return echoes(state).length > 0 || wolfEchoes(state) > 0;
+}
+
 // --- Keepsakes --------------------------------------------------------------
 
 export function hasKeepsake(state: GameState, id: KeepsakeId): boolean {

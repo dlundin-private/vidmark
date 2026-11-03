@@ -458,7 +458,41 @@ function generateMarker() {
   save('marker.png', canvas);
 }
 
+/** A starving wolf on a 1 x 1 footprint: grey, long along one axis, ribs showing. */
+function generateWolf() {
+  const grey = { top: '#8f8d88', left: '#7a7873', right: '#5c5a56' };
+  const dark = { top: '#4a4845', left: '#3d3b38', right: '#2e2c2a' };
+  save('wolf.png', drawBoxes(1, 1, 16, [
+    { u: 0.2, v: 0.38, du: 0.08, dv: 0.08, z: 0, dz: 5, ...dark }, // back legs
+    { u: 0.66, v: 0.38, du: 0.08, dv: 0.08, z: 0, dz: 5, ...dark }, // front legs
+    { u: 0.15, v: 0.36, du: 0.62, dv: 0.22, z: 4, dz: 5, ...grey, pattern: (hit) => hit.face === 'left' && Math.floor(hit.u * 20) % 3 === 0 ? '#5c5a56' : grey[hit.face] }, // thin body, ribs
+    { u: 0.72, v: 0.36, du: 0.2, dv: 0.22, z: 7, dz: 5, ...grey }, // head
+    { u: 0.88, v: 0.42, du: 0.08, dv: 0.1, z: 7, dz: 2, ...dark }, // muzzle
+    { u: 0.74, v: 0.38, du: 0.06, dv: 0.06, z: 12, dz: 3, ...dark }, // ear
+    { u: 0.02, v: 0.43, du: 0.15, dv: 0.08, z: 6, dz: 2, ...grey }, // tail
+  ]));
+}
+
+/** Fight overlays: where a wolf will run, and where it will bite. */
+function generateFightMarks() {
+  const overlay = (name, paint) => {
+    const c = new Canvas(TILE_W, TILE_H);
+    for (let y = 0; y < TILE_H; y++) for (let x = 0; x < TILE_W; x++) if (inDiamond(x, y)) paint(c, x, y);
+    save(name, c);
+  };
+  overlay('fx-intent.png', (c, x, y) => {
+    if (Math.hypot(x - 15.5, (y - 7.5) * 2) < 3) c.set(x, y, '#b8402f', 200);
+  });
+  overlay('fx-bite.png', (c, x, y) => {
+    const edge = !inDiamond(x - 1, y) || !inDiamond(x + 1, y) || !inDiamond(x, y - 1) || !inDiamond(x, y + 1);
+    if (edge) c.set(x, y, '#d0442f', 230);
+    else c.set(x, y, '#b8402f', 70);
+  });
+}
+
 generateTileset();
+generateWolf();
+generateFightMarks();
 generateBoathouse();
 generateBirch();
 generateNetRack();

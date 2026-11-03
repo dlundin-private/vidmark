@@ -35,6 +35,8 @@ export type CastPlan =
       tiles?: Tile[];
       /** Push: where the object ends up. */
       pushTo?: Tile;
+      /** Push, in a fight: the creature it slams into. */
+      hits?: Tile;
     }
   | { ok: false; reason: string; /** 'range': fine, but Signe must get closer. */ code?: 'range' };
 
@@ -75,7 +77,10 @@ export function spellCost(state: GameState, t: Tuning, spell: Spell, pushTiles =
 }
 
 /** Checks whether Signe, standing on `signe`, can cast this at `aim`, and what it would do. Changes nothing. */
-export function planCast(world: WorldModel, state: GameState, t: Tuning, spell: Spell, aim: Aim, signe: Tile, pushTo?: Tile): CastPlan {
+/** In a fight, creatures (wolves) that aren't map objects but stop a push: it slams into them. */
+export type CreatureAt = (x: number, y: number) => boolean;
+
+export function planCast(world: WorldModel, state: GameState, t: Tuning, spell: Spell, aim: Aim, signe: Tile, pushTo?: Tile, creatureAt?: CreatureAt): CastPlan {
   const reach = spell.modifier === 'range' ? t.craftRangeExtended : t.craftRange;
   const fail = (reason: string): CastPlan => ({ ok: false, reason });
   const tooFar: CastPlan = { ok: false, reason: 'Too far away.', code: 'range' };
@@ -117,6 +122,14 @@ export function planCast(world: WorldModel, state: GameState, t: Tuning, spell: 
         const distance = dx !== 0 ? (dx > 0 ? dest.x - (fp.x + fp.w - 1) : fp.x - dest.x) : dy > 0 ? dest.y - (fp.y + fp.h - 1) : fp.y - dest.y;
         if (!inLine || distance < 1) return fail('Push moves things straight away from you.');
         for (let step = 1; step <= distance; step++) {
+          let creature: Tile | null = null;
+          forTiles({ ...fp, x: fp.x + dx * step, y: fp.y + dy * step }, (x, y) => {
+            if (!creature && creatureAt?.(x, y)) creature = { x, y };
+          });
+          if (creature) {
+            const moved = step - 1;
+            return ok(spell, state, t, { object, pushTo: { x: fp.x + dx * moved, y: fp.y + dy * moved }, hits: creature }, Math.max(1, moved));
+          }
           let clear = true;
           forTiles({ ...fp, x: fp.x + dx * step, y: fp.y + dy * step }, (x, y) => {
             const other = world.objectAt(x, y);
@@ -155,7 +168,7 @@ export function planCast(world: WorldModel, state: GameState, t: Tuning, spell: 
   return ok(spell, state, t, { tiles });
 }
 
-function ok(spell: Spell, state: GameState, t: Tuning, rest: { object?: MapObject; tiles?: Tile[]; pushTo?: Tile }, pushTiles = 1): CastPlan {
+function ok(spell: Spell, state: GameState, t: Tuning, rest: { object?: MapObject; tiles?: Tile[]; pushTo?: Tile; hits?: Tile }, pushTiles = 1): CastPlan {
   return { ok: true, spell, cost: spellCost(state, t, spell, pushTiles), ...rest };
 }
 
@@ -198,7 +211,13 @@ export function cast(world: WorldModel, state: GameState, t: Tuning, plan: Extra
       case 'push': {
         const brittle = world.objectEffect(o)?.kind === 'weakened';
         A.moveObject(state, o.id, plan.pushTo!);
-        if (brittle) {
+        if (plan.hits) {
+          if (brittle) {
+            A.setObjectBroken(state, o.id, true);
+            A.setObjectEffect(state, o.id, undefined);
+          }
+          message = `The ${label(o)} slams into the wolf${brittle ? ' and breaks apart' : ''}.`;
+        } else if (brittle) {
           A.setObjectBroken(state, o.id, true);
           A.setObjectEffect(state, o.id, undefined);
           message = `The ${label(o)} slides, and breaks apart.`;

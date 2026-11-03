@@ -130,6 +130,19 @@ describe('Push', () => {
     expect(reason(w.run(plainSpell('push', 'object'), { kind: 'object', id: 1 }, { x: 0, y: 0 }).plan)).toMatch(/in the way/);
   });
 
+  it('in a fight, slams into a wolf in its path and stops there', () => {
+    const w = setup(['........'], [{ id: 1, type: 'crate', x: 1, y: 0 }]);
+    const wolf = (x: number, y: number) => x === 4 && y === 0;
+    const plan = planCast(w.world, w.state, t, plainSpell('push', 'object'), { kind: 'object', id: 1 }, { x: 0, y: 0 }, { x: 6, y: 0 }, wolf);
+    expect(plan.ok && plan.hits).toEqual({ x: 4, y: 0 });
+    expect(plan.ok && plan.pushTo).toEqual({ x: 3, y: 0 });
+    // Right up against it: the crate doesn't move, but still strikes.
+    const close = planCast(w.world, w.state, t, plainSpell('push', 'object'), { kind: 'object', id: 1 }, { x: 0, y: 0 }, { x: 2, y: 0 }, (x) => x === 2);
+    expect(close.ok && close.pushTo).toEqual({ x: 1, y: 0 });
+    expect(close.ok && close.cost).toBe(1);
+    expect(cast(w.world, w.state, t, plan as Extract<typeof plan, { ok: true }>)).toContain('slams into the wolf');
+  });
+
   it('will not move things that are not pushable', () => {
     const w = setup(['....'], [{ id: 1, type: 'net-rack', x: 1, y: 0, w: 2 }]);
     expect(reason(w.run(plainSpell('push', 'object'), { kind: 'object', id: 1 }).plan)).toMatch(/will not move/);

@@ -57,6 +57,22 @@ export const DEFAULT_TUNING = {
   /** Distinct things a skill must be used on to reach level 2 and level 3. */
   skillLevel2At: 3,
   skillLevel3At: 7,
+
+  // --- Combat (design: "Combat: turn-based on the isometric grid") ---
+  /** Actions Signe gets each turn: move, use an ability, or interact (design: two). */
+  combatActions: 2,
+  /** Tiles one move action takes her. */
+  combatMoveTiles: 3,
+  /** Starving wolves on the ice road. */
+  wolfCount: 3,
+  /** Tiles a wolf runs in one turn. */
+  wolfMoveTiles: 3,
+  /** Hits (a pushed crate, a marker) before a wolf runs off. */
+  wolfHitsToFlee: 2,
+  /** Wounds from one bite. */
+  wolfBiteWounds: 1,
+  /** One-time reserve from hollowing a wolf: a smaller life than a person's (decided by Daniel). */
+  wolfHollowingReserve: 2,
 };
 
 export type Tuning = typeof DEFAULT_TUNING;
@@ -93,4 +109,11 @@ export const TUNING_LABELS: Record<TuningKey, string> = {
   weaveSlots: 'Weaves carried at once',
   skillLevel2At: 'Uses to reach skill level 2',
   skillLevel3At: 'Uses to reach skill level 3',
+  combatActions: 'Fight: actions per turn',
+  combatMoveTiles: 'Fight: tiles per move',
+  wolfCount: 'Fight: wolves in the pack',
+  wolfMoveTiles: 'Fight: tiles a wolf runs',
+  wolfHitsToFlee: 'Fight: hits before a wolf flees',
+  wolfBiteWounds: 'Fight: wounds per bite',
+  wolfHollowingReserve: 'Reserve from hollowing a wolf',
 };

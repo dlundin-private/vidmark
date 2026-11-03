@@ -36,10 +36,15 @@ import { Journal } from './Journal';
 import { questsWouldChange, updateQuests } from '../systems/quests';
 import { personStepsOnto, wouldBreakUnderPerson, wouldBreakUnderSigne } from '../systems/craft';
 import { WeaveScreen } from './WeaveScreen';
+import { FightView } from './FightView';
+import { WolfFight, wolfStarts, type FightEvent } from '../systems/combat';
 import { TILESET_KEY } from './BootScene';
 import mapJson from '../../assets/maps/kallsjo.json';
 
 const SIGNE_SPRITE = 'signe';
+/** The wolf fight is on (saved, so a reload brings the pack back), and it is over. */
+const FLAG_WOLVES_HUNTING = 'wolves_hunting';
+const FLAG_WOLVES_GONE = 'wolves_gone';
 const MARKER_SPRITE = 'marker';
 /** Tileset frame drawn by the collision debug overlay (the "blocked" tile). */
 const BLOCKED_FRAME = 7;
@@ -135,6 +140,9 @@ export class WorldScene extends Phaser.Scene {
   private spell: Spell | null = null;
   /** Push: the object chosen, waiting for where it should stop. */
   private pushing: MapObject | null = null;
+  /** The wolf fight on the ice road, while it lasts (build step 6). */
+  private fight: { logic: WolfFight; view: FightView; sortables: Sortable[] } | null = null;
+  private overlayLayer!: Phaser.GameObjects.Layer;
 
   constructor() {
     super('World');
@@ -159,6 +167,7 @@ export class WorldScene extends Phaser.Scene {
     bubbles.clear();
     this.spell = null;
     this.pushing = null;
+    this.fight = null;
     hud.select(null);
 
     const map = parseTiledMap(mapJson as TiledJson);
@@ -170,6 +179,7 @@ export class WorldScene extends Phaser.Scene {
     // Draw order between layers is fixed; inside the entity layer it comes from the footprints.
     const groundLayer = this.add.layer();
     const overlayLayer = this.add.layer();
+    this.overlayLayer = overlayLayer;
     this.entityLayer = this.add.layer();
     const topLayer = this.add.layer();
 
@@ -293,6 +303,9 @@ export class WorldScene extends Phaser.Scene {
     });
     hud.render(store.state, tuning.values);
     if (A.hasFallen(store.state, tuning.values)) this.die();
+    // Reloaded in the middle of the wolf fight: the pack is still out there.
+    if (store.state.flags[FLAG_WOLVES_HUNTING] && !store.state.flags[FLAG_WOLVES_GONE]) this.startFight();
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.fight?.view.destroy());
 
     // How many nets are torn is a fact of the map; quests and dialogue count against it.
     const racks = map.objects.filter((o) => o.type === 'net-rack' && o.broken).length;
@@ -331,7 +344,9 @@ export class WorldScene extends Phaser.Scene {
   update(_time: number, delta: number): void {
     const busy = menuOpen();
     hud.setVisible(!dialogueBox.isOpen && !deathScreen.isOpen && !journal.isOpen);
-    if (!busy) this.handleKeys();
+    // In a fight, Signe moves by taps, one action at a time; keys would walk past the turns.
+    if (this.fight) this.tapped = null;
+    else if (!busy) this.handleKeys();
     this.updatePeople(delta);
     const before = this.walker.tile;
     const entered = this.walker.update(delta);
@@ -349,6 +364,7 @@ export class WorldScene extends Phaser.Scene {
       const there = visit && (visit.onTile ? onFootprint(t, visit.target()) : isBesideFootprint(t, visit.target()));
       if (visit && there) visit.arrive();
     }
+    if (this.fight) this.updateFight(delta);
     this.placeSigne();
     this.refreshView();
     this.sortDepth();
@@ -392,7 +408,7 @@ export class WorldScene extends Phaser.Scene {
     let plan;
 
     if (this.pushing) {
-      plan = planCast(this.world, store.state, t, spell, { kind: 'object', id: this.pushing.id }, signe, tile);
+      plan = planCast(this.world, store.state, t, spell, { kind: 'object', id: this.pushing.id }, signe, tile, this.wolfAt());
     } else {
       const object = this.craftableAt(worldX, worldY, tile);
       // A plain Strengthen or Weaken works on whatever was tapped: an object, or the ice.
@@ -401,7 +417,7 @@ export class WorldScene extends Phaser.Scene {
         s = { ...spell, target: 'surface' };
       }
       const aim: Aim = s.target === 'object' && object ? { kind: 'object', id: object.id } : { kind: 'tile', x: tile.x, y: tile.y };
-      plan = planCast(this.world, store.state, t, s, aim, signe);
+      plan = planCast(this.world, store.state, t, s, aim, signe, undefined, this.wolfAt());
       if (plan.ok && s.action === 'push') {
         this.pushing = plan.object!;
         hud.say(`Push the ${plan.object!.type.replace(/-/g, ' ')}: tap where it should stop. 1 Power per ${t.pushTilesPerPower} tiles.`, 0);
@@ -409,6 +425,10 @@ export class WorldScene extends Phaser.Scene {
       }
     }
 
+    if (!plan.ok && plan.code === 'range' && this.fight) {
+      hud.say('Out of reach. Moving closer takes an action.');
+      return;
+    }
     if (!plan.ok && plan.code === 'range' && !this.pushing) return this.walkIntoReach(worldX, worldY, tile, reach(spell));
     if (!plan.ok) {
       hud.say(plan.reason);
@@ -417,9 +437,13 @@ export class WorldScene extends Phaser.Scene {
     if (A.availablePower(store.state) < plan.cost) {
       const text = `That needs ${plan.cost} Power. You have ${A.availablePower(store.state)}.`;
       // Out of Power: the Keepsakes are the one thing she can always spend.
-      if (KEEPSAKES.some((k) => !k.hiddenUntilLate && A.hasKeepsake(store.state, k.id))) {
-        hud.ask(text, [{ label: 'Burn a Keepsake…', run: () => journal.open('keepsakes') }]);
-      } else hud.say(text);
+      // In a fight, taking everything from the wolf beside her is always offered too (design).
+      const options = [
+        ...(KEEPSAKES.some((k) => !k.hiddenUntilLate && A.hasKeepsake(store.state, k.id)) ? [{ label: 'Burn a Keepsake…', run: () => journal.open('keepsakes') }] : []),
+        ...(this.fight?.logic.wolfBeside() ? [{ label: 'Take everything from the wolf', run: () => this.askHollowWolf() }] : []),
+      ];
+      if (options.length > 0) hud.ask(text, options);
+      else hud.say(text);
       return;
     }
     const done = plan;
@@ -427,6 +451,164 @@ export class WorldScene extends Phaser.Scene {
     store.save();
     hud.select(null); // clears the "tap what to work on" prompt, so say the result after
     hud.say(`${message} (−${plan.cost} Power)`);
+    if (this.fight) this.afterFightCast(done);
+  }
+
+  // --- The wolf fight (build step 6) ------------------------------------------------
+
+  /** Northward off the cracked ice, anywhere but the hermit's route, while the road is still theirs. */
+  private meetsWolves(from: Tile, to: Tile): boolean {
+    const band = this.world.band;
+    const f = store.state.flags;
+    if (!band || this.fight || f[FLAG_WOLVES_GONE] || f.ice_road_open) return false;
+    return from.y === band.y0 && to.y === band.y0 - 1 && to.x !== this.world.map.numbers.safeRouteX;
+  }
+
+  private startFight(): void {
+    const t = tuning.values;
+    const free = (x: number, y: number) => this.world.isIce(x, y) && !this.world.isBlocked(x, y) && !this.world.isThinIce(x, y);
+    const starts = wolfStarts(this.walker.tile, t.wolfCount, free);
+    const logic = new WolfFight(
+      {
+        width: this.world.width,
+        height: this.world.height,
+        isBlocked: (x, y) => this.world.isBlocked(x, y),
+        isTrap: (x, y) => {
+          const e = this.world.tileEffect(x, y);
+          return e?.armed === true && e.kind === 'weakened';
+        },
+      },
+      this.walker.tile,
+      starts,
+      t,
+    );
+    const view = new FightView(this, this.proj, logic, this.entityLayer, this.overlayLayer, () => {
+      if (!this.canActInFight()) return;
+      logic.endTurn();
+      view.refresh();
+    });
+    const sortables: Sortable[] = view.sortables().map((s) => ({ sprite: s.sprite, footprint: s.footprint, obj: null, bounds: null }));
+    this.fight = { logic, view, sortables };
+    this.spell = null;
+    hud.select(null);
+    const resumed = !!store.state.flags[FLAG_WOLVES_HUNTING];
+    store.update((s) => A.setFlag(s, FLAG_WOLVES_HUNTING, true));
+    store.save(); // a reload in the middle of the fight brings the pack back
+    hud.announce(
+      resumed ? 'The wolves are still out there' : 'Starving wolves',
+      'They come out of the snow along the road, ribs like fence rails. Red marks show where each will run, and where it will bite.',
+    );
+    this.lastViewKey = '';
+  }
+
+  /** Taps in a fight: move (one action, a few tiles), or reach for the wolf beside her. */
+  private fightTap(tile: Tile): void {
+    const { logic } = this.fight!;
+    const wolf = logic.wolfAt(tile.x, tile.y);
+    if (wolf) {
+      if (logic.wolfBeside() === wolf) return this.askHollowWolf();
+      hud.say('It keeps just out of reach. Craft works from here; your hands do not.');
+      return;
+    }
+    const path = logic.movePath(tile);
+    if (!path) {
+      hud.say(`One move takes you at most ${tuning.values.combatMoveTiles} tiles, and not through a wolf.`);
+      return;
+    }
+    this.walker.setPath(path);
+    logic.moved(path.at(-1)!);
+    this.fight!.view.refresh();
+  }
+
+  private canActInFight(): boolean {
+    const f = this.fight;
+    return !!f && f.logic.phase === 'signe' && !f.view.animating && !this.walker.isMoving;
+  }
+
+  private wolfAt(): ((x: number, y: number) => boolean) | undefined {
+    const logic = this.fight?.logic;
+    return logic ? (x, y) => !!logic.wolfAt(x, y) : undefined;
+  }
+
+  /** A cast in a fight: an action; a pushed thing may strike a wolf, broken ice may take one. */
+  private afterFightCast(plan: Extract<ReturnType<typeof planCast>, { ok: true }>): void {
+    const { logic } = this.fight!;
+    const events: FightEvent[] = [];
+    if (plan.hits) {
+      const w = logic.wolfAt(plan.hits.x, plan.hits.y);
+      if (w) events.push(...logic.hit(w.id));
+    }
+    for (const w of logic.hunting) if (this.world.isBrokenIce(w.at.x, w.at.y)) events.push(...logic.remove(w.id, 'drowned'));
+    logic.spend();
+    this.playFight(events);
+  }
+
+  private askHollowWolf(): void {
+    const { logic, view } = this.fight!;
+    const wolf = logic.wolfBeside();
+    if (!wolf || !this.canActInFight()) return;
+    hud.ask('The wolf is right beside you, all ribs and teeth. You could take everything it is.', [
+      {
+        label: 'Take everything',
+        run: () => {
+          if (!this.fight || logic.wolfBeside() !== wolf) return;
+          store.update((s, t) => A.hollowWolf(s, t));
+          const events = logic.remove(wolf.id, 'hollowed');
+          logic.spend();
+          hud.say(`Hunger, cold, the pack: it pours into you. +${tuning.values.wolfHollowingReserve} Power, once.`, 5000);
+          view.hollowed(wolf.id, () => this.playFight(events));
+        },
+      },
+      { label: 'Let it be', run: () => undefined },
+    ]);
+  }
+
+  /** Shows fight events, applying what they do to Signe and the ice as each lands. */
+  private playFight(events: FightEvent[]): void {
+    const fight = this.fight;
+    if (!fight) return;
+    fight.view.play(events, (e) => this.fightEvent(e), () => {
+      if (fight.logic.isOver) this.endFight();
+      else fight.view.refresh();
+    });
+  }
+
+  private fightEvent(e: FightEvent): void {
+    const t = tuning.values;
+    if (e.kind === 'bite') {
+      store.update((s, tt) => {
+        for (let i = 0; i < t.wolfBiteWounds; i++) A.addWound(s, tt);
+      });
+      if (!deathScreen.isOpen) hud.say('Teeth in your arm. You tear free.', 2500);
+    }
+    if (e.kind === 'drowned') {
+      store.update((s) => A.breakIce(s, e.at.x, e.at.y, t.iceRefreezeRests));
+      hud.say('The ice opens under the wolf. It does not come up.', 3000);
+    }
+    if (e.kind === 'fled') hud.say('A wolf turns tail and runs for the far shore.', 2500);
+  }
+
+  private updateFight(delta: number): void {
+    const fight = this.fight!;
+    fight.view.update(delta);
+    // After a move (or going through the ice and back), she is where the walker is.
+    if (!this.walker.isMoving) fight.logic.signe = { ...this.walker.tile };
+    if (fight.logic.phase === 'wolves' && !fight.view.animating && !this.walker.isMoving && !menuOpen()) {
+      this.playFight(fight.logic.wolvesAct());
+    }
+  }
+
+  private endFight(): void {
+    const fight = this.fight!;
+    store.update((s) => {
+      A.setFlag(s, FLAG_WOLVES_HUNTING, false);
+      A.setFlag(s, FLAG_WOLVES_GONE, true);
+    });
+    store.save();
+    hud.announce('The wolves are gone', 'The rest of the pack slinks off toward the far shore. The road is quiet.');
+    fight.view.destroy();
+    this.fight = null;
+    this.lastViewKey = '';
   }
 
   /**
@@ -474,6 +656,11 @@ export class WorldScene extends Phaser.Scene {
     for (const tile of entered) {
       this.sketchMemory.push(tile);
       this.noteCrossing(previous, tile);
+      if (this.meetsWolves(previous, tile)) {
+        this.walker.setPath([]);
+        this.startFight();
+        return;
+      }
       const through = wouldBreakUnderSigne(this.world, tile) && store.update((s, t) => stepOnto(this.world, s, t, tile));
       if (through) {
         this.walker.teleport(previous);
@@ -516,7 +703,10 @@ export class WorldScene extends Phaser.Scene {
     const northward = from.y === band.y0 && to.y === band.y0 - 1;
     const southward = from.y === band.y1 && to.y === band.y1 + 1;
     if ((northward || southward) && this.world.isIce(to.x, to.y)) {
-      store.update((s) => A.setFlag(s, 'crossed_cracked_ice', true));
+      store.update((s) => {
+        A.setFlag(s, 'crossed_cracked_ice', true);
+        if (to.x === this.world.map.numbers.safeRouteX) A.setFlag(s, 'crossed_by_route', true);
+      });
     }
   }
 
@@ -568,7 +758,7 @@ export class WorldScene extends Phaser.Scene {
     this.echoIn -= delta;
     if (this.echoIn > 0) return;
     this.echoIn = between(ECHO_INTERVAL_MS);
-    const echoes = A.echoes(store.state);
+    const echoes: string[] = [...A.echoes(store.state), ...(A.wolfEchoes(store.state) > 0 ? ['wolf'] : [])];
     if (echoes.length === 0) return;
     const who = echoes[Math.floor(Math.random() * echoes.length)]!;
     const line = ambientDialogue.linesOf(`echo_${who}`)[0];
@@ -672,7 +862,7 @@ export class WorldScene extends Phaser.Scene {
     }
 
     for (const s of this.onScreen) s.sprite.setVisible(false);
-    this.onScreen = this.sortables.filter((s) => !s.bounds || rectsOverlap(s.bounds, view));
+    this.onScreen = [...this.sortables, ...(this.fight?.sortables ?? [])].filter((s) => !s.bounds || rectsOverlap(s.bounds, view));
     for (const s of this.onScreen) s.sprite.setVisible(true);
     this.lastSortKey = '';
   }
@@ -681,7 +871,7 @@ export class WorldScene extends Phaser.Scene {
   private sortDepth(): void {
     const key = [this.walker.footprint, ...this.people.map((p) => this.sim.footprintOf(p.id))]
       .map((f) => `${f.x},${f.y},${f.w},${f.h}`)
-      .join('|');
+      .join('|') + (this.fight?.view.sortKey() ?? '');
     if (key === this.lastSortKey) return;
     this.lastSortKey = key;
     const footprints = this.onScreen.map((s) => s.footprint());
@@ -733,7 +923,7 @@ export class WorldScene extends Phaser.Scene {
   }
 
   private talkToSomeoneBeside(): void {
-    if (menuOpen() || this.walker.isMoving) return;
+    if (menuOpen() || this.walker.isMoving || this.fight) return;
     const who = this.people.find((p) => isBeside(this.walker.tile, this.sim.tileOf(p.id)));
     if (who) this.talkTo(who);
   }
@@ -754,7 +944,9 @@ export class WorldScene extends Phaser.Scene {
 
   private onPointerDown(pointer: Phaser.Input.Pointer): void {
     if (menuOpen()) return;
+    if (this.fight && !this.canActInFight()) return;
     if (this.spell) return this.aimAt(pointer.worldX, pointer.worldY);
+    if (this.fight) return this.fightTap(this.proj.pick({ x: pointer.worldX, y: pointer.worldY }));
     this.pendingVisit = null;
     const tile = this.proj.pick({ x: pointer.worldX, y: pointer.worldY });
     const tapped = this.spriteAt(pointer.worldX, pointer.worldY, (s) => !!s.obj?.npc || !!s.obj?.rest || !!s.obj?.inspect) ?? this.world.objectAt(tile.x, tile.y);

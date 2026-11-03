@@ -73,6 +73,11 @@ It would be yours. All of it, at once.
 {~{name_known(): Signe, look! Look! | Look! Look!}|You said not past the reeds.|I'm cold.}
 -> END
 
+// A hollowed wolf has no words: only what it felt.
+=== echo_wolf ===
+{~(Hunger. The smell of the village on the wind.)|(Cold under the paws. The pack, close, warm.)|(Something small and quick under the snow. Not enough.)}
+-> END
+
 === echo_torvald ===
 {~There's my girl.|Stay where the ice is white.|Tell it again? The old one?}
 -> END

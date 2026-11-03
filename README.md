@@ -8,7 +8,7 @@ This repo builds the **vertical slice**: one village by the frozen lake in Kalls
 
 ## Status
 
-Build steps 1–5 of 7 are done: Kallsjö, a 256×256 valley with a frozen lake, birch forest, mountains, an ice road and Signe's village to walk around; the game state with save/load; conversations with everyone in the slice that react to what Signe has lost; and Craft magic: Strengthen, Weaken, Push and Mend, Weave crafting, training and resting; and the two ways to get Power from people, asking (Offerings) and taking (hollowing), plus burning Keepsakes. There's no combat yet. All art is placeholder, and all dialogue is a first draft.
+Build steps 1–6 of 7 are done: Kallsjö, a 256×256 valley with a frozen lake, birch forest, mountains, an ice road and Signe's village to walk around; the game state with save/load; conversations with everyone in the slice that react to what Signe has lost; and Craft magic: Strengthen, Weaken, Push and Mend, Weave crafting, training and resting; and the two ways to get Power from people, asking (Offerings) and taking (hollowing), plus burning Keepsakes; and the one fight, starving wolves on the ice road. All art is placeholder, and all dialogue is a first draft.
 
 | Step | What | Status |
 | --- | --- | --- |
@@ -17,8 +17,8 @@ Build steps 1–5 of 7 are done: Kallsjö, a 256×256 valley with a frozen lake,
 | 3 | Ink dialogue wired to the game state | Done |
 | 4 | Craft abilities, Power, Weave crafting and skill training | Done |
 | 5 | Offering, hollowing and Keepsake burning | Done |
-| 6 | Turn-based combat and the wolf fight | Next |
-| 7 | Both quests, world changes and playtesting | |
+| 6 | Turn-based combat and the wolf fight | Done |
+| 7 | Both quests, world changes and playtesting | Next |
 
 ## Controls
 
@@ -34,6 +34,9 @@ Build steps 1–5 of 7 are done: Kallsjö, a 256×256 valley with a frozen lake,
 | See or refocus Weaves (once Ebbe has taught you) | Weaves…, or tap your house | V |
 | Quests, Hearth, Keepsakes | Journal | J |
 | Rest (refill Power) | Tap Signe's home | |
+| In a fight: move | Tap a tile up to 3 away (one action) | |
+| In a fight: take everything from a wolf | Tap the wolf beside you | |
+| In a fight: end your turn | End turn, at the top | |
 | Debug panel | Gear button, top right | ` (backtick) |
 
 Keys move along the isometric axes: W/↑ goes up-right, S/↓ down-left, A/← up-left and D/→ down-right.
@@ -81,6 +84,18 @@ The journal's **Hearth** page shows who has given Signe a memory, what they gave
 - **Hollowing**: every conversation ends with *Take everything*, for anyone, family included. It always asks a second time. A Hollow stops moving and greys out, the village talks about it, and what is left of them, an **Echo**, speaks up inside Signe now and then.
 - **Burning Keepsakes**: in the journal's Keepsakes page, or from the prompt when a cast needs more Power than she has. The confirmation only names what she gains.
 - **Lilja's promise** can be kept once the ice road is open.
+
+## The wolf fight
+
+Cross the cracked ice anywhere except the hermit's safe route and starving wolves come out along the road on the far side. The fight is turn-based, on the same map:
+
+- Signe gets two actions a turn: move up to three tiles, use Craft, or take everything from a wolf beside her.
+- Red dots show where each wolf will run on its turn; a red square is where it will bite. Each bite is a wound, and three wounds is death.
+- A wolf goes through ice Signe weakens under it, or through her armed trap ice on its run, and is gone. A crate or marker pushed into a wolf hits it; two hits and it runs. Once half the pack is down, the rest flee.
+- Out of Power, she can burn a Keepsake or take everything from the wolf beside her (+2 Power, once, and a wordless Echo).
+- There is no running away. A reload in the middle of the fight brings the pack back.
+
+Crossing by the hermit's route avoids the wolves altogether.
 
 ## The map
 
