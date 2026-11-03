@@ -42,6 +42,10 @@ import { WolfFight, encodeTrackStarts, trackTiles, wolfStarts, type FightEvent }
 import { TILESET_KEY } from './BootScene';
 import mapJson from '../../assets/maps/kallsjo.json';
 import { sound, type Surface } from '../audio/sound';
+import { Cinematic, type Art, type Painter, type Tableau } from './Cinematic';
+import * as T from './tableaux';
+import { INTRO, chapterOneEnding, type Beat, type Picture } from '../../content/data/cinematics';
+import { chapterOneCanEnd, endChapterOne } from '../systems/chapters';
 
 const SIGNE_SPRITE = 'signe';
 /** The wolf fight is on (saved, so a reload brings the pack back), and it is over. */
@@ -96,8 +100,23 @@ const hud = new CraftHud({
   onOpenWeaves: () => weaveScreen.open(),
   onOpenJournal: () => journal.open(),
 });
+const film = new Cinematic();
 /** Overlays that pause the world while open. */
-const menuOpen = () => dialogueBox.isOpen || weaveScreen.isOpen || journal.isOpen || deathScreen.isOpen;
+const menuOpen = () => dialogueBox.isOpen || weaveScreen.isOpen || journal.isOpen || deathScreen.isOpen || film.isOpen;
+
+const PICTURES: Record<Picture, { paint: Painter; snow: boolean }> = {
+  nightLake: { paint: T.nightLake, snow: true },
+  village: { paint: T.village, snow: true },
+  girlOnIce: { paint: T.girlOnIce, snow: true },
+  coatByDoor: { paint: T.coatByDoor, snow: false },
+  waking: { paint: T.waking, snow: false },
+  dawnRoad: { paint: T.dawnRoad, snow: true },
+  emptyBed: { paint: T.emptyBed, snow: false },
+  ledger: { paint: T.ledger, snow: false },
+  warmPoint: { paint: T.warmPoint, snow: false },
+  northPass: { paint: T.northPass, snow: true },
+};
+const tableaux = (beats: readonly Beat[]): Tableau[] => beats.map((b) => ({ ...PICTURES[b.picture], lines: b.lines, ...(b.title ? { title: b.title } : {}) }));
 const bubbles = new SpeechBubbles(BUBBLE_MS_PER_LINE);
 const deathScreen = new DeathScreen();
 const NPC_BY_NAME = new Map(NPCS.map((n) => [n.name, n.id]));
@@ -325,6 +344,13 @@ export class WorldScene extends Phaser.Scene {
     });
     hud.render(store.state, tuning.values);
     if (A.hasFallen(store.state, tuning.values)) this.die();
+    // A new game opens with the intro (once).
+    if (!store.state.flags.intro_seen) {
+      film.play(tableaux(INTRO), this.art(), () => {
+        store.update((s) => A.setFlag(s, 'intro_seen', true));
+        store.save();
+      });
+    }
     // Reloaded in the middle of the wolf fight: the pack is still out there.
     if (store.state.flags[FLAG_WOLVES_HUNTING] && !store.state.flags[FLAG_WOLVES_GONE]) this.startFight();
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.fight?.view.destroy());
@@ -791,6 +817,7 @@ export class WorldScene extends Phaser.Scene {
     if (this.worldVersion !== this.movesCheckedAt) this.applyMoves();
     for (const p of this.people) {
       const hollow = store.state.npcs[p.id].hollowed;
+      if (store.state.npcs[p.id].gone) this.sim.setGone(p.id);
       this.sim.setHollow(p.id, hollow);
       // The boathouse Hollow has his own look; anyone Signe empties greys out.
       if (hollow && !NPCS.find((n) => n.id === p.id)?.startsHollow) p.sprite.setTint(HOLLOW_TINT);
@@ -867,6 +894,25 @@ export class WorldScene extends Phaser.Scene {
     }
   }
 
+  /** The game's loaded sprites, for the films to paint with. */
+  private art(): Art {
+    return (key) => (this.textures.exists(key) ? (this.textures.get(key).getSourceImage() as CanvasImageSource) : null);
+  }
+
+  /** Morning after the road opened: the Tithe has taken Lilja. The outro, then chapter 2 (not yet written). */
+  private endChapter(): void {
+    const torvaldHollowed = store.state.npcs.torvald.hollowed;
+    const record = store.update((s) => endChapterOne(s));
+    store.save();
+    store.saveRestPoint();
+    film.play(tableaux(chapterOneEnding(record, { torvaldHollowed })), this.art(), () => {
+      hud.ask('Chapter 1 is over. Järnfors is not written yet.', [
+        { label: 'Stay in Kallsjö', run: () => hud.say('The village is quieter now. You can walk it as long as you like.', 5000) },
+        { label: 'Start over', run: () => store.newGame() },
+      ]);
+    });
+  }
+
   /** CSS-pixel point just above someone's head, or null if they are off screen. */
   private screenPointAbove(who: string): { x: number; y: number } | null {
     const p = this.people.find((q) => q.id === who);
@@ -883,7 +929,8 @@ export class WorldScene extends Phaser.Scene {
 
   private offerRest(): void {
     const weavesTaught = !!store.state.flags[WEAVES_TAUGHT_FLAG];
-    hud.ask('Rest at home? Power refills, a wound heals, and Craft effects fade.', [
+    const ending = chapterOneCanEnd(store.state);
+    hud.ask(ending ? 'Rest at home? The road across the ice is open now. Anything could come over it by morning.' : 'Rest at home? Power refills, a wound heals, and Craft effects fade.', [
       ...(weavesTaught ? [{ label: 'Refocus Weaves', run: () => weaveScreen.open() }] : []),
       {
         label: 'Rest',
@@ -891,6 +938,7 @@ export class WorldScene extends Phaser.Scene {
           store.update(A.restAtHome);
           this.autosave();
           store.saveRestPoint(); // where death returns to
+          if (ending) return this.endChapter();
           hud.say(A.echoCount(store.state) > 0
             ? `You rest by the fire, but other lives crowd in around it. Power refills to ${store.state.power}. You will remember this.`
             : 'You rest by the fire. Power restored. You will remember this.');
@@ -973,7 +1021,10 @@ export class WorldScene extends Phaser.Scene {
     for (const s of this.onScreen) s.sprite.setVisible(false);
     // Some objects only exist once a quest has ended a certain way (step 7).
     this.onScreen = [...this.inView(view), ...(this.fight?.sortables ?? [])].filter(
-      (s) => (!s.bounds || rectsOverlap(s.bounds, view)) && (!s.obj || this.world.isShown(s.obj)),
+      (s) =>
+        (!s.bounds || rectsOverlap(s.bounds, view)) &&
+        (!s.obj || this.world.isShown(s.obj)) &&
+        !(s.obj?.npc && store.state.npcs[s.obj.npc as NpcId]?.gone),
     );
     for (const s of this.onScreen) s.sprite.setVisible(true);
     this.lastSortKey = '';

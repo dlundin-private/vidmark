@@ -23,6 +23,13 @@ It would be yours. All of it, at once.
 // How people react when someone they know has been hollowed. Called at the
 // start of their conversations: -> reacts("gerda") ->
 === reacts(who) ===
+// Chapter 1 is over: the Tithe has taken Lilja across the road Signe opened.
+{ has_flag("why_you_left_for"):
+    { who == "torvald": Torvald: The road's open both ways now. Go, if you're going. }
+    { who == "gerda": Old Gerda: They took the Tithe child across the road you opened. Don't think nobody noticed. }
+    { who == "ebbe": Ebbe: The sled went past before light. I didn't look up. I'm sorry. }
+    { who == "hermit": The hermit: Kronvall's road. It always was. }
+}
 // Someone saw Signe hollow a person, so the village knows (Daniel: "only by evidence").
 // They react; the game never judges. Nobody offers from now on.
 { has_flag("village_knows"):

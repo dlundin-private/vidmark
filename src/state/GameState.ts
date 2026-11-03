@@ -4,7 +4,7 @@ import { NPCS, type NpcId } from '../../content/data/npcs';
 import type { Tile } from '../iso/types';
 
 /** Bump when the shape changes, and add a migration in save.ts. */
-export const STATE_VERSION = 4;
+export const STATE_VERSION = 5;
 
 /**
  * kept: Signe still has it. burned: spent for Power; gone.
@@ -25,6 +25,8 @@ export interface NpcState {
   hollowed: boolean;
   /** Lost faith in Signe: no longer part of her Hearth. */
   faithLost: boolean;
+  /** No longer in the region (taken by the Tithe at the end of chapter 1). */
+  gone?: boolean;
 }
 
 export type SkillId = CraftAction;
@@ -77,6 +79,26 @@ export interface PromiseRecord {
 
 export type FlagValue = boolean | number | string;
 
+/** What a finished chapter decided, kept for the chapters after it (src/systems/chapters.ts). */
+export interface ChapterRecord {
+  chapter: number;
+  /** Gave Signe an Offering. */
+  gave: NpcId[];
+  /** Hollowed by Signe (not the Hollow who started that way). */
+  hollowed: NpcId[];
+  wolvesHollowed: number;
+  burned: KeepsakeId[];
+  promises: { id: string; to: NpcId; kept: boolean }[];
+  /** Quest id -> the outcome it ended with. */
+  quests: Record<string, string>;
+  /** Someone saw her hollow a person. */
+  villageKnew: boolean;
+  /** Who came for Lilja: Reeve Olle, or Kronvall's own men because Signe emptied him. */
+  liljaTakenBy: 'olle' | 'kronvall';
+  /** How Signe knew her when she was taken. */
+  lilja: 'sister' | 'stranger' | 'hollow';
+}
+
 /** Everything that persists. Saving = serialising this object. */
 export interface GameState {
   version: number;
@@ -107,6 +129,10 @@ export interface GameState {
   impressions: Partial<Record<NpcId, string[]>>;
   /** Her journal map: tiles she has sketched (explored.ts, base64 bits) and places she has found (map place ids). */
   sketched: { tiles: string; places: string[] };
+  /** The chapter she is in (content/data/chapters.ts). */
+  chapter: number;
+  /** What each finished chapter decided, oldest first. */
+  chapters: ChapterRecord[];
 }
 
 export function createNewGame(basePower: number): GameState {
@@ -134,5 +160,7 @@ export function createNewGame(basePower: number): GameState {
     world: { objects: {}, tiles: {} },
     impressions: {},
     sketched: { tiles: '', places: [] },
+    chapter: 1,
+    chapters: [],
   };
 }

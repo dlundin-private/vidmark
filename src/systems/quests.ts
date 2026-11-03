@@ -37,6 +37,7 @@ export function updateQuests(state: GameState): QuestEvent[] {
   const events: QuestEvent[] = [];
   for (const q of QUESTS) {
     if (state.flags[outcomeFlag(q.id)]) continue;
+    if ((q.chapter ?? 1) !== state.chapter) continue;
     if (!state.flags[startedFlag(q.id)] && q.starts(v)) {
       A.setFlag(state, startedFlag(q.id), true);
       events.push({ kind: 'started', quest: q, text: q.summary });
@@ -57,6 +58,7 @@ export function questsWouldChange(state: Readonly<GameState>): boolean {
   const v = view(state as GameState);
   return QUESTS.some((q) => {
     if (state.flags[outcomeFlag(q.id)]) return false;
+    if ((q.chapter ?? 1) !== state.chapter) return false;
     const started = !!state.flags[startedFlag(q.id)];
     if (!started) return q.starts(v);
     return q.outcomes.some((o) => o.when(v));

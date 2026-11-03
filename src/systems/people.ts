@@ -58,6 +58,8 @@ interface Person extends PersonSetup {
   meeting: MeetingDef | null;
   /** A Hollow: stands where they are, goes nowhere, meets nobody. */
   hollow: boolean;
+  /** Left the region: nowhere on the map at all. */
+  gone: boolean;
 }
 
 /**
@@ -88,6 +90,7 @@ export class PeopleSim {
       blockedFor: 0,
       meeting: null,
       hollow: false,
+      gone: false,
     }));
     this.nextMeetingAt = this.between(timing.meetingIntervalMs);
   }
@@ -107,9 +110,23 @@ export class PeopleSim {
     return this.person(id).walker.visual;
   }
 
+  /** Someone has left the region (taken by the Tithe): they are nowhere on the map, and do nothing. */
+  setGone(id: NpcId): void {
+    const p = this.person(id);
+    if (p.gone) return;
+    p.gone = true;
+    p.hollow = true;
+    if (p.meeting) this.endMeeting(p.meeting);
+    p.route = [];
+    const nowhere = { x: -1000, y: -1000 };
+    p.walker.teleport(nowhere);
+    this.world.placePerson(id, nowhere);
+  }
+
   /** Someone has a new spot (the world changed): they walk there and wander around it from now on. */
   moveTo(id: NpcId, home: Tile, radius: number, onIce: boolean): void {
     const p = this.person(id);
+    if (p.gone) return;
     if (p.home.x === home.x && p.home.y === home.y && p.radius === radius) return;
     if (p.meeting) this.endMeeting(p.meeting);
     p.home = { ...home };
@@ -133,7 +150,7 @@ export class PeopleSim {
   /** Someone became a Hollow (or is one from the start): they stop where they stand. */
   setHollow(id: NpcId, hollow: boolean): void {
     const p = this.person(id);
-    if (p.hollow === hollow) return;
+    if (p.gone || p.hollow === hollow) return;
     p.hollow = hollow;
     if (hollow && p.meeting) this.endMeeting(p.meeting);
   }

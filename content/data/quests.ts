@@ -33,6 +33,8 @@ export interface QuestOutcome {
 
 export interface QuestDef {
   id: string;
+  /** The chapter it belongs to (default 1). Quests of finished chapters stay as they ended. */
+  chapter?: number;
   title: string;
   giver: NpcId;
   summary: string;

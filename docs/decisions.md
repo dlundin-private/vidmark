@@ -63,6 +63,23 @@ The design gives the four actions, their costs and the Weave parts. Everything b
 | At 3 wounds Signe dies. The game goes back to her last rest at home; everything since is undone. With no rest yet, it starts over. | Decided by Daniel |
 | Death is told as a memory she had wrong: "No. That isn't how it went. You're remembering it wrong", then "Remember it again". The text is in `content/ink/death.ink`, three variants per line. | Daniel's idea, wording drafted by Claude |
 
+## After the slice: intro, ending, sound, art, chapters
+
+Daniel, after his playthrough: fix the art a bit, consider performance, add sound, prepare for the next slice, an intro that introduces Signe without giving too much away, and a move to the next slice that reflects what the player did.
+
+| Decision | Status |
+| --- | --- |
+| The intro is a short film of still pixel tableaux with a line or two each (the night lake, the village, Lilja on the ice, the coat by the door, waking). It hints that something is missing and never says that memory is magic. Skippable; shown once per new game; older saves skip it. | Daniel chose the form; scenes and lines are Claude's draft |
+| Chapter 1 ends as the design says: once the ice road is open and Signe rests, morning comes and the Tithe has taken Lilja across it. "Why you left" forms. The rest prompt warns that anything could come over the road by morning. | Daniel |
+| If Signe hollowed Reeve Olle, Kronvall sends its own men, who take Lilja and the blank Reeve too. | Daniel |
+| If Signe hollowed Lilja, she is taken anyway; "Why you left" forms colder: "to bring Lilja home, even if nobody is in there to bring". | Daniel; wording is Claude's draft |
+| If the swim is burned, Signe goes for a girl she doesn't know because Torvald asks (or, if he is hollowed, because she means to anyway): "to bring home the girl they took". | Daniel; wording is Claude's draft |
+| The ending film reflects chapter 1: who took her, how Signe knew her, who gave, who she emptied (wolves too), what she burned, the nets, Maren's Winter noticed, the promise kept or broken (an open promise counts as broken), and whether the village knew. Then "Chapter 2: Järnfors", not yet written; the player can stay in Kallsjö or start over. Lilja and Olle are gone from the village, and the others say a line about it. | Claude's draft |
+| The save knows its chapter and keeps a record of each finished chapter (src/systems/chapters.ts), for Järnfors to read. Quests belong to a chapter. Save version 5. | Daniel chose it; the shape is Claude's |
+| A first design draft for chapter 2 is in docs/chapter-2-jarnfors.md, with open questions. | Daniel asked; content is Claude's draft |
+| Sound is synthesised in the browser, no files: wind, steps by surface, ice, Craft tones, wolves, hollowing, burning, chimes, Echoes, the fire, a low drone. It starts muted for now; the speaker button turns it on. | Daniel |
+| Art: outlines on object sprites, shadows under people and wolves, falling snow, a cold vignette. Performance: depth sorting and view culling no longer touch everything on the map (worst frame 22.5 ms to 5 ms). | Claude, on Daniel's "fix the art a bit, consider performance" |
+
 ## World changes and playtesting (step 7)
 
 Daniel's answers before step 7, and how they were built.

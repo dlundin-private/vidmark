@@ -8,7 +8,7 @@ This repo builds the **vertical slice**: one village by the frozen lake in Kalls
 
 ## Status
 
-All 7 build steps are done: Kallsjö, a 256×256 valley with a frozen lake, birch forest, mountains, an ice road and Signe's village to walk around; the game state with save/load; conversations with everyone in the slice that react to what Signe has lost; and Craft magic: Strengthen, Weaken, Push and Mend, Weave crafting, training and resting; and the two ways to get Power from people, asking (Offerings) and taking (hollowing), plus burning Keepsakes; the one fight, starving wolves on the ice road; and a village that visibly changes with what Signe did. Next: playtesting. All art is placeholder, and all dialogue is a first draft.
+Chapter 1 is playable from start to end. All 7 build steps are done: Kallsjö, a 256×256 valley with a frozen lake, birch forest, mountains, an ice road and Signe's village to walk around; the game state with save/load; conversations with everyone in the slice that react to what Signe has lost; and Craft magic: Strengthen, Weaken, Push and Mend, Weave crafting, training and resting; and the two ways to get Power from people, asking (Offerings) and taking (hollowing), plus burning Keepsakes; the one fight, starving wolves on the ice road; and a village that visibly changes with what Signe did. Next: playtesting. All art is placeholder, and all dialogue is a first draft.
 
 | Step | What | Status |
 | --- | --- | --- |
@@ -106,6 +106,14 @@ Crossing by the hermit's route avoids the wolves altogether.
 - When the ice road opens, fresh spruce markers line it across the cracked band, Lilja plays out on it and Reeve Olle walks it toward Kronvall.
 - After the wolf fight, the hole where a wolf went through stays open, and tracks run north where the pack fled.
 - Hollow someone while another villager is close by and they see it. Then the village knows: everyone says so, and nobody offers Signe a memory again.
+
+## The beginning and the end
+
+A new game opens with a short film that introduces Signe. Chapter 1 ends once the ice road is open and Signe rests at home: in the morning the Tithe has taken Lilja across it. A closing film tells how Signe got there (who gave, who she emptied, what she burned, the promise) and points north to chapter 2, Järnfors, which is drafted in `docs/chapter-2-jarnfors.md` but not built. The save keeps what chapter 1 decided.
+
+## Sound
+
+Every sound is synthesised in the browser. Sound starts muted; turn it on with the speaker button at the top right.
 
 ## The map
 
