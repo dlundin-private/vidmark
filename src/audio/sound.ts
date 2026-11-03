@@ -349,11 +349,12 @@ function makeNoise(ctx: AudioContext): AudioBuffer {
   return buffer;
 }
 
+/** Sound starts muted for now (Daniel); the speaker button turns it on, and that choice is remembered. */
 function readMuted(): boolean {
   try {
-    return localStorage.getItem(MUTE_KEY) === '1';
+    return localStorage.getItem(MUTE_KEY) !== '0';
   } catch {
-    return false;
+    return true;
   }
 }
 
