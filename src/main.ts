@@ -42,6 +42,10 @@ installDebugPanel();
 if (import.meta.env.DEV) {
   // For poking at the game from the browser console during development.
   (window as unknown as { game: Phaser.Game }).game = game;
+  // A faint cold vignette at the edges of the view, under every overlay.
+  const vignette = document.createElement('div');
+  vignette.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:1;background:radial-gradient(ellipse at 50% 45%, rgba(0,0,0,0) 55%, rgba(12,22,38,0.38) 100%);';
+  document.body.appendChild(vignette);
 }
 // Browser zoom changes devicePixelRatio and fires resize too; phones also fire orientationchange.
 window.addEventListener('resize', applyFit);

@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import {
   BUBBLE_MS_PER_LINE,
   ECHO_INTERVAL_MS,
+  SNOWFLAKES,
   HOLLOW_TINT,
   MEETING_INTERVAL_MS,
   MEETING_MAX_DISTANCE,
@@ -114,6 +115,9 @@ export class WorldScene extends Phaser.Scene {
   private fxTarget!: Phaser.GameObjects.Blitter;
   private fxRoute!: Phaser.GameObjects.Blitter;
   private fxTracks!: Phaser.GameObjects.Blitter;
+  /** Falling snow, in world pixels around the camera. */
+  private snow: { bob: Phaser.GameObjects.Bob; x: number; y: number; speed: number; sway: number }[] = [];
+  private snowTime = 0;
   private tracks: { from: string; tiles: Set<string> } = { from: '', tiles: new Set() };
   private entityLayer!: Phaser.GameObjects.Layer;
   private sortables: Sortable[] = [];
@@ -257,6 +261,15 @@ export class WorldScene extends Phaser.Scene {
     this.placeSigne();
     this.sketchIcon = this.add.image(0, 0, 'fx-sketch').setOrigin(0.5, 1).setVisible(false);
     topLayer.add(this.sketchIcon);
+    this.snow = [];
+    for (const [key, share] of [['fx-flake', 0.7], ['fx-flake-near', 0.3]] as const) {
+      const blitter = this.add.blitter(0, 0, key);
+      topLayer.add(blitter);
+      const near = key === 'fx-flake-near';
+      for (let i = 0; i < Math.round(SNOWFLAKES * share); i++) {
+        this.snow.push({ bob: blitter.create(0, 0), x: Math.random(), y: Math.random(), speed: near ? 0.09 : 0.05, sway: Math.random() * Math.PI * 2 });
+      }
+    }
     journal.setMap({
       width: map.width,
       height: map.height,
@@ -371,6 +384,7 @@ export class WorldScene extends Phaser.Scene {
       if (visit && there) visit.arrive();
     }
     if (this.fight) this.updateFight(delta);
+    this.updateSnow(delta);
     this.placeSigne();
     this.refreshView();
     this.sortDepth();
@@ -937,6 +951,18 @@ export class WorldScene extends Phaser.Scene {
     );
     for (const s of this.onScreen) s.sprite.setVisible(true);
     this.lastSortKey = '';
+  }
+
+  /** Snow drifts down across the view; flakes wrap around it, on whole pixels. */
+  private updateSnow(delta: number): void {
+    const v = this.cameras.main.worldView;
+    this.snowTime += delta;
+    for (const f of this.snow) {
+      f.y = (f.y + (f.speed * delta) / 1000) % 1;
+      f.x = (f.x + 1 + (Math.sin(this.snowTime / 1400 + f.sway) * 0.004 * delta) / 16) % 1;
+      f.bob.x = Math.round(v.x + f.x * v.width);
+      f.bob.y = Math.round(v.y + f.y * v.height);
+    }
   }
 
   /** World pixels per side of a bucket in the spatial index of sprites. */

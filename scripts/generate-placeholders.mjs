@@ -18,8 +18,41 @@ const outDir = join(dirname(fileURLToPath(import.meta.url)), '..', 'assets', 'sp
 mkdirSync(outDir, { recursive: true });
 
 function save(name, canvas) {
+  finish(name, canvas);
   writeFileSync(join(outDir, name), canvas.toPng());
   console.log(`wrote assets/sprites/${name} (${canvas.width}x${canvas.height})`);
+}
+
+// --- Finishing touches ---------------------------------------------------------
+// Object sprites get a dark one-pixel outline so they read against the snow, and
+// people and wolves a soft shadow at their feet. Tiles and overlays stay flat.
+const FLAT = /^(tiles|fx-|marker)/;
+const STANDING = /^(signe|npc-|wolf)/;
+const OUTLINE = '#1c2028';
+
+function finish(name, canvas) {
+  if (FLAT.test(name)) return;
+  const { width: w, height: h, data } = canvas;
+  const alpha = (x, y) => (x < 0 || y < 0 || x >= w || y >= h ? 0 : data[(y * w + x) * 4 + 3]);
+  const edge = [];
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      if (alpha(x, y) > 0) continue;
+      if (alpha(x - 1, y) > 128 || alpha(x + 1, y) > 128 || alpha(x, y - 1) > 128 || alpha(x, y + 1) > 128) edge.push([x, y]);
+    }
+  }
+  for (const [x, y] of edge) canvas.set(x, y, OUTLINE, 190);
+  if (!STANDING.test(name)) return;
+  // A shadow on the ground under the tile centre (half a tile above the bottom vertex).
+  const cx = w / 2 - 0.5;
+  const cy = h - HALF_H - 0.5;
+  for (let y = Math.floor(cy - 3); y <= Math.ceil(cy + 3); y++) {
+    for (let x = Math.floor(cx - 8); x <= Math.ceil(cx + 8); x++) {
+      if (alpha(x, y) > 0) continue;
+      const d = ((x - cx) / 8) ** 2 + ((y - cy) / 3.2) ** 2;
+      if (d <= 1) canvas.set(x, y, '#27384a', Math.round(110 * (1 - d * 0.6)));
+    }
+  }
 }
 
 // --- Ground tiles -----------------------------------------------------------
@@ -473,6 +506,16 @@ function generateWolf() {
   ]));
 }
 
+/** Falling snow: one small flake, and a larger, nearer one. */
+function generateFlakes() {
+  const small = new Canvas(1, 1);
+  small.set(0, 0, '#ffffff', 220);
+  save('fx-flake.png', small);
+  const big = new Canvas(2, 2);
+  for (const [x, y] of [[0, 0], [1, 0], [0, 1], [1, 1]]) big.set(x, y, '#ffffff', x + y === 1 ? 230 : 150);
+  save('fx-flake-near.png', big);
+}
+
 /** Fight overlays: where a wolf will run, and where it will bite. */
 function generateFightMarks() {
   const overlay = (name, paint) => {
@@ -517,6 +560,7 @@ generateTileset();
 generateWolf();
 generateVillageMarks();
 generateFightMarks();
+generateFlakes();
 generateBoathouse();
 generateBirch();
 generateNetRack();
