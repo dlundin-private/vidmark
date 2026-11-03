@@ -11,6 +11,8 @@ export interface QuestView {
   flag(name: string): boolean | number | string | undefined;
   offered(npc: NpcId): boolean;
   hollowed(npc: NpcId): boolean;
+  /** Signe remembers this about someone (an impression key). */
+  remembers(npc: NpcId, key: string): boolean;
 }
 
 export interface QuestStep {
@@ -86,6 +88,46 @@ export const QUESTS: readonly QuestDef[] = [
         text: 'You made the ice hold and crossed. The village marks the road safe again.',
         sets: 'ice_road_open',
       },
+    ],
+  },
+  // The two chapter-1 side quests beyond the slice's two (design: "Side quests").
+  {
+    id: 'hollow',
+    title: 'The Hollow in the boathouse',
+    giver: 'hollow',
+    summary: 'The village tends a blank man in the boathouse, and nobody talks about him.',
+    starts: (v) => !!v.flag('met_hollow'),
+    steps: [
+      { text: () => 'Ask someone in the village who he was', done: (v) => !!v.flag('asked_about_hollow') },
+      { text: () => 'Find what the Tithe wrote down', done: (v) => !!v.flag('read_ledger') },
+      { text: () => 'Find where the Tithe takes people', done: (v) => !!v.flag('read_cairn') },
+    ],
+    outcomes: [
+      {
+        id: 'learned',
+        when: (v) => !!v.flag('asked_about_hollow') && !!v.flag('read_ledger') && !!v.flag('read_cairn'),
+        text: "When a village can't pay, the Tithe takes a person instead: whole, or everything they were.",
+        sets: 'knows_tithe_takes_people',
+      },
+    ],
+  },
+  {
+    id: 'marens-winter',
+    title: "Maren's Winter",
+    giver: 'gerda',
+    summary: 'Every year the village plays how Saint Maren saved the lake. Old Gerda needs a young Maren.',
+    starts: (v) => !!v.flag('maren_winter_part'),
+    steps: [
+      { text: () => 'Hear the story the way Father tells it', done: (v) => !!v.flag('heard_fathers_story') || v.remembers('torvald', 'story') },
+      { text: () => 'Play your part, at the statue on the shore', done: (v) => !!v.flag('played_maren') },
+    ],
+    outcomes: [
+      {
+        id: 'noticed',
+        when: (v) => !!v.flag('played_maren') && !!v.flag('noticed_play_differs'),
+        text: "The play and Father's story don't agree about what Maren gave. Someone is remembering it wrong.",
+      },
+      { id: 'played', when: (v) => !!v.flag('played_maren'), text: 'You played young Maren. The village clapped. It was only a play.' },
     ],
   },
 ];

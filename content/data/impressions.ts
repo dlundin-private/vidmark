@@ -37,6 +37,7 @@ export const MEMORIES: Record<NpcId, PersonMemory> = {
       { key: 'wife', text: 'His wife on the jetty, laughing at his knots. The last thing he has of her.', cold: 'He offered his wife: the last good memory in him.' },
       { key: 'nets', text: "You mended his nets. He kept turning them over, as if he'd forgotten nets could be whole." },
       { key: 'taught', text: '"A net is made before the fish comes." He taught you more than he knew.' },
+      { key: 'hollow', text: "He wouldn't talk about the man in the boathouse. \"He was one of us.\"" },
     ],
   },
   hermit: {
@@ -63,6 +64,8 @@ export const MEMORIES: Record<NpcId, PersonMemory> = {
         blurred: 'A story about a saint and her mother. It slips away when you try to hold it.',
         tiedTo: 'story',
       },
+      { key: 'hollow', text: "\"We don't say his name. It would be cruel.\" His family couldn't pay, so the Tithe took him instead.", cold: 'The man in the boathouse was payment. The Tithe took all of him.' },
+      { key: 'winter', text: 'She wants me as young Maren in the festival play. "You\'ve the face for it."' },
     ],
   },
   olle: {

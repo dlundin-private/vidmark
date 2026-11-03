@@ -489,7 +489,10 @@ export class WorldScene extends Phaser.Scene {
     const { kept, forgotten } = this.sketchMemory.flush(t.sketchMemorySteps);
     const map = this.world.map;
     const result = store.update((s) => A.sketchSeen(s, [...kept, this.walker.tile], t.sightRadius, map, map.places));
-    if (result.newTiles > 0) this.sketchIconUntil = this.time.now + 1100;
+    if (result.newTiles > 0) {
+      this.sketchIconUntil = this.time.now + 1100;
+      store.save(); // the page is drawn: keep it
+    }
     for (const id of result.found) {
       const place = map.places.find((p) => p.id === id);
       if (place) hud.announce(`Found: ${place.name}`, PLACES[id]?.found ?? '');

@@ -70,6 +70,15 @@ The journal's **People** page holds what Signe remembers of everyone she has met
 
 The journal's **Hearth** page shows who has given Signe a memory, what they gave and the Power each adds, stacked like a pyramid on her own.
 
+### Two more quests
+
+- **The Hollow in the boathouse**: who was he, and what does the Tithe do when a village can't pay?
+- **Maren's Winter**: play young Maren in Gerda's festival play at the statue.
+
+## The map
+
+Signe sketches what she has seen into her journal whenever she stops. If she walks too long without stopping, the start of the way is lost. The journal's **Map** page shows her sketch and the places she has found: Maren's village on the island, an empty village on the west shore with a shelter to mend and rest in, a wrecked Tithe sled, the cairn at the pass north, and more.
+
 ## The village
 
 People move about near their spots, and now and then two of them walk over to each other and talk for a moment (speech bubbles), then go back.

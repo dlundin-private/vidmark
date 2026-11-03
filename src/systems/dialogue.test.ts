@@ -105,6 +105,25 @@ describe('dialogue', () => {
     expect(text(play(runner, 'hermit'))).toContain("Can't think what I told them");
   });
 
+  it("plays Maren's Winter at the statue, and notices it differs from Father's story", () => {
+    const { store, runner } = setup();
+    play(runner, 'gerda', ["Maren's Winter", 'Take the part']);
+    expect(store.state.flags.maren_winter_part).toBe(true);
+    play(runner, 'torvald', ['old story']);
+    expect(store.state.flags.heard_fathers_story).toBe(true);
+    const t = text(play(runner, 'place_statue'));
+    expect(t).toContain('she gave up nothing');
+    expect(t).toContain('nobody gives up anything at all');
+    expect(store.state.flags.noticed_play_differs).toBe(true);
+  });
+
+  it('asking Gerda about the man in the boathouse counts for his quest', () => {
+    const { store, runner } = setup();
+    store.update((s) => A.setFlag(s, 'met_hollow', true));
+    expect(text(play(runner, 'gerda', ['man in the boathouse']))).toContain("We don't say his name");
+    expect(store.state.flags.asked_about_hollow).toBe(true);
+  });
+
   it('people hurt by trap ice say so', () => {
     const { store, runner } = setup();
     store.update((s, t) => A.hurtByTrap(s, 'lilja', t));

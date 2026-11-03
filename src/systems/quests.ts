@@ -22,6 +22,7 @@ function view(state: GameState): QuestView {
     flag: (name) => state.flags[name],
     offered: (npc: NpcId) => state.npcs[npc].offered,
     hollowed: (npc: NpcId) => state.npcs[npc].hollowed,
+    remembers: (npc: NpcId, key: string) => A.remembers(state, npc, key),
   };
 }
 

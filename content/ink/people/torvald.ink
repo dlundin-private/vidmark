@@ -11,8 +11,10 @@ Torvald: {name_known(): There's my girl. | There you are.}
 = talk
 * {not remembers("torvald", "story")} [Ask for the old story] Signe: Tell it again. The old one.
     ~ remember("torvald", "story")
+    ~ set_flag("heard_fathers_story", true)
     { has_keepsake("story"):
         He laughs and starts it anyway: the saint, the starving lake, the miracle on the ice.
+        In his story she gives something up to save the lake. He never says what. "Something dear to her," he says, every time.
         You know every word a moment before he says it.
     - else:
         He laughs and starts a story about a saint and a starving lake.

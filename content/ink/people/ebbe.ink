@@ -51,6 +51,12 @@
     ** [Refuse] Signe: Keep it. It's yours.
         Ebbe: Then the nets stay torn.
         -> talk
+* {flag("met_hollow") and not remembers("ebbe", "hollow")} [Ask about the man in the boathouse] Signe: Who is the man in the boathouse?
+    ~ remember("ebbe", "hollow")
+    ~ set_flag("asked_about_hollow", true)
+    Ebbe: Don't.
+    Ebbe: He was one of us. Then the Tithe came, and his people couldn't pay. Ask Gerda, if you must. I won't.
+    -> talk
 + [Leave] -> END
 
 // Signe has mended one or both of his net racks since he last saw them.

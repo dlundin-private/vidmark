@@ -43,6 +43,35 @@ describe("The net-mender's hands", () => {
   });
 });
 
+describe('The Hollow in the boathouse', () => {
+  it('needs asking, the ledger and the cairn, in any order', () => {
+    const s = createNewGame(2);
+    A.setFlag(s, 'met_hollow', true);
+    A.setFlag(s, 'read_cairn', true);
+    A.setFlag(s, 'read_ledger', true);
+    updateQuests(s);
+    expect(status(s, 'hollow').outcome).toBeNull();
+    A.setFlag(s, 'asked_about_hollow', true);
+    updateQuests(s);
+    expect(status(s, 'hollow').outcome?.id).toBe('learned');
+    expect(s.flags.knows_tithe_takes_people).toBe(true);
+  });
+});
+
+describe("Maren's Winter", () => {
+  it('notices the play differs only if she still has the story', () => {
+    const kept = createNewGame(2);
+    for (const f of ['maren_winter_part', 'played_maren', 'noticed_play_differs']) A.setFlag(kept, f, true);
+    updateQuests(kept);
+    expect(status(kept, 'marens-winter').outcome?.id).toBe('noticed');
+
+    const burned = createNewGame(2);
+    for (const f of ['maren_winter_part', 'played_maren']) A.setFlag(burned, f, true);
+    updateQuests(burned);
+    expect(status(burned, 'marens-winter').outcome?.id).toBe('played');
+  });
+});
+
 describe('The ice road', () => {
   it('starts on hearing about it, or on going through the cracked ice', () => {
     const s = createNewGame(2);

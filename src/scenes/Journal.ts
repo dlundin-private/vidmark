@@ -214,7 +214,6 @@ const ICE = new Set([4, 5, 10]);
 const THIN = 13;
 const WATER = 6;
 const ROAD = new Set([8, 9]);
-const SHORE = new Set([2, 3]);
 const ROCK = 12;
 const WOOD = 11;
 
@@ -223,119 +222,193 @@ const WOOD = 11;
  * ice, an inked shoreline, tick marks for trees, carets for mountains, dashes
  * for roads, and labels for places found. Only sketched tiles are drawn.
  */
+/** What one patch of the map is, as she'd sketch it. */
+type CellKind = 'lake' | 'cracked' | 'forest' | 'mountain' | 'land';
+
+/** Tiles per sketched patch: she draws the shape of things, not every tile. */
+const CELL = 4;
+
 function drawSketch(canvas: HTMLCanvasElement, src: SketchSource, explored: ExploredMap, found: readonly string[]): void {
-  // Isometric, 1 unit per half tile; cropped to what she has sketched, so a
-  // short walk fills the page and the map grows as she explores.
-  const iso = (x: number, y: number) => [x - y + src.height, (x + y) / 2] as const;
-  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-  for (let y = 0; y < src.height; y++) {
-    for (let x = 0; x < src.width; x++) {
-      if (!explored.has(x, y)) continue;
-      const [ix, iy] = iso(x, y);
-      minX = Math.min(minX, ix); maxX = Math.max(maxX, ix + 2);
-      minY = Math.min(minY, iy); maxY = Math.max(maxY, iy + 1);
+  // --- Reduce the world to patches -------------------------------------------------
+  const cw = Math.ceil(src.width / CELL);
+  const ch = Math.ceil(src.height / CELL);
+  const seen = new Float32Array(cw * ch); // 0..1: how much of the patch she sketched
+  const kind: CellKind[] = new Array(cw * ch).fill('land');
+  const road = new Uint8Array(cw * ch);
+  const building = new Uint8Array(cw * ch);
+  for (let cy = 0; cy < ch; cy++) {
+    for (let cx = 0; cx < cw; cx++) {
+      let n = 0, ice = 0, thin = 0, trees = 0, rock = 0, roads = 0, houses = 0;
+      for (let y = cy * CELL; y < Math.min(src.height, (cy + 1) * CELL); y++) {
+        for (let x = cx * CELL; x < Math.min(src.width, (cx + 1) * CELL); x++) {
+          if (!explored.has(x, y)) continue;
+          n++;
+          const fr = src.frame(x, y);
+          const obj = src.objectAt(x, y) ?? '';
+          if (ICE.has(fr) || fr === WATER) ice++;
+          if (fr === THIN) thin++;
+          if (fr === ROCK || obj.startsWith('mountain')) rock++;
+          if (obj.startsWith('birch')) trees++;
+          if (ROAD.has(fr) || fr === WOOD) roads++;
+          if (/house|hut|boathouse|shelter|ruin/.test(obj)) houses++;
+        }
+      }
+      const i = cy * cw + cx;
+      seen[i] = n / (CELL * CELL);
+      if (n === 0) continue;
+      kind[i] = thin > n * 0.3 ? 'cracked' : ice + thin > n * 0.5 ? 'lake' : rock > n * 0.5 ? 'mountain' : trees > n * 0.2 ? 'forest' : 'land';
+      road[i] = roads >= 2 ? 1 : 0;
+      building[i] = houses > 0 ? 1 : 0;
     }
   }
-  if (!Number.isFinite(minX)) { minX = 0; minY = 0; maxX = 40; maxY = 20; }
-  // A margin, and never zoomed in so far that a handful of tiles fills the page.
-  const pad = 6;
-  const spanX = Math.max(maxX - minX + 2 * pad, 90);
-  const spanY = Math.max(maxY - minY + 2 * pad, 45);
-  const cx = (minX + maxX) / 2, cy = (minY + maxY) / 2;
-  const x0 = cx - spanX / 2, y0 = cy - spanY / 2;
+  const at = (cx: number, cy: number) => (cx < 0 || cy < 0 || cx >= cw || cy >= ch ? -1 : cy * cw + cx);
+  const isSeen = (cx: number, cy: number) => { const i = at(cx, cy); return i >= 0 && seen[i]! > 0.25; };
 
+  // --- Frame: crop to what she has seen -------------------------------------------
+  // Isometric, in patch units: one patch is a diamond 2 wide and 1 high.
+  const iso = (cx: number, cy: number) => [cx - cy + ch, (cx + cy) / 2] as const;
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  for (let cy = 0; cy < ch; cy++) for (let cx = 0; cx < cw; cx++) {
+    if (!isSeen(cx, cy)) continue;
+    const [ix, iy] = iso(cx, cy);
+    minX = Math.min(minX, ix); maxX = Math.max(maxX, ix + 2);
+    minY = Math.min(minY, iy); maxY = Math.max(maxY, iy + 1);
+  }
+  if (!Number.isFinite(minX)) { const [ix, iy] = iso(cw / 2, ch / 2); minX = ix - 10; maxX = ix + 10; minY = iy - 5; maxY = iy + 5; }
+  const pad = 2.5;
+  const spanX = Math.max(maxX - minX + 2 * pad, 24);
+  const spanY = Math.max(maxY - minY + 2 * pad, 12);
+  const x0 = (minX + maxX) / 2 - spanX / 2;
+  const y0 = (minY + maxY) / 2 - spanY / 2;
   const dpr = window.devicePixelRatio || 1;
-  const cssWidth = 560;
-  const k = (cssWidth * dpr) / spanX; // canvas pixels per unit
+  const k = (560 * dpr) / spanX;
   canvas.width = Math.round(spanX * k);
   canvas.height = Math.round(spanY * k);
   const g = canvas.getContext('2d')!;
-  const px = (x: number, y: number) => {
-    const [ix, iy] = iso(x, y);
-    return [(ix - x0) * k, (iy - y0) * k] as const;
-  };
-  const wob = (x: number, y: number) => ((((x * 73856093) ^ (y * 19349663)) >>> 0) % 7) / 7;
+  const P = (cx: number, cy: number) => { const [ix, iy] = iso(cx, cy); return [(ix - x0) * k, (iy - y0) * k] as const; };
+  const centre = (cx: number, cy: number) => { const [x, y] = P(cx, cy); return [x + k, y + k / 2] as const; };
+  const rnd = (a: number, b: number) => ((((a * 73856093) ^ (b * 19349663)) >>> 0) % 1000) / 1000;
+  const ink = '#3d3026';
 
-  g.fillStyle = '#e9dfc6';
+  // Paper.
+  g.fillStyle = '#ece2c9';
   g.fillRect(0, 0, canvas.width, canvas.height);
-  const tw = 2 * k, th = k; // one tile's diamond bounding box
-  for (let y = 0; y < src.height; y++) {
-    for (let x = 0; x < src.width; x++) {
-      if (!explored.has(x, y)) continue;
-      const f = src.frame(x, y);
-      const [ax, ay] = px(x, y);
-      if (ax < -tw || ay < -th || ax > canvas.width || ay > canvas.height) continue;
-      const obj = src.objectAt(x, y);
-      // Washes, as a soft diamond.
-      g.fillStyle = ICE.has(f) ? 'rgba(120, 150, 170, 0.30)' : f === THIN ? 'rgba(85, 105, 125, 0.45)' : f === WATER ? 'rgba(40, 55, 70, 0.75)'
-        : SHORE.has(f) ? 'rgba(150, 125, 90, 0.28)' : f === ROCK ? 'rgba(110, 100, 90, 0.22)' : 'rgba(255, 250, 235, 0.45)';
+
+  // --- Washes: soft, overlapping blobs, so edges fade like pencil shading ---------
+  // One path per wash, filled once, so overlaps don't darken into scallops.
+  const wash = (colour: string, scale: number, include: (i: number) => boolean) => {
+    g.fillStyle = colour;
+    g.beginPath();
+    for (let cy = 0; cy < ch; cy++) for (let cx = 0; cx < cw; cx++) {
+      const i = at(cx, cy);
+      if (seen[i]! <= 0.25 || !include(i)) continue;
+      const [x, y] = centre(cx, cy);
+      g.moveTo(x + k * scale, y);
+      g.ellipse(x, y, k * scale, k * scale * 0.55, 0, 0, Math.PI * 2);
+    }
+    g.fill('nonzero');
+  };
+  wash('rgba(255, 250, 238, 0.5)', 1.5, () => true); // the part of the page she has drawn on
+  wash('rgba(126, 156, 176, 0.3)', 1.1, (i) => kind[i] === 'lake' || kind[i] === 'cracked');
+
+  // --- The shoreline: one inked line where lake meets land ------------------------
+  g.strokeStyle = ink;
+  g.lineWidth = Math.max(1.2, k * 0.09);
+  g.lineCap = 'round';
+  const water = (i: number) => kind[i] === 'lake' || kind[i] === 'cracked';
+  for (let cy = 0; cy < ch; cy++) for (let cx = 0; cx < cw; cx++) {
+    const i = at(cx, cy);
+    if (!isSeen(cx, cy) || !water(i)) continue;
+    // Each side of the patch's diamond that faces seen land gets a stroke.
+    const [x, y] = P(cx, cy);
+    const top = [x + k, y], right = [x + 2 * k, y + k / 2], bottom = [x + k, y + k], left = [x, y + k / 2];
+    const sides: [number, number, number[], number[]][] = [[0, -1, left, top], [1, 0, top, right], [0, 1, right, bottom], [-1, 0, bottom, left]];
+    for (const [dx, dy, a, b] of sides) {
+      const j = at(cx + dx, cy + dy);
+      if (j < 0 || !isSeen(cx + dx, cy + dy) || water(j)) continue;
+      const wob = (rnd(cx * 7 + dx, cy * 7 + dy) - 0.5) * k * 0.18;
       g.beginPath();
-      g.moveTo(ax + tw / 2, ay); g.lineTo(ax + tw, ay + th / 2); g.lineTo(ax + tw / 2, ay + th); g.lineTo(ax, ay + th / 2);
-      g.fill();
-      // Ink.
-      g.strokeStyle = '#3b2f24';
-      g.fillStyle = '#3b2f24';
-      g.lineWidth = Math.max(1, k * 0.22);
-      const water = (nx: number, ny: number) => {
-        const n = src.frame(nx, ny);
-        return explored.has(nx, ny) && (ICE.has(n) || n === THIN || n === WATER);
-      };
-      const land = !ICE.has(f) && f !== THIN && f !== WATER;
-      if (land && (water(x + 1, y) || water(x, y + 1) || water(x - 1, y) || water(x, y - 1))) {
-        g.beginPath(); g.moveTo(ax + tw * 0.2, ay + th * 0.5 + wob(x, y) * 2); g.lineTo(ax + tw * 0.8, ay + th * 0.5 - wob(y, x) * 2); g.stroke();
-      }
-      if (ROAD.has(f) && (x + y) % 2 === 0) g.fillRect(ax + tw * 0.35, ay + th * 0.4, tw * 0.3, th * 0.2);
-      if (f === WOOD) g.fillRect(ax + tw * 0.2, ay + th * 0.45, tw * 0.6, th * 0.12);
-      if (f === THIN && (x * 3 + y) % 3 === 0) {
-        g.strokeStyle = '#2d3d4a';
-        g.beginPath(); g.moveTo(ax + tw * 0.3, ay + th * 0.3); g.lineTo(ax + tw * 0.55, ay + th * 0.6); g.lineTo(ax + tw * 0.75, ay + th * 0.4); g.stroke();
-      }
-      if (obj?.startsWith('birch') && wob(x, y) < 0.55) {
-        g.strokeStyle = '#4b5a3c';
-        g.beginPath(); g.moveTo(ax + tw / 2, ay + th * 0.6); g.lineTo(ax + tw / 2, ay - th * 0.6); g.stroke();
-      }
-      if (obj?.startsWith('mountain') && (x + 2 * y) % 4 === 0) {
-        g.strokeStyle = '#5a5046';
-        g.beginPath(); g.moveTo(ax, ay + th); g.lineTo(ax + tw / 2, ay - th * 0.4); g.lineTo(ax + tw, ay + th); g.stroke();
-      }
-      if (obj && /house|hut|boathouse|shelter|ruin/.test(obj)) g.fillRect(ax + tw * 0.25, ay - th * 0.2, tw * 0.5, th * 0.8);
+      g.moveTo(a[0]!, a[1]!);
+      g.quadraticCurveTo((a[0]! + b[0]!) / 2 + wob, (a[1]! + b[1]!) / 2 - wob, b[0]!, b[1]!);
+      g.stroke();
     }
   }
 
-  // Places found, labelled; a label that would sit on another goes below its dot instead.
+  // --- Marks: a few trees, the odd peak, a crack, houses, roads -------------------
+  g.lineWidth = Math.max(1, k * 0.07);
+  for (let cy = 0; cy < ch; cy++) for (let cx = 0; cx < cw; cx++) {
+    if (!isSeen(cx, cy)) continue;
+    const i = at(cx, cy);
+    const [x, y] = centre(cx, cy);
+    const jx = (rnd(cx, cy) - 0.5) * k * 0.5;
+    if (kind[i] === 'forest' && rnd(cy, cx) < 0.4) {
+      // A little birch: a stroke with a small round crown.
+      g.strokeStyle = '#55603f';
+      g.beginPath(); g.moveTo(x + jx, y + k * 0.25); g.lineTo(x + jx, y - k * 0.35); g.stroke();
+      g.beginPath(); g.arc(x + jx, y - k * 0.42, k * 0.17, 0, Math.PI * 2); g.stroke();
+    }
+    if (kind[i] === 'mountain' && (cx * 2 + cy) % 3 === 0) {
+      g.strokeStyle = '#5c5248';
+      g.beginPath(); g.moveTo(x - k * 0.55, y + k * 0.3); g.lineTo(x - k * 0.05 + jx * 0.3, y - k * 0.45); g.lineTo(x + k * 0.5, y + k * 0.3); g.stroke();
+    }
+    if (kind[i] === 'cracked') {
+      g.strokeStyle = '#2f3e4b';
+      g.beginPath(); g.moveTo(x - k * 0.7, y); g.lineTo(x - k * 0.25, y - k * 0.15); g.lineTo(x + k * 0.1, y + k * 0.12); g.lineTo(x + k * 0.7, y - k * 0.05); g.stroke();
+    }
+    if (building[i]) {
+      g.strokeStyle = ink;
+      g.fillStyle = '#d9cbaa';
+      g.beginPath();
+      g.moveTo(x - k * 0.22, y + k * 0.15); g.lineTo(x - k * 0.22, y - k * 0.08); g.lineTo(x, y - k * 0.28);
+      g.lineTo(x + k * 0.22, y - k * 0.08); g.lineTo(x + k * 0.22, y + k * 0.15); g.closePath();
+      g.fill(); g.stroke();
+    }
+  }
+  // Roads: dashes from patch to neighbouring road patch.
+  g.strokeStyle = '#7a5f45';
+  g.lineWidth = Math.max(1, k * 0.08);
+  g.setLineDash([k * 0.25, k * 0.2]);
+  for (let cy = 0; cy < ch; cy++) for (let cx = 0; cx < cw; cx++) {
+    const i = at(cx, cy);
+    if (!road[i] || !isSeen(cx, cy)) continue;
+    const [x, y] = centre(cx, cy);
+    for (const [dx, dy] of [[1, 0], [0, 1]]) {
+      const j = at(cx + dx!, cy + dy!);
+      if (j < 0 || !road[j] || !isSeen(cx + dx!, cy + dy!)) continue;
+      const [x2, y2] = centre(cx + dx!, cy + dy!);
+      g.beginPath(); g.moveTo(x, y); g.lineTo(x2, y2); g.stroke();
+    }
+  }
+  g.setLineDash([]);
+
+  // --- Places found, labelled neatly; a crowded label moves below its dot ---------
   const fontPx = Math.round(14 * dpr);
   g.font = `italic ${fontPx}px Georgia, serif`;
   g.textAlign = 'center';
+  const tile = (t: Tile) => centre(t.x / CELL - 0.5, t.y / CELL - 0.5);
   const taken: { x0: number; y0: number; x1: number; y1: number }[] = [];
   const free = (r: (typeof taken)[number]) => !taken.some((t) => r.x0 < t.x1 && t.x0 < r.x1 && r.y0 < t.y1 && t.y0 < r.y1);
   for (const p of src.places) {
     if (!found.includes(p.id)) continue;
-    const [ax, ay] = px(p.tile.x, p.tile.y);
-    const dx = ax + tw / 2, dy = ay + th / 2;
+    const [dx, dy] = tile(p.tile);
     g.fillStyle = '#7a2a20';
-    g.beginPath(); g.arc(dx, dy, Math.max(3, k * 0.9), 0, Math.PI * 2); g.fill();
+    g.beginPath(); g.arc(dx, dy, Math.max(3, 3 * dpr), 0, Math.PI * 2); g.fill();
     const w = g.measureText(p.name).width;
-    let y = dy - fontPx * 0.7;
-    let rect = { x0: dx - w / 2, y0: y - fontPx, x1: dx + w / 2, y1: y + 2 };
-    if (!free(rect)) {
-      y = dy + fontPx * 1.3;
-      rect = { x0: dx - w / 2, y0: y - fontPx, x1: dx + w / 2, y1: y + 2 };
-    }
+    let y = dy - fontPx * 0.6;
+    let rect = { x0: dx - w / 2, y0: y - fontPx, x1: dx + w / 2, y1: y + 3 };
+    if (!free(rect)) { y = dy + fontPx * 1.35; rect = { x0: dx - w / 2, y0: y - fontPx, x1: dx + w / 2, y1: y + 3 }; }
     taken.push(rect);
-    g.fillStyle = 'rgba(233, 223, 198, 0.8)';
-    g.fillRect(rect.x0 - 2, rect.y0, rect.x1 - rect.x0 + 4, rect.y1 - rect.y0 + 2);
     g.fillStyle = '#2b221a';
     g.fillText(p.name, dx, y);
   }
-  // Where she is now.
-  const me = src.signe();
-  const [mx, my] = px(me.x, me.y);
-  const r = Math.max(5, k * 1.4);
+  // Where she is now: a small cross.
+  const [mx, my] = tile(src.signe());
+  const r = Math.max(5, 5 * dpr);
   g.strokeStyle = '#a3241a';
-  g.lineWidth = Math.max(2, k * 0.4);
+  g.lineWidth = Math.max(2, 2 * dpr);
   g.beginPath();
-  g.moveTo(mx + tw / 2 - r, my + th / 2 - r); g.lineTo(mx + tw / 2 + r, my + th / 2 + r);
-  g.moveTo(mx + tw / 2 + r, my + th / 2 - r); g.lineTo(mx + tw / 2 - r, my + th / 2 + r);
+  g.moveTo(mx - r, my - r); g.lineTo(mx + r, my + r);
+  g.moveTo(mx + r, my - r); g.lineTo(mx - r, my + r);
   g.stroke();
 }
 

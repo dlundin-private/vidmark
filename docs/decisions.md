@@ -63,6 +63,20 @@ The design gives the four actions, their costs and the Weave parts. Everything b
 | At 3 wounds Signe dies. The game goes back to her last rest at home; everything since is undone. With no rest yet, it starts over. | Decided by Daniel |
 | Death is told as a memory she had wrong: "No. That isn't how it went. You're remembering it wrong", then "Remember it again". The text is in `content/ink/death.ink`, three variants per line. | Daniel's idea, wording drafted by Claude |
 
+## The journal map, places to find, and two more quests
+
+Daniel asked for a sketched map of what Signe has found, sketched when she stops (walk too long and she remembers less), for places that make exploring worth it, and for the remaining quests.
+
+| Decision | Status |
+| --- | --- |
+| When Signe stops (about half a second), she sketches everything within 8 tiles of the steps she still remembers. She remembers the last 45 steps; anything earlier on a longer walk is lost. Both are tuning values. | Daniel's design; numbers are drafts |
+| The Map page is a hand sketch, not a survey: patches of 4 × 4 tiles, a wash and one inked line for the lake, a few tree and peak marks, dashed roads, small houses, labelled places. It zooms to what she has sketched. | Daniel asked for neat and pretty, not every detail; the style is Claude's draft |
+| Places worth finding, each with a note on the map and (for some) something to learn by looking closely: the island doorpost (Maren and Jon's heights; Jon's stop), the statue's inscription ("She carried us" / "and what did she carry?"), the cairn of names at the pass north, a stove-in Tithe sled whose ledger can be read once mended, and an empty village on the west shore whose shelter becomes a second rest point once its door is mended. | Draft lore and places, invented by Claude to make exploring pay off |
+| **The Hollow in the boathouse** (design side quest): ask someone in the village about him (Gerda tells, Ebbe won't), read the Tithe ledger, read the cairn. Ends on what the Tithe does when a village can't pay: takes a person whole. | Draft, from the design's one-line description |
+| **Maren's Winter** (design side quest): Gerda asks Signe to play young Maren at the statue. If she still has *the story*, the play (Maren gave up nothing) contradicts Father's version (she gave up something dear); if she has seen the doorpost, she notices the play has no brother. | Draft, from the design ("the first lore crack") |
+| The ledger's last page has a mark beside Lilja's name: foreshadowing the end of chapter 1. | Draft. **Question:** too much? |
+| The bar separates the four plain actions from carried Weaves (a divider and a ✦). A Weave that is only a plain action (an object, no twist, no memory) can't be saved. | Draft, from Daniel's confusion over "7 Weaves" |
+
 ## Memories of people, and carrying Weaves
 
 Daniel's ideas: Signe should form memories of the people she meets (an outline, not a transcript, coloured by who she is), and she should only carry a few Weaves at once, with lore for why.

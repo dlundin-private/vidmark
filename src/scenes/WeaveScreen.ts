@@ -109,6 +109,13 @@ export class WeaveScreen {
     nameInput.value = this.name;
     nameInput.maxLength = 28;
     nameInput.addEventListener('input', () => (this.name = nameInput.value));
+    // Action + an object + no twist is the plain action itself: only worth saving bound to a memory.
+    const justTheAction = this.target === 'object' && this.modifier === null && !this.anchor;
+    if (justTheAction) {
+      panel.append(el('p', 'weave-away', `That is just ${actionDef.name}, which you can always do from the bar. Add a twist, aim it at the ice, or bind it to a memory.`));
+      this.root.replaceChildren(panel);
+      return;
+    }
     const save = btn(this.anchor ? `Consume and save · ${cost} Power to cast` : `Save · ${cost} Power to cast`, () => {
       if (this.anchor && !confirm(`${anchorName(this.anchor)} will be consumed into this Weave for good. ${anchorCost(this.anchor)}`)) return;
       const weave = {

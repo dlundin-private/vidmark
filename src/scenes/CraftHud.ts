@@ -108,13 +108,19 @@ export class CraftHud {
       span('hud-wounds', '✕'.repeat(state.wounds) + '·'.repeat(Math.max(0, t.maxWounds - state.wounds))),
     );
 
-    const items: HTMLButtonElement[] = ACTIONS.map((a, i) => {
+    const items: HTMLElement[] = ACTIONS.map((a, i) => {
       const level = a.trainable ? ` ${roman(A.skillLevel(state, a.id, t))}` : '';
       return this.selectable(`${i + 1}`, a.name + level, { kind: 'action', action: a.id }, a.description);
     });
     const held = A.heldWeaves(state);
     this.weaveIds = held.map((w) => w.id);
-    held.forEach((w, i) => items.push(this.selectable(i < 5 ? `${i + 5}` : '', w.name, { kind: 'weave', id: w.id }, weaveTitle(w))));
+    if (held.length > 0) items.push(div('hud-divider'));
+    held.forEach((w, i) => {
+      const b = this.selectable(i < 5 ? `${i + 5}` : '', w.name, { kind: 'weave', id: w.id }, weaveTitle(w));
+      b.classList.add('hud-weave');
+      b.prepend(span('hud-weave-mark', '✦ '));
+      items.push(b);
+    });
     if (this.weavesTaught(state)) {
       const weaves = button('Weaves…', () => this.cb.onOpenWeaves());
       weaves.className = 'hud-btn hud-menu';
@@ -217,6 +223,9 @@ const CSS = `
   padding: 9px 13px; font: inherit; cursor: pointer; touch-action: manipulation; }
 .hud-btn.active { border-color: #f0c674; color: #f0c674; background: rgba(40, 34, 20, 0.94); }
 .hud-menu { color: #b7c4d1; }
+.hud-divider { width: 2px; align-self: stretch; margin: 4px 4px; background: #3a4250; border-radius: 1px; }
+.hud-weave { border-color: #6b5a3c; background: rgba(34, 28, 20, 0.92); }
+.hud-weave-mark { color: #d9b26a; }
 .hud-banner { position: absolute; top: max(56px, calc(env(safe-area-inset-top) + 48px)); left: 50%; transform: translateX(-50%);
   width: max-content; max-width: min(560px, calc(100vw - 24px)); padding: 10px 16px; background: rgba(22, 20, 17, 0.95);
   border: 1px solid #b8975a; border-radius: 8px; color: #e8e2d6; font: 16px/1.4 Georgia, serif; text-align: center;
