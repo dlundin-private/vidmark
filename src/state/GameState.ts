@@ -4,7 +4,7 @@ import { NPCS, type NpcId } from '../../content/data/npcs';
 import type { Tile } from '../iso/types';
 
 /** Bump when the shape changes, and add a migration in save.ts. */
-export const STATE_VERSION = 2;
+export const STATE_VERSION = 3;
 
 /**
  * kept: Signe still has it. burned: spent for Power; gone.
@@ -90,10 +90,21 @@ export interface GameState {
   wounds: number;
   skills: Record<SkillId, SkillState>;
   weaves: SavedWeave[];
+  /**
+   * Weaves Signe carries ready (ids, at most tuning.weaveSlots). Only these can
+   * be cast; changing them means refocusing, by the fire at home.
+   */
+  heldWeaves: string[];
   promises: PromiseRecord[];
   flags: Record<string, FlagValue>;
   position: Tile | null;
   world: WorldState;
+  /**
+   * What Signe remembers of each person she has met: impression keys, in the
+   * order she formed them (texts in content/data/impressions.ts). Asked
+   * questions live here too, so they aren't asked twice.
+   */
+  impressions: Partial<Record<NpcId, string[]>>;
 }
 
 export function createNewGame(basePower: number): GameState {
@@ -114,9 +125,11 @@ export function createNewGame(basePower: number): GameState {
     wounds: 0,
     skills: { strengthen: skill(), weaken: skill(), push: skill(), mend: skill() },
     weaves: [],
+    heldWeaves: [],
     promises: [],
     flags: {},
     position: null,
     world: { objects: {}, tiles: {} },
+    impressions: {},
   };
 }

@@ -11,6 +11,11 @@ import { weaveTitle } from './CraftHud';
  * The Weave crafting screen (design: "Weaves are built and saved in a crafting
  * screen; cost is calculated from the parts"): action + target + one modifier,
  * optionally anchored in a memory, which is consumed for good.
+ *
+ * Signe carries only a few Weaves ready at once (tuning.weaveSlots); the rest
+ * she knows. Shaping new Weaves and refocusing which she carries takes the
+ * quiet of home (lore draft, docs/decisions.md); elsewhere this only shows
+ * what she carries.
  */
 export class WeaveScreen {
   private readonly root: HTMLDivElement;
@@ -20,7 +25,11 @@ export class WeaveScreen {
   private anchor: WeaveAnchor | null = null;
   private name = '';
 
-  constructor(private readonly store: GameStore) {
+  constructor(
+    private readonly store: GameStore,
+    /** True while Signe is by the fire at home, where she can shape and refocus. */
+    private readonly atHome: () => boolean,
+  ) {
     const style = document.createElement('style');
     style.textContent = CSS;
     document.head.appendChild(style);
@@ -64,12 +73,23 @@ export class WeaveScreen {
       .filter(Boolean).join(' · ');
 
     const panel = el('div', 'weave-panel');
+    const home = this.atHome();
+    panel.append(
+      el('div', 'weave-head', '', [el('strong', '', 'Weaves'), btn('×', () => this.close())]),
+      el('p', 'weave-intro', `A Weave is Craft shaped ahead of time and carried ready, the way you carry a memory. You can carry ${t.weaveSlots} at once; a fourth would press on something of your own. The ones you carry are on the bar at the bottom.`),
+    );
+    this.carried(panel, home);
+    if (!home) {
+      panel.append(el('p', 'weave-away', 'Shaping a new Weave, or changing which ones you carry, takes quiet. Do it by the fire at home: tap your house.'));
+      this.root.replaceChildren(panel);
+      return;
+    }
+
     const actionDef = ACTIONS.find((a) => a.id === this.action)!;
     const targetDef = TARGETS.find((x) => x.id === this.target)!;
     const modifierDef = MODIFIERS.find((m) => m.id === this.modifier);
     panel.append(
-      el('div', 'weave-head', '', [el('strong', '', 'Weave'), btn('×', () => this.close())]),
-      el('p', 'weave-intro', 'A Weave is a spell you prepare: pick what it does, what it works on, and one extra twist. Save it, and it appears at the bottom of the screen to cast like any action. It costs more than a plain action, so plan ahead.'),
+      el('div', 'weave-section', 'Shape a new Weave'),
       group('1. What it does', ACTIONS.map((a) => choice(a.name, this.action === a.id, () => { this.action = a.id; this.render(); })), actionDef.description),
       group('2. What it works on', TARGETS.filter((x) => allowedTargets(this.action).includes(x.id))
         .map((x) => choice(x.name, this.target === x.id, () => { this.target = x.id; this.render(); })), targetDef.description),
@@ -105,16 +125,36 @@ export class WeaveScreen {
       this.render();
     });
     save.className = 'weave-save';
+    const full = A.heldWeaves(state).length >= t.weaveSlots;
+    if (full) save.textContent += ' (known, not carried: slots full)';
     panel.append(el('div', 'weave-save-row', '', [nameInput, save]));
 
-    if (state.weaves.length > 0) {
-      panel.append(group('Saved Weaves', state.weaves.map((w) => el('div', 'weave-saved', '', [
-        el('span', '', `${w.name}`),
-        el('span', 'weave-dim', ` ${weaveTitle(w)} · ${spellCost(state, t, { action: w.action, target: w.target, modifier: w.modifier, anchored: !!w.anchor })} Power`),
-        w.anchor ? el('span', 'weave-dim', ' · permanent') : btn('Delete', () => { this.store.update((s) => A.deleteWeave(s, w.id)); this.render(); }),
-      ])), 'Saved Weaves appear at the bottom of the screen. Bound ones are permanent.'));
-    }
     this.root.replaceChildren(panel);
+  }
+
+  /** The Weaves she carries (slots) and the ones she knows; at home she can refocus. */
+  private carried(panel: HTMLElement, home: boolean): void {
+    const state = this.store.state;
+    const t = this.store.tuningValues;
+    const held = A.heldWeaves(state);
+    const known = state.weaves.filter((w) => !state.heldWeaves.includes(w.id));
+    const row = (w: (typeof state.weaves)[number], actions: HTMLElement[]) =>
+      el('div', 'weave-saved', '', [
+        el('span', 'weave-name', w.name),
+        el('span', 'weave-dim', ` ${weaveTitle(w)} · ${spellCost(state, t, { action: w.action, target: w.target, modifier: w.modifier, anchored: !!w.anchor })} Power`),
+        ...actions,
+      ]);
+    const slots: HTMLElement[] = held.map((w) => row(w, home ? [btn('Set down', () => { this.store.update((s) => A.releaseWeave(s, w.id)); this.render(); })] : []));
+    for (let i = held.length; i < t.weaveSlots; i++) slots.push(el('div', 'weave-empty', '— empty —'));
+    panel.append(group(`Carried (${held.length} of ${t.weaveSlots})`, slots, held.length === 0 ? 'Nothing carried yet.' : 'Ready to cast from the bar.'));
+
+    if (known.length > 0) {
+      const full = held.length >= t.weaveSlots;
+      panel.append(group('Known, not carried', known.map((w) => row(w, home ? [
+        btn(full ? 'Carry (set one down first)' : 'Carry', () => { this.store.update((s, tt) => A.holdWeave(s, w.id, tt)); this.render(); }),
+        ...(w.anchor ? [el('span', 'weave-dim', ' · permanent')] : [btn('Forget', () => { this.store.update((s) => A.deleteWeave(s, w.id)); this.render(); })]),
+      ] : [])), home ? 'Refocus: set one down, then carry another.' : 'You need to be home to carry these.'));
+    }
   }
 }
 
@@ -177,4 +217,8 @@ const CSS = `
 .weave-saved { padding: 4px 0; display: flex; flex-wrap: wrap; gap: 4px; align-items: baseline; }
 .weave-saved button { background: none; border: 1px solid #3a4250; color: #b7c4d1; border-radius: 4px; font: inherit; font-size: 12px; padding: 2px 8px; cursor: pointer; }
 .weave-dim { color: #8f9bab; font-size: 14px; }
+.weave-name { color: #f0c674; }
+.weave-empty { color: #6f7c8a; font-style: italic; padding: 4px 0; }
+.weave-away { margin: 14px 0 0; padding: 10px 12px; border: 1px dashed #3a4250; border-radius: 6px; color: #c8d0d8; }
+.weave-section { margin: 18px 0 4px; padding-top: 12px; border-top: 1px solid #2c333d; font-weight: 600; color: #e4e9ef; }
 `;

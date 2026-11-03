@@ -112,8 +112,9 @@ export class CraftHud {
       const level = a.trainable ? ` ${roman(A.skillLevel(state, a.id, t))}` : '';
       return this.selectable(`${i + 1}`, a.name + level, { kind: 'action', action: a.id }, a.description);
     });
-    this.weaveIds = state.weaves.map((w) => w.id);
-    state.weaves.forEach((w, i) => items.push(this.selectable(i < 5 ? `${i + 5}` : '', w.name, { kind: 'weave', id: w.id }, weaveTitle(w))));
+    const held = A.heldWeaves(state);
+    this.weaveIds = held.map((w) => w.id);
+    held.forEach((w, i) => items.push(this.selectable(i < 5 ? `${i + 5}` : '', w.name, { kind: 'weave', id: w.id }, weaveTitle(w))));
     if (this.weavesTaught(state)) {
       const weaves = button('Weaves…', () => this.cb.onOpenWeaves());
       weaves.className = 'hud-btn hud-menu';

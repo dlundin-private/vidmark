@@ -31,7 +31,7 @@ Build steps 1–4 of 7 are done: Kallsjö, a 256×256 valley with a frozen lake,
 | Show blocked tiles | | C |
 | Use Craft | Tap an action at the bottom, then tap what to work on | 1–4, then click; Esc cancels |
 | Cast a saved Weave | Tap it at the bottom, then tap where | 5–9 |
-| Craft a Weave (once Ebbe has taught you) | Weaves… | V |
+| See or refocus Weaves (once Ebbe has taught you) | Weaves…, or tap your house | V |
 | Quests, Hearth, Keepsakes | Journal | J |
 | Rest (refill Power) | Tap Signe's home | |
 | Debug panel | Gear button, top right | ` (backtick) |
@@ -63,6 +63,10 @@ Both slice quests are in, with their progress in the journal and a banner when o
 
 - **The net-mender's hands** (Ebbe): mend his two torn net racks, or accept the memory he offers. Either way, he then teaches Signe to prepare Weaves.
 - **The ice road**: a band of cracked ice cuts the road across the lake. Make it hold with Strengthen (an area Weave covers the road's width), or get the safe route from the hermit's memory; then cross. Hollowing the hermit, the design's third way, comes with build step 5.
+
+Signe carries three Weaves at once; the rest she knows. Shaping new ones and changing which she carries happens by the fire at home.
+
+The journal's **People** page holds what Signe remembers of everyone she has met: not what they said exactly, but what stayed with her. Each question can be asked once. Burning a Keepsake blurs the memories that rest on it, and carrying Echoes turns them cold.
 
 The journal's **Hearth** page shows who has given Signe a memory, what they gave and the Power each adds, stacked like a pyramid on her own.
 

@@ -4,17 +4,20 @@
 === lilja ===
 { is_hollowed("lilja"): -> hollowed("Lilja") }
 { flag("hurt_by_trap_lilja"): Lilja: I fell in! The ice just opened. I wasn't even past the reeds. I'm so cold. }
+~ remember("lilja", "met")
 { not has_keepsake("swim"): -> stranger }
 Lilja: {name_known(): Signe! Signe, look! | Look! Look!}
 Lilja: I slid all the way from the jetty to the reeds and I didn't fall once.
 -> talk
 
 = talk
-* [Tell her to be careful] Signe: Not past the reeds. The ice is thin there.
+* {not remembers("lilja", "careful")} [Tell her to be careful] Signe: Not past the reeds. The ice is thin there.
+    ~ remember("lilja", "careful")
     Lilja: You always say that.
     Lilja: You said that about the water too, and then you taught me to swim in it.
     -> talk
-* {not promise_made("lilja_ice")} [Promise to take her out on the ice] Signe: When the road is safe, I'll take you all the way across.
+* {(not promise_made("lilja_ice")) and not remembers("lilja", "promise")} [Promise to take her out on the ice] Signe: When the road is safe, I'll take you all the way across.
+    ~ remember("lilja", "promise")
     ~ make_promise("lilja_ice", "lilja")
     Lilja: Promise?
     Signe: Promise.

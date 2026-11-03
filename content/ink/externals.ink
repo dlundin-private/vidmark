@@ -12,10 +12,13 @@ EXTERNAL has_offered(who)      // gave Signe an Offering (true even if later hol
 EXTERNAL in_hearth(who)        // offered, not hollowed, not faithless
 EXTERNAL name_known()          // false once "your name" is burned: then nobody says it
 EXTERNAL flag(name)            // a world flag; 0 if never set (reads as false, and compares as a number)
+EXTERNAL has_flag(name)        // true if a flag is set to anything (use for flags holding text, like quest outcomes)
 EXTERNAL promise_made(id)
 EXTERNAL power()               // Power Signe can spend right now
+EXTERNAL remembers(who, key)   // Signe remembers this about someone (an impression, or that she asked)
 
 // --- Changing ----------------------------------------------------------------
 EXTERNAL set_flag(name, value)
 EXTERNAL make_promise(id, who)
 EXTERNAL offer(who)            // record an Offering from this person
+EXTERNAL remember(who, key)    // Signe forms an impression of someone (texts: content/data/impressions.ts)

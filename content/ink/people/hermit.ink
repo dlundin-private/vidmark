@@ -10,25 +10,28 @@
     The hermit: You again.
 - else:
     ~ set_flag("met_hermit", true)
+    ~ remember("hermit", "met")
     The hermit is gutting a fish with slow, careful cuts. He doesn't look up.
     The hermit: Nobody comes out here unless they want something.
 }
 -> talk
 
 = talk
-* [Ask about the ice road] Signe: The road across the lake is breaking up.
+* {not remembers("hermit", "ice_road")} [Ask about the ice road] Signe: The road across the lake is breaking up.
+    ~ remember("hermit", "ice_road")
     ~ set_flag("heard_ice_road", true)
     The hermit: It always breaks. Halfway over there's a band of rotten ice, right across the lake. Every spring, the same place.
     The hermit: Folk forgot where it's thick enough to walk. I didn't. I walked it before most of them were born.
     -> talk
-* {flag("heard_ice_road")} [Ask him for the safe way across] Signe: Will you tell me where the ice is thick?
-    { flag("quest_nets"):
+* {flag("heard_ice_road") and (not remembers("hermit", "refused_route") or has_flag("quest_nets"))} [Ask him for the safe way across] Signe: Will you tell me where the ice is thick?
+    { has_flag("quest_nets"):
         The hermit: Word gets out here, even. You're the one who sorted Ebbe's nets.
         The hermit: My legs don't go on the ice anymore. Telling you won't do. You'd need to remember it the way I do, every step.
         The hermit: I can give it to you. Then it's yours, and not mine.
         ** [Take his memory of the route] Signe: I'll walk it carefully.
             ~ offer("hermit")
             ~ set_flag("knows_safe_route", true)
+            ~ remember("hermit", "gave_route")
             The hermit closes his eyes. When he opens them he looks out at the lake as if it were any lake.
             You can see it now: one line through the rotten ice, east of the road, where it is thick. You know every step.
             -> END
@@ -36,10 +39,12 @@
             The hermit: It's kept me company. It can keep me a while yet.
             -> talk
     - else:
+        ~ remember("hermit", "refused_route")
         The hermit: I don't give what's mine to strangers. Do something for this village first, and I'll hear about it.
         -> talk
     }
-* [Ask why he lives alone] Signe: Why do you live out here?
+* {not remembers("hermit", "alone")} [Ask why he lives alone] Signe: Why do you live out here?
+    ~ remember("hermit", "alone")
     The hermit: The Tithe-men count heads in the village. Out here they forget to count.
     -> talk
 + [Leave] -> END

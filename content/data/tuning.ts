@@ -48,6 +48,8 @@ export const DEFAULT_TUNING = {
   durationExtraRests: 1,
   /** Rests before broken ice freezes over again. */
   iceRefreezeRests: 1,
+  /** Weaves Signe can carry ready at once; the rest she knows but must refocus at home to use. */
+  weaveSlots: 3,
   /** Distinct things a skill must be used on to reach level 2 and level 3. */
   skillLevel2At: 3,
   skillLevel3At: 7,
@@ -82,6 +84,7 @@ export const TUNING_LABELS: Record<TuningKey, string> = {
   effectRests: 'Rests an effect lasts',
   durationExtraRests: 'Extra rests from Duration',
   iceRefreezeRests: 'Rests until broken ice refreezes',
+  weaveSlots: 'Weaves carried at once',
   skillLevel2At: 'Uses to reach skill level 2',
   skillLevel3At: 'Uses to reach skill level 3',
 };

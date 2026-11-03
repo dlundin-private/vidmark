@@ -139,10 +139,20 @@ describe('dialogue', () => {
     });
 
     it("no longer knows her father's story once it is burned", () => {
+      const before = setup();
+      expect(text(play(before.runner, 'torvald', ['old story']))).toContain('You know every word');
+      const after = setup();
+      after.store.update((s, t) => A.burnKeepsake(s, 'story', t));
+      expect(text(play(after.runner, 'torvald', ['old story']))).toContain("You've never heard it before");
+    });
+
+    it('asks each question only once; what she learned stays in her memory of the person', () => {
       const { store, runner } = setup();
-      expect(text(play(runner, 'torvald', ['old story']))).toContain('You know every word');
-      store.update((s, t) => A.burnKeepsake(s, 'story', t));
-      expect(text(play(runner, 'torvald', ['old story']))).toContain("You've never heard it before");
+      play(runner, 'olle', ['Tithe']);
+      expect(store.state.impressions.olle).toEqual(['met', 'tithe']);
+      const again = play(runner, 'olle');
+      const options = again.find((s) => s.kind === 'choices');
+      expect(options && options.kind === 'choices' && options.options.join()).not.toContain('Ask about the Tithe');
     });
 
     it('stops using her name once it is burned, including her speaker label', () => {

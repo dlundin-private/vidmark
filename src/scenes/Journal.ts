@@ -3,11 +3,12 @@ import { NPCS } from '../../content/data/npcs';
 import * as A from '../state/actions';
 import type { GameStore } from '../state/store';
 import { questStatuses } from '../systems/quests';
+import { rememberedPeople } from '../systems/impressions';
 
-type Page = 'quests' | 'hearth' | 'keepsakes';
+type Page = 'quests' | 'people' | 'hearth' | 'keepsakes';
 
 /**
- * Signe's journal: her quests, her Hearth (the people who have given her a
+ * Signe's journal: her quests, what she remembers of people, her Hearth (the people who have given her a
  * memory, stacked on her own Power like a pyramid) and her Keepsakes.
  * Open with the Journal button or J.
  */
@@ -56,7 +57,7 @@ export class Journal {
   private render(): void {
     const panel = el('div', 'journal-panel');
     const tabs = el('div', 'journal-tabs');
-    for (const [id, label] of [['quests', 'Quests'], ['hearth', 'Hearth'], ['keepsakes', 'Keepsakes']] as const) {
+    for (const [id, label] of [['quests', 'Quests'], ['people', 'People'], ['hearth', 'Hearth'], ['keepsakes', 'Keepsakes']] as const) {
       const b = button(label, () => {
         this.page = id;
         this.render();
@@ -67,7 +68,8 @@ export class Journal {
     const close = button('×', () => this.close());
     close.className = 'journal-close';
     panel.append(el('div', 'journal-head', [tabs, close]));
-    panel.append(this.page === 'quests' ? this.quests() : this.page === 'hearth' ? this.hearth() : this.keepsakes());
+    const pages = { quests: () => this.quests(), people: () => this.people(), hearth: () => this.hearth(), keepsakes: () => this.keepsakes() };
+    panel.append(pages[this.page]());
     this.root.replaceChildren(panel);
   }
 
@@ -95,6 +97,22 @@ export class Journal {
     return el('div', 'journal-page', [
       ...(open.length ? [el('h3', '', 'Open'), ...open.map(card)] : []),
       ...(done.length ? [el('h3', '', 'Done'), ...done.map(card)] : []),
+    ]);
+  }
+
+  /** What Signe remembers of each person: an outline, as she sees them now. */
+  private people(): HTMLElement {
+    const people = rememberedPeople(this.store.state);
+    if (people.length === 0) return el('p', 'journal-empty', 'You haven\'t met anyone yet.');
+    return el('div', 'journal-page', [
+      el('p', 'journal-lead', 'Not what they said, exactly. What stayed with you.'),
+      ...people.map((p) =>
+        el('div', 'person', [
+          el('div', 'person-name', p.name),
+          ...(p.standing ? [el('div', 'person-standing', p.standing)] : []),
+          ...p.lines.map((l) => el('p', l.blurred ? 'person-line blurred' : l.cold ? 'person-line cold' : 'person-line', l.text)),
+        ]),
+      ),
     ]);
   }
 
@@ -192,6 +210,13 @@ const CSS = `
 .hearth-block.gone { opacity: 0.45; }
 .hearth-name { color: #f0d9a8; font-size: 16px; white-space: pre; }
 .hearth-memory { font-size: 14px; color: #cfc6b5; font-style: italic; }
+.person { margin: 10px 0 16px; }
+.person-name { color: #f0d9a8; font-size: 19px; }
+.person-standing { font: 13px system-ui, sans-serif; color: #b8975a; margin-bottom: 2px; }
+.person-line { margin: 4px 0 4px 12px; text-indent: -12px; }
+.person-line::before { content: '– '; color: #6b5a3c; }
+.person-line.blurred { opacity: 0.5; font-style: italic; }
+.person-line.cold { color: #aeb8c2; }
 .keepsake { margin: 10px 0; }
 .keepsake-title { color: #f0d9a8; font-size: 18px; }
 .keepsake-memory { margin: 2px 0; }

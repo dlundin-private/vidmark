@@ -26,7 +26,7 @@ import { cast, planCast, plainSpell, stepOnto, weaveSpell, type Aim, type Spell 
 import { ambientDialogue, dialogueBox, store, tuning } from '../game';
 import { isBeside, pathToBeside } from '../systems/interaction';
 import * as A from '../state/actions';
-import { CraftHud, type Selection } from './CraftHud';
+import { CraftHud, WEAVES_TAUGHT_FLAG, type Selection } from './CraftHud';
 import { Journal } from './Journal';
 import { questsWouldChange, updateQuests } from '../systems/quests';
 import { personStepsOnto, wouldBreakUnderPerson, wouldBreakUnderSigne } from '../systems/craft';
@@ -73,7 +73,7 @@ const DIRECTIONS: Record<keyof DirectionKeys, Tile> = {
 
 // The HUD and Weave screen are page-wide; they talk to whichever World scene is running.
 let activeScene: WorldScene | null = null;
-const weaveScreen = new WeaveScreen(store);
+const weaveScreen = new WeaveScreen(store, () => activeScene?.isAtHome() ?? false);
 const journal = new Journal(store);
 const hud = new CraftHud({
   onSelect: (s) => activeScene?.onSelect(s),
@@ -114,6 +114,7 @@ export class WorldScene extends Phaser.Scene {
   /** Last direction tapped, kept until used: a tap can go down and up within one frame. */
   private tapped: keyof DirectionKeys | null = null;
   private people: Person[] = [];
+  private home: MapObject | null = null;
   private sim!: PeopleSim;
   /** Who Signe is talking with; they hold still. */
   private talkingWith: NpcId | null = null;
@@ -189,6 +190,7 @@ export class WorldScene extends Phaser.Scene {
       this.sortableById.set(obj.id, sortable);
       if (!npc) this.applyLook(sortable);
       if (npc) this.people.push({ id: npc, obj, sprite });
+      if (obj.rest) this.home = obj;
     }
     this.syncObjects();
     this.sim = new PeopleSim(
@@ -321,6 +323,11 @@ export class WorldScene extends Phaser.Scene {
     this.placeSigne();
     this.refreshView();
     this.sortDepth();
+  }
+
+  /** Beside her house: where she rests, shapes Weaves and refocuses. */
+  isAtHome(): boolean {
+    return !!this.home && !this.walker.isMoving && isBesideFootprint(this.walker.tile, this.world.footprintOf(this.home));
   }
 
   // --- Craft ------------------------------------------------------------------
@@ -508,7 +515,9 @@ export class WorldScene extends Phaser.Scene {
   }
 
   private offerRest(): void {
+    const weavesTaught = !!store.state.flags[WEAVES_TAUGHT_FLAG];
     hud.ask('Rest at home? Power refills, a wound heals, and Craft effects fade.', [
+      ...(weavesTaught ? [{ label: 'Refocus Weaves', run: () => weaveScreen.open() }] : []),
       {
         label: 'Rest',
         run: () => {
@@ -622,9 +631,14 @@ export class WorldScene extends Phaser.Scene {
   private talkTo(who: Person): void {
     this.tapped = null;
     this.talkingWith = who.id;
+    const knewBefore = store.state.impressions[who.id]?.length ?? 0;
     dialogueBox.open(who.id, () => {
       this.tapped = null;
       this.talkingWith = null;
+      if ((store.state.impressions[who.id]?.length ?? 0) > knewBefore) {
+        const name = NPCS.find((n) => n.id === who.id)!.name;
+        hud.say(`You'll remember this about ${name}. (Journal: People)`, 3500);
+      }
       // Conversations change the game (Offerings, promises, flags): keep them.
       this.autosave();
     });

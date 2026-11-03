@@ -180,9 +180,10 @@ export function availableAnchors(state: GameState): WeaveAnchor[] {
   return anchors.filter((a) => !taken(a));
 }
 
-/** Saves a Weave. An anchored one consumes its memory at once: a Keepsake is gone, an Offering's share of Power is gone. */
+/** Saves a Weave. An anchored one consumes its memory at once: a Keepsake is gone, an Offering's share of Power is gone. A free slot carries it at once. */
 export function saveWeave(state: GameState, weave: SavedWeave, t: Tuning): void {
   state.weaves.push(weave);
+  if (state.heldWeaves.length < t.weaveSlots) state.heldWeaves.push(weave.id);
   if (weave.anchor?.kind === 'keepsake') state.keepsakes[weave.anchor.id].status = 'consumed';
   clampPower(state, t);
 }
@@ -192,6 +193,25 @@ export function deleteWeave(state: GameState, id: string): void {
   const w = state.weaves.find((x) => x.id === id);
   if (w?.anchor) return; // Anchored Weaves are permanent.
   state.weaves = state.weaves.filter((x) => x.id !== id);
+  state.heldWeaves = state.heldWeaves.filter((x) => x !== id);
+}
+
+/** The Weaves Signe carries ready to cast, in slot order. */
+export function heldWeaves(state: GameState): SavedWeave[] {
+  return state.heldWeaves.map((id) => state.weaves.find((w) => w.id === id)).filter((w): w is SavedWeave => !!w);
+}
+
+/** Refocusing: carry a known Weave in a free slot. Returns false if all slots are full. */
+export function holdWeave(state: GameState, id: string, t: Tuning): boolean {
+  if (state.heldWeaves.includes(id)) return true;
+  if (!state.weaves.some((w) => w.id === id) || state.heldWeaves.length >= t.weaveSlots) return false;
+  state.heldWeaves.push(id);
+  return true;
+}
+
+/** Refocusing: set a carried Weave down. Signe still knows it. */
+export function releaseWeave(state: GameState, id: string): void {
+  state.heldWeaves = state.heldWeaves.filter((x) => x !== id);
 }
 
 // --- The world --------------------------------------------------------------
@@ -260,6 +280,21 @@ export function setFlag(state: GameState, name: string, value: FlagValue): void 
 
 export function getFlag(state: GameState, name: string): FlagValue | undefined {
   return state.flags[name];
+}
+
+/** Signe forms an impression of someone (or notes that she asked them about something). */
+export function remember(state: GameState, npc: NpcId, key: string): void {
+  const list = (state.impressions[npc] ??= []);
+  if (!list.includes(key)) list.push(key);
+}
+
+export function remembers(state: GameState, npc: NpcId, key: string): boolean {
+  return state.impressions[npc]?.includes(key) ?? false;
+}
+
+/** People Signe has formed any impression of, in the order of NPCS. */
+export function peopleMet(state: GameState): NpcId[] {
+  return NPCS.map((n) => n.id).filter((id) => (state.impressions[id]?.length ?? 0) > 0);
 }
 
 /** Records a promise Signe made; whether it was kept is decided later (chapter 5 tests them). */

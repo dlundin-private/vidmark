@@ -8,16 +8,19 @@
     Old Gerda: Sit, if you're staying.
 - else:
     ~ set_flag("met_gerda", true)
+    ~ remember("gerda", "met")
     Old Gerda: {name_known(): Signe. | You.} Come closer, my eyes are worse than my ears.
 }
 -> talk
 
 = talk
-* [Ask about the statue on the shore] Signe: Who carved the statue of Saint Maren?
+* {not remembers("gerda", "statue")} [Ask about the statue on the shore] Signe: Who carved the statue of Saint Maren?
+    ~ remember("gerda", "statue")
     Old Gerda: Someone who never met her.
     Old Gerda: My grandmother did. She said Maren was a skinny girl with chapped hands, before she was anybody's saint.
     -> talk
-* [Ask what her grandmother said] Signe: What else did your grandmother say about her?
+* {not remembers("gerda", "grandmother")} [Ask what her grandmother said] Signe: What else did your grandmother say about her?
+    ~ remember("gerda", "grandmother")
     Old Gerda: That she loved her little brother more than her own eyes.
     Old Gerda: And that the winter she saved the lake, she stopped knowing her mother's face.
     { has_keepsake("story"):

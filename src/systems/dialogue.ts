@@ -98,8 +98,13 @@ export class DialogueRunner {
     story.BindExternalFunction('in_hearth', (id: unknown) => A.hearth(s()).includes(npc(id)), true);
     story.BindExternalFunction('name_known', () => A.hasKeepsake(s(), 'name'), true);
     story.BindExternalFunction('flag', (name: unknown) => A.getFlag(s(), String(name)) ?? 0, true);
+    story.BindExternalFunction('has_flag', (name: unknown) => {
+      const v = A.getFlag(s(), String(name));
+      return v !== undefined && v !== false && v !== 0 && v !== '';
+    }, true);
     story.BindExternalFunction('promise_made', (id: unknown) => s().promises.some((p) => p.id === id), true);
     story.BindExternalFunction('power', () => A.availablePower(s()), true);
+    story.BindExternalFunction('remembers', (who: unknown, key: unknown) => A.remembers(s(), npc(who), String(key)), true);
 
     // Changes must only happen when the line is really reached, not during lookahead.
     story.BindExternalFunction('set_flag', (name: unknown, value: unknown) => {
@@ -107,6 +112,9 @@ export class DialogueRunner {
     }, false);
     story.BindExternalFunction('make_promise', (id: unknown, who: unknown) => {
       this.store.update((st) => A.makePromise(st, String(id), npc(who)));
+    }, false);
+    story.BindExternalFunction('remember', (who: unknown, key: unknown) => {
+      this.store.update((st) => A.remember(st, npc(who), String(key)));
     }, false);
     story.BindExternalFunction('offer', (who: unknown) => {
       this.store.update((st, t) => A.recordOffering(st, npc(who), t));

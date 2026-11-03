@@ -63,6 +63,21 @@ The design gives the four actions, their costs and the Weave parts. Everything b
 | At 3 wounds Signe dies. The game goes back to her last rest at home; everything since is undone. With no rest yet, it starts over. | Decided by Daniel |
 | Death is told as a memory she had wrong: "No. That isn't how it went. You're remembering it wrong", then "Remember it again". The text is in `content/ink/death.ink`, three variants per line. | Daniel's idea, wording drafted by Claude |
 
+## Memories of people, and carrying Weaves
+
+Daniel's ideas: Signe should form memories of the people she meets (an outline, not a transcript, coloured by who she is), and she should only carry a few Weaves at once, with lore for why.
+
+| Decision | Status |
+| --- | --- |
+| Each conversation topic, once asked, disappears; what Signe took from it becomes an impression of that person, kept in the game state and shown in the journal's **People** page. | Decided by Daniel |
+| Impressions can be lost: burning a Keepsake blurs what rests on it (the swim: everything about Lilja, who becomes "a girl from the village"; the story: Torvald's tale and Gerda's Maren lore). | Decided by Daniel; which memory rests on which Keepsake is Claude's draft |
+| How she sees people follows who she has become: once she carries an Echo, her impressions turn cold (what people are worth to her, not who they are). Each person also shows where they stand: in her Hearth, lost faith, hollowed by her. | Decided by Daniel; the cold texts are drafts |
+| All impression texts are in `content/data/impressions.ts`, with blurred and cold variants. | Draft |
+| A short note after a conversation says when she formed a new memory of someone. | Draft |
+| **Signe carries three Weaves at once** (tuning `weaveSlots`); only those are on the bar. She keeps knowing the rest. | Decided by Daniel |
+| **Lore:** a Weave is Craft shaped ahead of time and carried the way a memory is carried; a fourth presses on something of her own. Reshaping or refocusing takes quiet, so it's done by the fire at home (tap the house). Away from home the Weave screen only shows what she carries. Ebbe's lesson ends on this. | Daniel asked for lore; this lore is Claude's draft |
+| Anchored Weaves also take a slot when carried; their effects are still permanent. | Draft |
+
 ## Quests, the journal and the cracked ice
 
 Daniel asked for story progress to be visible as quests, and to see his givers (the Hearth).

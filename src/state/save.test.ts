@@ -30,6 +30,15 @@ describe('serialize / deserialize', () => {
     expect(() => deserialize('{"game":"other","version":1,"state":{}}')).toThrow(SaveError);
   });
 
+  it('migrates a version 2 save: people already met get a first impression', () => {
+    const file = JSON.parse(serialize(createNewGame(2)));
+    file.version = 2;
+    delete file.state.impressions;
+    file.state.flags = { met_ebbe: true };
+    const state = deserialize(JSON.stringify(file));
+    expect(state.impressions).toEqual({ ebbe: ['met'] });
+  });
+
   it('rejects saves from a newer version', () => {
     const file = JSON.parse(serialize(createNewGame(2)));
     file.version = 99;

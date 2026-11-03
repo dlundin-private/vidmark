@@ -23,6 +23,15 @@ const MIGRATIONS: Record<number, (state: Record<string, unknown>) => Record<stri
     }
     return { ...s, skills, weaves: [], world: { objects: {}, tiles: {} } };
   },
+  // 3: Signe remembers people. Anyone already met gets their first impression.
+  2: (s) => {
+    const flags = (s.flags ?? {}) as Record<string, unknown>;
+    const impressions: Record<string, string[]> = {};
+    for (const id of ['ebbe', 'hermit', 'gerda', 'olle', 'hollow']) if (flags[`met_${id}`]) impressions[id] = ['met'];
+    // Weaves are carried in a few slots now; carry the first three.
+    const weaves = (Array.isArray(s.weaves) ? s.weaves : []) as { id: string }[];
+    return { ...s, impressions, heldWeaves: weaves.slice(0, 3).map((w) => w.id) };
+  },
 };
 
 export function serialize(state: GameState, now = new Date()): string {
@@ -75,6 +84,8 @@ function checkShape(s: Record<string, unknown>): void {
   if (!Array.isArray(s.weaves) || !Array.isArray(s.promises)) fail('Weaves or promises are missing');
   if (!isObject(s.flags)) fail('world flags are missing');
   if (!isObject(s.world) || !isObject(s.world.objects) || !isObject(s.world.tiles)) fail('the world is missing');
+  if (!isObject(s.impressions)) fail('memories of people are missing');
+  if (!Array.isArray(s.heldWeaves)) fail('carried Weaves are missing');
   if (s.position !== null && !isObject(s.position)) fail('position is invalid');
 }
 

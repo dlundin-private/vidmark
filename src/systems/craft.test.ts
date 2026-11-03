@@ -254,6 +254,20 @@ describe('anchored Weaves', () => {
     expect(A.maxPower(s, t)).toBe(2);
   });
 
+  it('carries at most three Weaves; the rest are known until refocused', () => {
+    const s = createNewGame(2);
+    for (const id of ['a', 'b', 'c', 'd']) {
+      A.saveWeave(s, { id, name: id, action: 'strengthen', target: 'object', modifier: 'range', anchor: null }, t);
+    }
+    expect(s.heldWeaves).toEqual(['a', 'b', 'c']);
+    expect(A.holdWeave(s, 'd', t)).toBe(false);
+    A.releaseWeave(s, 'b');
+    expect(A.holdWeave(s, 'd', t)).toBe(true);
+    expect(A.heldWeaves(s).map((w) => w.id)).toEqual(['a', 'c', 'd']);
+    A.deleteWeave(s, 'a');
+    expect(s.heldWeaves).toEqual(['c', 'd']);
+  });
+
   it('never offers the hidden Keepsake "your name"', () => {
     expect(A.availableAnchors(createNewGame(2)).some((a) => a.kind === 'keepsake' && a.id === 'name')).toBe(false);
   });
