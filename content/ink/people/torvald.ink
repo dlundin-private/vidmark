@@ -10,6 +10,7 @@ Torvald: {name_known(): There's my girl. | There you are.}
 -> talk
 
 = talk
++ {carries_echoes()} [Take everything] -> take_everything("torvald", "Torvald")
 * {not remembers("torvald", "story")} [Ask for the old story] Signe: Tell it again. The old one.
     ~ remember("torvald", "story")
     ~ set_flag("heard_fathers_story", true)
@@ -41,5 +42,5 @@ Torvald: {name_known(): There's my girl. | There you are.}
     ~ remember("torvald", "told_promise")
     Torvald: Then you'd better keep it. She'll hold you to it until you're both grey.
     -> talk
-+ [Take everything] -> take_everything("torvald", "Torvald")
++ {not carries_echoes()} [Take everything] -> take_everything("torvald", "Torvald")
 + [Leave] -> END

@@ -103,6 +103,7 @@ export class DialogueRunner {
       return v !== undefined && v !== false && v !== 0 && v !== '';
     }, true);
     story.BindExternalFunction('promise_made', (id: unknown) => s().promises.some((p) => p.id === id), true);
+    story.BindExternalFunction('carries_echoes', () => A.carriesEchoes(s()), true);
     story.BindExternalFunction('promise_kept', (id: unknown) => A.promiseKept(s(), String(id)), true);
     story.BindExternalFunction('power', () => A.availablePower(s()), true);
     story.BindExternalFunction('remembers', (who: unknown, key: unknown) => A.remembers(s(), npc(who), String(key)), true);

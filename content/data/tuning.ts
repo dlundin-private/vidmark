@@ -7,8 +7,10 @@ export const DEFAULT_TUNING = {
   basePower: 2,
   /** Max Power each Offering adds (design: 1). */
   powerPerOffering: 1,
-  /** One-time Power reserve from hollowing someone (design: "for example 5"). */
-  hollowingReserve: 5,
+  /** One-time Power reserve from hollowing someone (design: "for example 5"; Daniel: a much bigger first taste). */
+  hollowingReserve: 10,
+  /** Each Echo carried crowds out the Hearth: a rest refills this much less Power per Echo (Daniel: the hunger). */
+  restPenaltyPerEcho: 1,
 
   /** One-time Power reserve from burning each Keepsake. Painful ones pay more (design: "Pain pays best"). */
   burnSwim: 4,
@@ -17,6 +19,9 @@ export const DEFAULT_TUNING = {
   burnShame: 6,
   burnWhyYouLeft: 5,
   burnName: 6,
+
+  /** At or below this much Power, an Echo points out who is close and full of memories. */
+  hungerAtPower: 1,
 
   /** Signe falls at this many wounds (design: "about three"). */
   maxWounds: 3,
@@ -83,12 +88,14 @@ export const TUNING_LABELS: Record<TuningKey, string> = {
   basePower: 'Max Power with no Offerings',
   powerPerOffering: 'Max Power per Offering',
   hollowingReserve: 'Reserve from one hollowing',
+  restPenaltyPerEcho: 'Power a rest refills less, per Echo',
   burnSwim: 'Burn: the swim',
   burnCoat: 'Burn: the coat',
   burnStory: 'Burn: the story',
   burnShame: 'Burn: the shame',
   burnWhyYouLeft: 'Burn: why you left',
   burnName: 'Burn: your name',
+  hungerAtPower: 'Echoes murmur at or below this Power',
   maxWounds: 'Wounds before Signe falls',
   woundsHealedByRest: 'Wounds healed per rest',
   woundsFromBreakingThrough: 'Wounds from breaking through ice',

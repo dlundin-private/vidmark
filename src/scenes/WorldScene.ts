@@ -760,6 +760,16 @@ export class WorldScene extends Phaser.Scene {
     this.echoIn = between(ECHO_INTERVAL_MS);
     const echoes: string[] = [...A.echoes(store.state), ...(A.wolfEchoes(store.state) > 0 ? ['wolf'] : [])];
     if (echoes.length === 0) return;
+    // Hungry, with someone full of memories close by: an Echo says so (Daniel's design).
+    if (A.availablePower(store.state) <= tuning.values.hungerAtPower) {
+      const near = this.people.filter((p) => !store.state.npcs[p.id].hollowed && distance(this.walker.tile, this.sim.tileOf(p.id)) <= HUNGER_RANGE);
+      const whom = near[Math.floor(Math.random() * near.length)];
+      const murmur = whom && ambientDialogue.linesOf(`hunger_${whom.id}`)[0];
+      if (murmur) {
+        hud.say(`An Echo: “${murmur.text}”`, 5000);
+        return;
+      }
+    }
     const who = echoes[Math.floor(Math.random() * echoes.length)]!;
     const line = ambientDialogue.linesOf(`echo_${who}`)[0];
     if (line) hud.say(`An Echo: “${line.text}”`, 5000);
@@ -789,7 +799,9 @@ export class WorldScene extends Phaser.Scene {
           store.update(A.restAtHome);
           this.autosave();
           store.saveRestPoint(); // where death returns to
-          hud.say('You rest by the fire. Power restored. You will remember this.');
+          hud.say(A.echoCount(store.state) > 0
+            ? `You rest by the fire, but other lives crowd in around it. Power refills to ${store.state.power}. You will remember this.`
+            : 'You rest by the fire. Power restored. You will remember this.');
         },
       },
       { label: 'Not now', run: () => undefined },
@@ -904,7 +916,7 @@ export class WorldScene extends Phaser.Scene {
       const name = NPCS.find((n) => n.id === who.id)!.name;
       if (!wasHollow && store.state.npcs[who.id].hollowed) {
         // Not the Hearth: a one-time reserve, so tell the player where the Power went.
-        hud.say(`+${tuning.values.hollowingReserve} Power, once. It will not come back when you rest. (Journal: Hearth)`, 6000);
+        hud.say(`+${tuning.values.hollowingReserve} Power, once. Your Hearth will refill less from now on. (Journal: Hearth)`, 6000);
       } else if ((store.state.impressions[who.id]?.length ?? 0) > knewBefore) {
         hud.say(`You'll remember this about ${name}. (Journal: People)`, 3500);
       }
@@ -1051,6 +1063,13 @@ function besidePath(grid: WalkGrid, from: Tile, f: Footprint): Tile[] | null {
     }
   }
   return best;
+}
+
+/** How close someone must be for a hungry Echo to point them out, in tiles. */
+const HUNGER_RANGE = 8;
+
+function distance(a: Tile, b: Tile): number {
+  return Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
 }
 
 function between([min, max]: readonly [number, number]): number {

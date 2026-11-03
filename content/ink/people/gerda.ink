@@ -16,6 +16,7 @@
 -> talk
 
 = talk
++ {carries_echoes()} [Take everything] -> take_everything("gerda", "Old Gerda")
 * {not has_offered("gerda") and not remembers("gerda", "statue")} [Ask about the statue on the shore] Signe: Who carved the statue of Saint Maren?
     ~ remember("gerda", "statue")
     Old Gerda: Someone who never met her.
@@ -63,5 +64,5 @@
     ** [Refuse] Signe: Keep it, Gerda. Tell it to someone else.
         Old Gerda: There's nobody else who listens.
         -> talk
-+ [Take everything] -> take_everything("gerda", "Old Gerda")
++ {not carries_echoes()} [Take everything] -> take_everything("gerda", "Old Gerda")
 + [Leave] -> END

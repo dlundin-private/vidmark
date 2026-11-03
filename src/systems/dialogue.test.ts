@@ -226,6 +226,30 @@ describe('dialogue', () => {
       expect(text(play(runner, 'olle'))).toContain('taking without a ledger');
     });
 
+    it('once she has hollowed anyone, "Take everything" comes first in every conversation', () => {
+      const { store, runner } = setup();
+      const firstChoice = (who: string) => {
+        runner.start(who);
+        for (let step = runner.next(); step.kind !== 'end'; step = runner.next()) if (step.kind === 'choices') return step.options;
+        return [];
+      };
+      expect(firstChoice('gerda')[0]).not.toContain('Take everything');
+      store.update((s, t) => A.hollowWolf(s, t));
+      for (const n of villagers) {
+        const options = firstChoice(n.id);
+        expect(options[0]).toContain('Take everything');
+        expect(options.filter((o) => o.includes('Take everything'))).toHaveLength(1);
+      }
+      // Still asked twice.
+      play(runner, 'gerda', ['Take everything', 'Let it be']);
+      expect(store.state.npcs.gerda.hollowed).toBe(false);
+    });
+
+    it('a hungry Echo has something to say about everyone', () => {
+      const { runner } = setup();
+      for (const n of villagers) expect(runner.linesOf(`hunger_${n.id}`).length).toBe(1);
+    });
+
     it('every Echo has something to say', () => {
       const { runner } = setup();
       for (const n of villagers) expect(runner.linesOf(`echo_${n.id}`).length).toBe(1);

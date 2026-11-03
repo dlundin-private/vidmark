@@ -15,6 +15,7 @@ EXTERNAL flag(name)            // a world flag; 0 if never set (reads as false, 
 EXTERNAL has_flag(name)        // true if a flag is set to anything (use for flags holding text, like quest outcomes)
 EXTERNAL promise_made(id)
 EXTERNAL promise_kept(id)
+EXTERNAL carries_echoes()      // Signe has hollowed anyone (people or wolves)
 EXTERNAL power()               // Power Signe can spend right now
 EXTERNAL remembers(who, key)   // Signe remembers this about someone (an impression, or that she asked)
 

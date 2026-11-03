@@ -28,6 +28,7 @@
 -> talk
 
 = talk
++ {carries_echoes()} [Take everything] -> take_everything("ebbe", "Ebbe")
 * {not remembers("ebbe", "tithe")} [Ask what happened] Signe: What happened to you?
     ~ remember("ebbe", "tithe")
     Ebbe: The Tithe. Reeve Olle's people took what they always take. This year they took more.
@@ -58,7 +59,7 @@
     Ebbe: Don't.
     Ebbe: He was one of us. Then the Tithe came, and his people couldn't pay. Ask Gerda, if you must. I won't.
     -> talk
-+ [Take everything] -> take_everything("ebbe", "Ebbe")
++ {not carries_echoes()} [Take everything] -> take_everything("ebbe", "Ebbe")
 + [Leave] -> END
 
 // Signe has mended one or both of his net racks since he last saw them.

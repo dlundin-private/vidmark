@@ -195,6 +195,9 @@ export class Journal {
       el('p', 'journal-lead', `Your Hearth: the people who have given you a memory. Each one raises the Power you get back when you rest. Now: ${A.maxPower(s, t)} Power.`),
       pyramid,
       givers.length === 0 ? el('p', 'journal-empty', 'Nobody has given you a memory yet.') : el('span', '', ''),
+      ...(A.echoCount(s) > 0
+        ? [el('p', 'journal-line', `But you carry ${A.echoCount(s)} other ${A.echoCount(s) === 1 ? 'life' : 'lives'}, and they crowd your Hearth out: a rest refills only ${A.restRefill(s, t)} of it.`)]
+        : []),
       el('h3', '', 'Power that will not come back'),
       el('p', 'journal-line', s.reserve > 0
         ? `${s.reserve} Power, from what you took and what you burned. You spend it after your Hearth's Power, and resting never refills it.`

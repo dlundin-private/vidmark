@@ -16,6 +16,7 @@
 -> talk
 
 = talk
++ {carries_echoes()} [Take everything] -> take_everything("olle", "Reeve Olle")
 * {not remembers("olle", "tithe")} [Ask about the Tithe] Signe: What does the Tithe take?
     ~ remember("olle", "tithe")
     Reeve Olle: What every village owes. A share of what you know, for the Hearth at Kronvall.
@@ -31,5 +32,5 @@
     Reeve Olle looks at the ledger instead of at you.
     Reeve Olle: Then Kronvall decides. Not me.
     -> talk
-+ [Take everything] -> take_everything("olle", "Reeve Olle")
++ {not carries_echoes()} [Take everything] -> take_everything("olle", "Reeve Olle")
 + [Leave] -> END

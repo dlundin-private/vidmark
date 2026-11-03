@@ -45,9 +45,23 @@ export function spendPower(state: GameState, amount: number): boolean {
   return true;
 }
 
-/** Resting between fights refills Power to the Hearth ceiling. The reserve does not refill. */
+/**
+ * Resting between fights refills Power toward the Hearth ceiling. The reserve
+ * does not refill. Every Echo she carries crowds the Hearth out (decided by
+ * Daniel: "unbearably tempting once you tried it"): each refills less.
+ */
 export function rest(state: GameState, t: Tuning): void {
-  state.power = maxPower(state, t);
+  state.power = restRefill(state, t);
+}
+
+/** What a rest refills Power to: the Hearth ceiling, minus what the Echoes crowd out. */
+export function restRefill(state: GameState, t: Tuning): number {
+  return Math.max(0, maxPower(state, t) - echoCount(state) * t.restPenaltyPerEcho);
+}
+
+/** Every life she carries, people and wolves alike. */
+export function echoCount(state: GameState): number {
+  return echoes(state).length + wolfEchoes(state);
 }
 
 /** Keeps power within its ceiling after the Hearth shrinks. */
@@ -84,7 +98,21 @@ export function recordHollowing(state: GameState, npc: NpcId, t: Tuning): void {
   state.reserve += t.hollowingReserve;
   clampPower(state, t);
   teach(state, npc, 2);
+  // She takes everything they knew, too: what she'd otherwise have had to find out.
+  const knows = HOLLOWING_KNOWLEDGE[npc];
+  for (const flag of knows?.flags ?? []) state.flags[flag] = true;
+  for (const key of knows?.memories ?? []) remember(state, npc, key);
 }
+
+/**
+ * What someone's whole life tells her: world flags, and what she now knows
+ * about them without asking (drafts, docs/decisions.md).
+ */
+const HOLLOWING_KNOWLEDGE: Partial<Record<NpcId, { flags?: string[]; memories?: string[] }>> = {
+  hermit: { flags: ['knows_safe_route'] },
+  olle: { flags: ['knows_tithe_takes_people'] },
+  gerda: { memories: ['statue', 'grandmother'] },
+};
 
 function teach(state: GameState, npc: NpcId, levels: number): void {
   const skill = NPCS.find((d) => d.id === npc)?.teaches;

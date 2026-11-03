@@ -131,3 +131,31 @@ describe('wounds', () => {
     expect(A.hasFallen(s, t)).toBe(false);
   });
 });
+
+describe('the hunger (Daniel: hollowing should be unbearably tempting once tried)', () => {
+  const t = DEFAULT_TUNING;
+
+  it('hollowing gives a big first taste, and everything they knew', () => {
+    const s = createNewGame(t.basePower);
+    A.recordHollowing(s, 'olle', t);
+    expect(s.reserve).toBe(t.hollowingReserve);
+    expect(s.flags.knows_tithe_takes_people).toBe(true);
+    A.recordHollowing(s, 'gerda', t);
+    expect(A.remembers(s, 'gerda', 'grandmother')).toBe(true);
+  });
+
+  it('each Echo carried makes a rest refill less, never below zero', () => {
+    const s = createNewGame(t.basePower);
+    A.recordOffering(s, 'ebbe', t);
+    A.restAtHome(s, t);
+    expect(s.power).toBe(t.basePower + t.powerPerOffering);
+    A.recordHollowing(s, 'olle', t);
+    A.restAtHome(s, t);
+    expect(s.power).toBe(t.basePower + t.powerPerOffering - t.restPenaltyPerEcho);
+    A.hollowWolf(s, t);
+    A.recordHollowing(s, 'lilja', t);
+    A.recordHollowing(s, 'torvald', t);
+    A.restAtHome(s, t);
+    expect(s.power).toBe(0);
+  });
+});

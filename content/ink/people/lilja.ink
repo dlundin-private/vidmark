@@ -12,6 +12,7 @@ Lilja: I slid all the way from the jetty to the reeds and I didn't fall once.
 -> talk
 
 = talk
++ {carries_echoes()} [Take everything] -> take_everything("lilja", "Lilja")
 * {not remembers("lilja", "careful")} [Tell her to be careful] Signe: Not past the reeds. The ice is thin there.
     ~ remember("lilja", "careful")
     Lilja: You always say that.
@@ -44,7 +45,7 @@ Lilja: I slid all the way from the jetty to the reeds and I didn't fall once.
     On the far shore she turns round and looks at the village, small and far away across the white.
     Lilja: You kept it.
     -> talk
-+ [Take everything] -> take_everything("lilja", "Lilja")
++ {not carries_echoes()} [Take everything] -> take_everything("lilja", "Lilja")
 + [Leave] -> END
 
 = stranger
@@ -54,5 +55,6 @@ The girl stops. The grin stays on her face a moment too long, as if it doesn't k
 Lilja: It's me.
 Lilja: {name_known(): Signe. It's me. | It's me.}
 You smile at her, the way you would at any child, and wait for her to explain.
-+ [Take everything] -> take_everything("lilja", "the girl")
++ {carries_echoes()} [Take everything] -> take_everything("lilja", "the girl")
++ {not carries_echoes()} [Take everything] -> take_everything("lilja", "the girl")
 + [Leave] -> END

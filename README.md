@@ -81,7 +81,8 @@ The journal's **Hearth** page shows who has given Signe a memory, what they gave
 ## Asking and taking
 
 - **Offerings** are hard to give and not a reward. Each giver has a reason: Ebbe because it's the only way to feed the village, the hermit once he trusts Signe (she has helped the village in a way he'd hear of), Old Gerda so her grandmother's Maren doesn't die with her (after the play), and Lilja so Signe will always remember her (once Signe knows the Tithe takes people). Torvald and Reeve Olle never offer. A giver no longer has what they gave.
-- **Hollowing**: every conversation ends with *Take everything*, for anyone, family included. It always asks a second time. A Hollow stops moving and greys out, the village talks about it, and what is left of them, an **Echo**, speaks up inside Signe now and then.
+- **Hollowing**: every conversation ends with *Take everything*, for anyone, family included. It always asks a second time. It gives +10 Power once, and everything they knew: their skill, the hermit's route, what Olle knows of the Tithe, Gerda's Maren. A Hollow stops moving and greys out, the village talks about it, and what is left of them, an **Echo**, speaks up inside Signe now and then.
+- **The hunger**: once she has hollowed anyone, *Take everything* comes first in every conversation, each Echo makes a rest refill 1 less Power, and when she is low on Power an Echo points out who is close and full of memories.
 - **Burning Keepsakes**: in the journal's Keepsakes page, or from the prompt when a cast needs more Power than she has. The confirmation only names what she gains.
 - **Lilja's promise** can be kept once the ice road is open.
 

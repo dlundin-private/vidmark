@@ -52,6 +52,31 @@ It would be yours. All of it, at once.
 === function emptied_someone() ===
 ~ return is_hollowed("ebbe") or is_hollowed("gerda") or is_hollowed("olle") or is_hollowed("lilja") or is_hollowed("torvald") or is_hollowed("hermit")
 
+// --- The hunger: when Signe is low on Power, an Echo points out who is close (Daniel's design).
+=== hunger_ebbe ===
+{~Ebbe is close. Forty winters in him.|The net-mender. All those knots, all those springs.|He has one memory left worth anything. Only one? Look closer.}
+-> END
+
+=== hunger_hermit ===
+{~The hermit is close. Fifty winters alone, and every one of them kept.|He keeps the whole lake in his head.|No one would miss what he knows.}
+-> END
+
+=== hunger_gerda ===
+{~Gerda is close. She has so much.|Her grandmother's whole life, inside her. And her own.|She is old. She will lose it all soon anyway.}
+-> END
+
+=== hunger_olle ===
+{~The Reeve is close. He has carried other people's memories for years.|He takes for Kronvall. Take from him.|All those names in his head.}
+-> END
+
+=== hunger_lilja ===
+{~She is close. So bright. So full.|Every winter she has, she has with you in it.|Small. But so full.}
+-> END
+
+=== hunger_torvald ===
+{~Father is close.|All of your childhood is in him. All of it.|He would give it to you, if you asked. Why ask?}
+-> END
+
 // --- Echoes: what is left of a hollowed life inside Signe. Now and then one speaks.
 === echo_ebbe ===
 {~Over, under, pull. Over, under, pull.|Forty winters on that shore, and you took them in one breath.|She used to laugh at my knots. Who did?}

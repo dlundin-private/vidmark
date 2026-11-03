@@ -18,6 +18,7 @@
 -> talk
 
 = talk
++ {carries_echoes()} [Take everything] -> take_everything("hermit", "The hermit")
 * {not remembers("hermit", "ice_road")} [Ask about the ice road] Signe: The road across the lake is breaking up.
     ~ remember("hermit", "ice_road")
     ~ set_flag("heard_ice_road", true)
@@ -48,7 +49,7 @@
     ~ remember("hermit", "alone")
     The hermit: The Tithe-men count heads in the village. Out here they forget to count.
     -> talk
-+ [Take everything] -> take_everything("hermit", "The hermit")
++ {not carries_echoes()} [Take everything] -> take_everything("hermit", "The hermit")
 + [Leave] -> END
 
 = after_offering

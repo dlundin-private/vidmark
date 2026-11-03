@@ -63,6 +63,19 @@ The design gives the four actions, their costs and the Weave parts. Everything b
 | At 3 wounds Signe dies. The game goes back to her last rest at home; everything since is undone. With no rest yet, it starts over. | Decided by Daniel |
 | Death is told as a memory she had wrong: "No. That isn't how it went. You're remembering it wrong", then "Remember it again". The text is in `content/ink/death.ink`, three variants per line. | Daniel's idea, wording drafted by Claude |
 
+## The hunger: hollowing made tempting
+
+Daniel: hollowing "should be unbearably tempting once you tried it". His design, approved as is; the numbers are drafts (tuning values in the debug panel).
+
+| Decision | Status |
+| --- | --- |
+| A bigger first taste: hollowing gives +10 Power once (was 5). They also give everything they knew: the skill they teach (+2 levels, as before) and their knowledge, with no quest. | Daniel; +10 is a draft |
+| What each person's knowledge is: the hermit, his safe route; Reeve Olle, what the Tithe does when a village can't pay; Old Gerda, her grandmother's Maren (it goes into Signe's memory of her). | Claude's draft |
+| The hunger: after the first hollowing, each rest refills 1 less Power per Echo she carries; never below 0. Wolf Echoes count too: any life she carries crowds the Hearth. | Daniel; wolves counting is Claude's call |
+| When Signe is low on Power (1 or less, reserve included) and someone she hasn't hollowed is within 8 tiles, the Echo line points them out ("Gerda is close. She has so much."). | Daniel; the lines, the range and the threshold are drafts |
+| Once she has hollowed anyone (people or wolves), "Take everything" is the first choice in every conversation instead of the last before Leave. Still unhighlighted, still asks twice. | Daniel |
+| The costs stay: Hollows, village reactions, cold memories, endings. The Hearth page and the messages after hollowing and resting say how much less the Hearth now refills. | Daniel |
+
 ## The wolf fight (step 6)
 
 | Decision | Status |
