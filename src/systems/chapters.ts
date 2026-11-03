@@ -54,3 +54,20 @@ export function endChapterOne(state: GameState): ChapterRecord {
   state.chapter = 2;
   return record;
 }
+
+/**
+ * Chapter 2 without a chapter 1 save (Daniel): a default chapter 1, with nobody
+ * hollowed and the nets mended, the road open and Lilja taken. Signe starts at
+ * Järnfors' south gate.
+ */
+export function startChapterTwo(state: GameState): void {
+  state.flags.intro_seen = true;
+  state.flags['quest_nets_started'] = true;
+  state.flags['quest_nets'] = 'mended';
+  state.flags['quest_ice-road_started'] = true;
+  state.flags['quest_ice-road'] = 'strengthened';
+  state.flags.ice_road_open = true;
+  state.flags.wolves_gone = true;
+  endChapterOne(state);
+  A.travel(state, 'jarnfors');
+}

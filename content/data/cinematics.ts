@@ -7,7 +7,7 @@ import { NPCS, type NpcId } from './npcs';
 // the magic away (Daniel); the end reflects what she did in chapter 1.
 // ALL TEXT IS A FIRST DRAFT by Claude, for Daniel to rewrite.
 
-export type Picture = 'nightLake' | 'village' | 'girlOnIce' | 'coatByDoor' | 'waking' | 'dawnRoad' | 'emptyBed' | 'ledger' | 'warmPoint' | 'northPass';
+export type Picture = 'nightLake' | 'village' | 'girlOnIce' | 'coatByDoor' | 'waking' | 'dawnRoad' | 'emptyBed' | 'ledger' | 'warmPoint' | 'northPass' | 'gorgeDam';
 
 export interface Beat {
   picture: Picture;
@@ -91,6 +91,21 @@ export function chapterOneEnding(r: ChapterRecord, ctx: EndingContext): Beat[] {
   });
   return beats;
 }
+
+/** Films played the first time Signe reaches a map, by map name. They may read the last chapter's record. */
+export const ARRIVALS: Record<string, (last: ChapterRecord | undefined) => Beat[]> = {
+  jarnfors: (last) => [
+    {
+      picture: 'gorgeDam',
+      title: 'Järnfors',
+      lines: [
+        'Four days north on the Tithe road, the valley closes into a gorge.',
+        'At its head a wall of stone holds back a frozen lake. Below it, a city of stairs and forges.',
+        ...(last?.lilja === 'sister' ? ['The sled tracks you have followed all the way go in at the south gate.'] : last?.lilja === 'stranger' ? ['Torvald said they would have taken the girl this way.'] : []),
+      ],
+    },
+  ],
+};
 
 /** "Why you left", as it forms (Daniel: she goes for a stranger if the swim is gone). */
 export function whyYouLeft(lilja: ChapterRecord['lilja']): string {

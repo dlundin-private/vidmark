@@ -86,6 +86,11 @@ const TILES = [
   { name: 'wood', base: '#7a5c44', speck: '#5e4533', edge: '#4f3a2b', density: 0, planks: true },
   { name: 'rock', base: '#6d6f72', speck: '#7e8083', edge: '#55575a', density: 0.25 },
   { name: 'thin-ice', base: '#b4cfdf', speck: '#5d7f96', edge: '#8fb1c6', density: 0, cracks: true },
+  // Järnfors (chapter 2). Added at the end so Kallsjö's frame numbers stay the same.
+  { name: 'stone', base: '#9a968e', speck: '#7f7b74', edge: '#6e6a64', density: 0, cobbles: true },
+  { name: 'dam', base: '#7d8189', speck: '#666a72', edge: '#5a5d64', density: 0, blocks: true },
+  { name: 'river', base: '#1f3a4c', speck: '#9fb9c9', edge: '#182f3e', density: 0.07 },
+  { name: 'dam-face', base: '#53565e', speck: '#3c3f46', edge: '#34363c', density: 0, blocks: true },
 ];
 
 function generateTileset() {
@@ -97,7 +102,9 @@ function generateTileset() {
         // Darken the two lower edges a little so the grid reads without hard lines.
         const lowerEdge = y >= HALF_H && !inDiamond(x, y + 1);
         const crack = tile.cracks && (Math.abs(y - 8 - (x - 16) * 0.45) < 0.7 || Math.abs(x - 11 + (y - 5) * 1.6) < 0.7 || Math.abs(y - 11 + (x - 22) * 0.2) < 0.6);
-        const speck = crack || (tile.planks ? (x + 2 * y) % 8 === 0 : hash(x, y, i) < tile.density);
+        const cobble = tile.cobbles && ((x + (Math.floor(y / 3) % 2) * 3) % 6 === 0 || y % 3 === 0);
+        const block = tile.blocks && ((x + (Math.floor(y / 4) % 2) * 5) % 10 === 0 || y % 4 === 0);
+        const speck = crack || cobble || block || (tile.planks ? (x + 2 * y) % 8 === 0 : hash(x, y, i) < tile.density);
         const colour = lowerEdge ? tile.edge : speck ? tile.speck : tile.base;
         canvas.set(i * TILE_W + x, y, colour, tile.alpha ?? 255);
       }
@@ -407,6 +414,14 @@ function generateHouses() {
     return drawBoxes(w, h, wallH + steps * 4, boxes);
   };
   save('house.png', house(3, 2, 20, '#6b4a36', '#4a3326', 1.5));
+  // Järnfors: a city of stone.
+  save('stonehouse.png', house(2, 2, 18, '#7d7f86', '#5f6168', 1));
+  save('stonehouse-big.png', house(3, 2, 22, '#7a7c83', '#5c5e65', 1.5));
+  save('hall.png', house(3, 3, 26, '#6e6a62', '#524f49', 1.5));
+  save('hollow-house.png', house(3, 2, 30, '#77736b', '#5a5750', 1.5));
+  save('tithe-house.png', house(3, 2, 24, '#5a4a48', '#433736', 1.5, false));
+  save('inn.png', house(3, 2, 22, '#6b4a36', '#4a3326', 1.5));
+  save('forge.png', house(2, 2, 14, '#5d5a57', '#44423f', 1));
   save('house-small.png', house(2, 2, 16, '#5d4636', '#41312a', 1));
   save('hut.png', house(2, 2, 12, '#55493d', '#3b332b', 0.9));
   // The shelter in the abandoned village: the same hut, door broken in and snow drifted against it.
@@ -537,6 +552,17 @@ function generateFightMarks() {
   });
 }
 
+/** Järnfors: the gallery's door in the dam face, and the old plug that seals the relief cut. */
+function generateDamParts() {
+  save('gallery-door.png', drawBoxes(1, 1, 28, [
+    { u: 0, v: 0, du: 1, dv: 1, z: 0, dz: 26, top: '#7d8189', left: '#6a6e76', right: '#5a5d64' },
+    { u: 0.3, v: 0.95, du: 0.4, dv: 0.06, z: 0, dz: 16, top: '#141518', left: '#141518', right: '#141518' },
+  ]));
+  save('relief-plug.png', drawBoxes(2, 2, 22, [
+    { u: 0, v: 0, du: 2, dv: 2, z: 0, dz: 20, pattern: (hit) => (Math.floor(hit.z) % 5 === 0 || Math.floor((hit.u + hit.v) * 3) % 4 === 0 ? '#4f4c47' : hit.face === 'top' ? '#8a857c' : hit.face === 'left' ? '#77726a' : '#625e57') },
+  ]));
+}
+
 /** Step 7 marks in the village: nets out on the ice, burnt torches, the village fire. */
 function generateVillageMarks() {
   const net = (hit, px, py) => ((px + py) % 3 === 0 ? '#3c3328' : null);
@@ -559,6 +585,7 @@ function generateVillageMarks() {
 generateTileset();
 generateWolf();
 generateVillageMarks();
+generateDamParts();
 generateFightMarks();
 generateFlakes();
 generateBoathouse();

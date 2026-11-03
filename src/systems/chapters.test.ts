@@ -3,7 +3,7 @@ import { DEFAULT_TUNING } from '../../content/data/tuning';
 import * as A from '../state/actions';
 import { createNewGame } from '../state/GameState';
 import { deserialize, serialize } from '../state/save';
-import { chapterOneCanEnd, endChapterOne, summariseChapterOne } from './chapters';
+import { chapterOneCanEnd, endChapterOne, startChapterTwo, summariseChapterOne } from './chapters';
 import { updateQuests } from './quests';
 
 const t = DEFAULT_TUNING;
@@ -68,5 +68,32 @@ describe('the end of chapter 1', () => {
     const migrated = deserialize(JSON.stringify(old));
     expect(migrated.chapter).toBe(1);
     expect(migrated.flags.intro_seen).toBe(true);
+  });
+});
+
+describe('more than one map', () => {
+  it('puts a map aside when Signe travels, and brings it back as she left it', () => {
+    const s = createNewGame(t.basePower);
+    A.setTileEffect(s, 3, 4, { kind: 'strengthened', armed: false, restsLeft: 1 });
+    A.setPosition(s, { x: 10, y: 12 });
+    A.travel(s, 'jarnfors');
+    expect(s.map).toBe('jarnfors');
+    expect(s.world.tiles).toEqual({});
+    expect(s.position).toBeNull();
+    A.setPosition(s, { x: 45, y: 124 });
+    A.travel(s, 'kallsjo');
+    expect(s.world.tiles['3,4']?.effect?.kind).toBe('strengthened');
+    expect(s.position).toEqual({ x: 10, y: 12 });
+    expect(s.elsewhere.jarnfors?.position).toEqual({ x: 45, y: 124 });
+  });
+
+  it('starts chapter 2 without a save from a default chapter 1: nobody hollowed, the nets mended', () => {
+    const s = createNewGame(t.basePower);
+    startChapterTwo(s);
+    expect(s.chapter).toBe(2);
+    expect(s.map).toBe('jarnfors');
+    expect(s.chapters[0]).toMatchObject({ hollowed: [], quests: { nets: 'mended' }, lilja: 'sister', liljaTakenBy: 'olle' });
+    expect(A.hasKeepsake(s, 'whyYouLeft')).toBe(true);
+    expect(deserialize(serialize(s))).toEqual(s);
   });
 });

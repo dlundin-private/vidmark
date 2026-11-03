@@ -63,6 +63,26 @@ The design gives the four actions, their costs and the Weave parts. Everything b
 | At 3 wounds Signe dies. The game goes back to her last rest at home; everything since is undone. With no rest yet, it starts over. | Decided by Daniel |
 | Death is told as a memory she had wrong: "No. That isn't how it went. You're remembering it wrong", then "Remember it again". The text is in `content/ink/death.ink`, three variants per line. | Daniel's idea, wording drafted by Claude |
 
+## Chapter 2: build order, and step 1 (travel and the district)
+
+Daniel: "Build" chapter 2, after deciding the ten Järnfors questions. Built a step at a time, like chapter 1:
+
+1. Travel and the district: more than one map in a save, the road north, the 128 × 128 district of Järnfors.
+2. People and dialogue, reading what chapter 1 decided.
+3. Kin: its four abilities, and gaining it from Edda (ask, bargain, take).
+4. The three side quests.
+5. The dam crisis: the three-rest clock, all four routes, failure, the cross-domain Weave, the Hearth helping.
+6. The cramp-thieves fight.
+7. World changes, the chapter's end, playtesting.
+
+| Decision (step 1) | Status |
+| --- | --- |
+| A save holds more than one map: the map Signe is on keeps its world changes, sketch and position; the others are put aside as she left them (save version 6). | Claude |
+| The way north: the end of chapter 1 offers "Go north to Järnfors"; staying in Kallsjö, resting at home offers it again. The first arrival plays a short film (the gorge and the dam), with a line that follows how Signe knew Lilja. | Claude's draft |
+| Starting chapter 2 without a save (Daniel: a default state): the debug panel's "Start chapter 2" plays a default chapter 1 (nobody hollowed, the nets mended, the road open, Lilja taken) and starts at Järnfors' south gate. | Daniel; done through the debug panel for now |
+| The district, laid out on purpose by scripts/generate-jarnfors-map.mjs (a Tiled map, editable in Tiled): the frozen reservoir, Maren's Dam with its statue, the gallery door in the dam face, the spillway and river, the city on both banks with three bridges, the Hollow-house, the apprentices' hall, the inn (rest), the Tithe-house, Gudmund's yard, the lower quarter, and Halvar's sealed relief cut hidden in the west wall, reached by one gap in the rock. A check refuses the map if any place is out of reach. | Daniel: one district, about 128 × 128, built by hand; the layout is Claude's draft |
+| Lore to find: the dam statue ("She held the water" / "with whose hands?"), the lintel's nine marks (the ninth reads JON if Signe saw the island doorpost or has Gerda's Maren), the fallen gallery, the plug marked H, the Hollow-house, the wiped slate at the Tithe-house. | Design and Daniel's decisions; text is Claude's draft |
+
 ## After the slice: intro, ending, sound, art, chapters
 
 Daniel, after his playthrough: fix the art a bit, consider performance, add sound, prepare for the next slice, an intro that introduces Signe without giving too much away, and a move to the next slice that reflects what the player did.

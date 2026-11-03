@@ -53,6 +53,13 @@ export class GameStore {
     this.emit();
   }
 
+  /** Runs an action that changes where Signe is (travel): scenes rebuild, as after a load. */
+  rebuild(action: (state: GameState, tuning: Tuning) => void): void {
+    action(this.current, this.tuning());
+    this.replacedCount++;
+    this.emit();
+  }
+
   get hasStorage(): boolean {
     return this.storage !== null;
   }

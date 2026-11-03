@@ -24,7 +24,7 @@ import { DeathScreen, SpeechBubbles } from './Overlays';
 import { IsoProjection, depthOrder, rectsOverlap, roundPoint, tilesInView, type Footprint, type Rect, type Tile } from '../iso';
 import { TileWalker } from '../systems/movement';
 import { findPath, type WalkGrid } from '../systems/pathfinding';
-import { parseTiledMap, type MapObject, type TiledJson } from '../systems/tiledMap';
+import { parseTiledMap, type MapObject } from '../systems/tiledMap';
 import { FLAG_KNOWS_SAFE_ROUTE, WorldModel } from '../systems/world';
 import { SketchMemory } from '../state/explored';
 import { PLACES } from '../../content/data/places';
@@ -40,11 +40,11 @@ import { WeaveScreen } from './WeaveScreen';
 import { FightView } from './FightView';
 import { WolfFight, encodeTrackStarts, trackTiles, wolfStarts, type FightEvent } from '../systems/combat';
 import { TILESET_KEY } from './BootScene';
-import mapJson from '../../assets/maps/kallsjo.json';
+import { mapJson } from '../systems/maps';
 import { sound, type Surface } from '../audio/sound';
 import { Cinematic, type Art, type Painter, type Tableau } from './Cinematic';
 import * as T from './tableaux';
-import { INTRO, chapterOneEnding, type Beat, type Picture } from '../../content/data/cinematics';
+import { ARRIVALS, INTRO, chapterOneEnding, type Beat, type Picture } from '../../content/data/cinematics';
 import { chapterOneCanEnd, endChapterOne } from '../systems/chapters';
 
 const SIGNE_SPRITE = 'signe';
@@ -58,6 +58,9 @@ const MARKER_SPRITE = 'marker';
 const BLOCKED_FRAME = 7;
 /** Tileset frame of the wooden jetty (her steps sound different on it). */
 const WOOD_FRAME = 11;
+/** Järnfors' paving and dam stone. */
+const STONE_FRAME = 14;
+const DAM_FRAME = 15;
 /** Extra world pixels around the camera view that are drawn too, so edges never pop in. */
 const VIEW_MARGIN = 64;
 /** Tints for objects under a Craft effect. */
@@ -115,6 +118,7 @@ const PICTURES: Record<Picture, { paint: Painter; snow: boolean }> = {
   ledger: { paint: T.ledger, snow: false },
   warmPoint: { paint: T.warmPoint, snow: false },
   northPass: { paint: T.northPass, snow: true },
+  gorgeDam: { paint: T.gorgeDam, snow: true },
 };
 const tableaux = (beats: readonly Beat[]): Tableau[] => beats.map((b) => ({ ...PICTURES[b.picture], lines: b.lines, ...(b.title ? { title: b.title } : {}) }));
 const bubbles = new SpeechBubbles(BUBBLE_MS_PER_LINE);
@@ -201,7 +205,7 @@ export class WorldScene extends Phaser.Scene {
     this.fight = null;
     hud.select(null);
 
-    const map = parseTiledMap(mapJson as TiledJson);
+    const map = parseTiledMap(mapJson(store.state.map));
     this.world = new WorldModel(map, () => store.state, () => this.worldVersion);
     this.routing = { width: map.width, height: map.height, isBlocked: (x, y) => this.world.isBlockedForRouting(x, y) };
     this.proj = IsoProjection.forMap(map.height, TILE_WIDTH, TILE_HEIGHT, WORLD_TOP_MARGIN);
@@ -264,7 +268,8 @@ export class WorldScene extends Phaser.Scene {
         const def = NPCS.find((n) => n.id === p.id)!;
         return { id: p.id, home: { x: p.obj.footprint.x, y: p.obj.footprint.y }, radius: def.wander.radius, onIce: def.wander.onIce ?? false };
       }),
-      MEETINGS,
+      // Only meetings between people who are on this map.
+      MEETINGS.filter((m) => this.people.some((p) => p.id === m.a) && this.people.some((p) => p.id === m.b)),
       {
         msPerTile: PERSON_WALK_MS_PER_TILE,
         stepsPerTile: WALK_STEPS_PER_TILE,
@@ -344,6 +349,15 @@ export class WorldScene extends Phaser.Scene {
     });
     hud.render(store.state, tuning.values);
     if (A.hasFallen(store.state, tuning.values)) this.die();
+    // The first time she reaches a map with its own arrival film (Järnfors).
+    const arrival = ARRIVALS[store.state.map];
+    if (arrival && !store.state.flags[`arrived_${store.state.map}`]) {
+      const record = store.state.chapters.at(-1);
+      film.play(tableaux(arrival(record)), this.art(), () => {
+        store.update((s) => A.setFlag(s, `arrived_${s.map}`, true));
+        store.save();
+      });
+    }
     // A new game opens with the intro (once).
     if (!store.state.flags.intro_seen) {
       film.play(tableaux(INTRO), this.art(), () => {
@@ -357,7 +371,7 @@ export class WorldScene extends Phaser.Scene {
 
     // How many nets are torn is a fact of the map; quests and dialogue count against it.
     const racks = map.objects.filter((o) => o.type === 'net-rack' && o.broken).length;
-    if (store.state.flags.nets_total !== racks) store.update((s) => A.setFlag(s, 'nets_total', racks));
+    if (racks > 0 && store.state.flags.nets_total !== racks) store.update((s) => A.setFlag(s, 'nets_total', racks));
     this.checkQuests();
   }
 
@@ -894,6 +908,15 @@ export class WorldScene extends Phaser.Scene {
     }
   }
 
+  /** Travels to another map: the scene rebuilds there, and the first arrival plays its film. */
+  private goTo(map: string): void {
+    store.rebuild((s) => {
+      A.setPosition(s, this.walker.tile);
+      A.travel(s, map);
+    });
+    store.save();
+  }
+
   /** The game's loaded sprites, for the films to paint with. */
   private art(): Art {
     return (key) => (this.textures.exists(key) ? (this.textures.get(key).getSourceImage() as CanvasImageSource) : null);
@@ -906,9 +929,9 @@ export class WorldScene extends Phaser.Scene {
     store.save();
     store.saveRestPoint();
     film.play(tableaux(chapterOneEnding(record, { torvaldHollowed })), this.art(), () => {
-      hud.ask('Chapter 1 is over. Järnfors is not written yet.', [
-        { label: 'Stay in Kallsjö', run: () => hud.say('The village is quieter now. You can walk it as long as you like.', 5000) },
-        { label: 'Start over', run: () => store.newGame() },
+      hud.ask('Chapter 1 is over.', [
+        { label: 'Go north to Järnfors', run: () => this.goTo('jarnfors') },
+        { label: 'Stay in Kallsjö a while', run: () => hud.say('The village is quieter now. When you are ready, rest at home and take the road north.', 6000) },
       ]);
     });
   }
@@ -930,7 +953,10 @@ export class WorldScene extends Phaser.Scene {
   private offerRest(): void {
     const weavesTaught = !!store.state.flags[WEAVES_TAUGHT_FLAG];
     const ending = chapterOneCanEnd(store.state);
+    // Chapter 1 is over and she is still in Kallsjö: home is where the road north starts.
+    const northbound = store.state.chapter >= 2 && store.state.map === 'kallsjo';
     hud.ask(ending ? 'Rest at home? The road across the ice is open now. Anything could come over it by morning.' : 'Rest at home? Power refills, a wound heals, and Craft effects fade.', [
+      ...(northbound ? [{ label: 'Go north to Järnfors', run: () => this.goTo('jarnfors') }] : []),
       ...(weavesTaught ? [{ label: 'Refocus Weaves', run: () => weaveScreen.open() }] : []),
       {
         label: 'Rest',
@@ -1033,7 +1059,7 @@ export class WorldScene extends Phaser.Scene {
   /** What Signe's feet are on, for the sound of her steps. */
   private surfaceAt(t: Tile): Surface {
     const frame = this.world.groundFrame(t.x, t.y);
-    if (frame === WOOD_FRAME) return 'wood';
+    if (frame === WOOD_FRAME || frame === STONE_FRAME || frame === DAM_FRAME) return 'wood';
     return this.world.isIce(t.x, t.y) ? 'ice' : 'snow';
   }
 

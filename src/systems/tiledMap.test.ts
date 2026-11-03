@@ -1,3 +1,4 @@
+import jarnforsJson from '../../assets/maps/jarnfors.json';
 import { describe, expect, it } from 'vitest';
 import { parseTiledMap, type TiledJson } from './tiledMap';
 import { findPath } from './pathfinding';
@@ -151,5 +152,22 @@ describe('the Kallsjö map', () => {
       expect(x).toBeDefined();
       expect(findPath(map, map.spawn, { x: x!, y: edge })).not.toBeNull();
     }
+  });
+});
+
+describe('the Järnfors map', () => {
+  const j = parseTiledMap(jarnforsJson as TiledJson);
+  it('is one district of 128 x 128 with a walkable south gate', () => {
+    expect([j.width, j.height]).toEqual([128, 128]);
+    expect(j.isBlocked(j.spawn.x, j.spawn.y)).toBe(false);
+  });
+
+  it('has the places of the chapter 2 draft', () => {
+    const ids = j.places.map((p) => p.id);
+    for (const id of ['dam-crest', 'dam-statue', 'gallery', 'hollow-house', 'apprentices-hall', 'inn', 'tithe-house', 'lower-quarter', 'relief-cut']) expect(ids).toContain(id);
+  });
+
+  it('has an inn to rest at', () => {
+    expect(j.objects.some((o) => o.type === 'inn' && o.rest)).toBe(true);
   });
 });

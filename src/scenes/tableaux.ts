@@ -282,3 +282,46 @@ export const northPass: Painter = (g, t) => {
   g.fillStyle = '#8a2f2a';
   g.fillRect(Math.round(W / 2 + (H - fy) * 0.15) - 1, Math.round(fy) - 5, 3, 5);
 };
+
+// --- Arriving in Järnfors --------------------------------------------------------------
+
+export const gorgeDam: Painter = (g, t) => {
+  sky(g, [30, 36, 56], [118, 108, 120], 70);
+  stars(g, t, 16, 30);
+  // The gorge walls, close on both sides.
+  g.fillStyle = '#2a2e38';
+  for (let y = 0; y < H; y++) {
+    const w = 40 + Math.round(Math.sin(y / 9) * 4) + Math.round((H - y) * 0.15);
+    g.fillRect(0, y, w, 1);
+    g.fillRect(W - w, y, w, 1);
+  }
+  // The dam: a long grey wall across the gorge, the statue on its crest.
+  g.fillStyle = '#6a6e78';
+  g.fillRect(40, 44, 160, 22);
+  g.fillStyle = '#7d818b';
+  g.fillRect(40, 44, 160, 3);
+  g.fillStyle = '#4c5058';
+  for (let x = 44; x < 198; x += 8) g.fillRect(x, 50 + ((x / 8) % 2) * 6, 1, 6);
+  g.fillStyle = '#3a3d44';
+  g.fillRect(118, 38, 3, 6);
+  g.fillRect(117, 40, 5, 2);
+  // The spillway's water, falling and moving.
+  for (let y = 66; y < H; y++) {
+    const phase = Math.floor(t / 120 + y) % 3;
+    g.fillStyle = phase === 0 ? '#9fb9c9' : '#2a4558';
+    g.fillRect(122 - Math.floor((y - 66) * 0.1), y, 6 + Math.floor((y - 66) * 0.2), 1);
+  }
+  // The city below: lit windows climbing the terraces.
+  const r = rand(77);
+  for (let i = 0; i < 34; i++) {
+    const x = 48 + Math.floor(r() * 144);
+    const y = 76 + Math.floor(r() * 66);
+    if (x > 114 && x < 138) continue;
+    g.fillStyle = '#3a3a40';
+    g.fillRect(x - 3, y - 2, 8, 6);
+    if (r() < 0.7) {
+      g.fillStyle = Math.sin(t / 400 + i) > -0.6 ? '#e6b46a' : '#b88a4a';
+      g.fillRect(x, y, 2, 2);
+    }
+  }
+};

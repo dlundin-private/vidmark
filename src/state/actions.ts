@@ -381,6 +381,21 @@ export function sketchSeen(
   return { newTiles, found };
 }
 
+/**
+ * Signe goes to another map: what she did and saw here is put aside, and the
+ * other map comes back as she left it (or fresh, the first time).
+ */
+export function travel(state: GameState, map: string): void {
+  if (state.map === map) return;
+  state.elsewhere[state.map] = { world: state.world, sketched: state.sketched, position: state.position };
+  const back = state.elsewhere[map];
+  delete state.elsewhere[map];
+  state.world = back?.world ?? { objects: {}, tiles: {} };
+  state.sketched = back?.sketched ?? { tiles: '', places: [] };
+  state.position = back?.position ?? null;
+  state.map = map;
+}
+
 /** Records a promise Signe made; whether it was kept is decided later (chapter 5 tests them). */
 export function makePromise(state: GameState, id: string, to: NpcId): void {
   if (state.promises.some((p) => p.id === id)) return;

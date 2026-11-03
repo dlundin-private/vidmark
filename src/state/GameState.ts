@@ -4,7 +4,7 @@ import { NPCS, type NpcId } from '../../content/data/npcs';
 import type { Tile } from '../iso/types';
 
 /** Bump when the shape changes, and add a migration in save.ts. */
-export const STATE_VERSION = 5;
+export const STATE_VERSION = 6;
 
 /**
  * kept: Signe still has it. burned: spent for Power; gone.
@@ -79,6 +79,13 @@ export interface PromiseRecord {
 
 export type FlagValue = boolean | number | string;
 
+/** Everything about one map that Signe changed or saw, kept while she is somewhere else. */
+export interface MapMemory {
+  world: WorldState;
+  sketched: { tiles: string; places: string[] };
+  position: Tile | null;
+}
+
 /** What a finished chapter decided, kept for the chapters after it (src/systems/chapters.ts). */
 export interface ChapterRecord {
   chapter: number;
@@ -131,6 +138,10 @@ export interface GameState {
   sketched: { tiles: string; places: string[] };
   /** The chapter she is in (content/data/chapters.ts). */
   chapter: number;
+  /** The map she is on (src/systems/maps.ts). `world`, `sketched` and `position` belong to it. */
+  map: string;
+  /** The other maps she has been on, as she left them. */
+  elsewhere: Record<string, MapMemory>;
   /** What each finished chapter decided, oldest first. */
   chapters: ChapterRecord[];
 }
@@ -162,5 +173,7 @@ export function createNewGame(basePower: number): GameState {
     sketched: { tiles: '', places: [] },
     chapter: 1,
     chapters: [],
+    map: 'kallsjo',
+    elsewhere: {},
   };
 }

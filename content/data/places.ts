@@ -57,4 +57,44 @@ export const PLACES: Record<string, PlaceNote> = {
   },
   'pass-south': { found: 'The pass south, out of the valley. Snowed shut this winter.' },
   'pass-north': { found: 'The pass north, toward Kronvall.' },
+
+  // --- Järnfors (chapter 2; scripts/generate-jarnfors-map.mjs) ---
+  'south-gate': { found: 'The south gate of Järnfors, where the Tithe road comes in.' },
+  'dam-crest': { found: "Maren's Dam. A wall of stone across the gorge, a frozen lake behind it." },
+  'dam-statue': {
+    found: 'Saint Maren on the crest, one hand on the stone.',
+    hint: 'There are words on the plinth.',
+    learnedFlag: 'read_dam_statue',
+    learned: '"She held the water." Scratched beneath: "with whose hands?"',
+  },
+  gallery: {
+    found: 'An iron door in the dam face.',
+    hint: 'It stands half open.',
+    learnedFlag: 'seen_gallery',
+    learned: 'A passage into the dam, fallen in a few paces along. Water drips behind the stones.',
+  },
+  'hollow-house': {
+    found: 'The Hollow-house, where the city tends its blank people.',
+    learnedFlag: 'seen_hollow_house',
+    learned: 'Two rows of cots. An old woman feeding someone at the window upstairs.',
+  },
+  'apprentices-hall': {
+    found: "The apprentices' hall. Halvar taught the dam here.",
+    hint: 'Marks are cut into the lintel.',
+    learnedFlag: 'read_lintel',
+    learned: 'Nine marks, one for each apprentice. The ninth is scratched out.',
+  },
+  inn: { found: 'The inn. A bed, a fire, and nobody who knows me.' },
+  'tithe-house': {
+    found: 'The Tithe-house, barred, where people wait for the sled north.',
+    learnedFlag: 'seen_tithe_house',
+    learned: 'The slate of names by the door has just been wiped.',
+  },
+  'mason-yard': { found: "Gudmund's yard: blocks and crates for the dam." },
+  'lower-quarter': { found: 'The lower quarter, packed along the river below the dam.' },
+  'relief-cut': {
+    found: 'A channel hidden in the west wall, running down from the dam.',
+    learnedFlag: 'found_relief_cut',
+    learned: 'Sealed at the top with a plug of mortared blocks. One letter cut into it: H.',
+  },
 };

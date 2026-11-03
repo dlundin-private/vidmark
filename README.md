@@ -107,6 +107,10 @@ Crossing by the hermit's route avoids the wolves altogether.
 - After the wolf fight, the hole where a wolf went through stays open, and tracks run north where the pack fled.
 - Hollow someone while another villager is close by and they see it. Then the village knows: everyone says so, and nobody offers Signe a memory again.
 
+## Chapter 2: Järnfors (being built)
+
+After chapter 1, the road north leads to Järnfors: a builders' city in a gorge under Maren's Dam. Step 1 of its build is done: travel, the district to walk and sketch, and places with lore to find. People, Kin, the quests, the dam crisis and the fight come next (docs/decisions.md). To jump straight there, use **Start chapter 2** in the debug panel.
+
 ## The beginning and the end
 
 A new game opens with a short film that introduces Signe. Chapter 1 ends once the ice road is open and Signe rests at home: in the morning the Tithe has taken Lilja across it. A closing film tells how Signe got there (who gave, who she emptied, what she burned, the promise) and points north to chapter 2, Järnfors, which is drafted in `docs/chapter-2-jarnfors.md` but not built. The save keeps what chapter 1 decided.

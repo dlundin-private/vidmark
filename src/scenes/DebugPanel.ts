@@ -3,6 +3,7 @@ import { NPCS, type NpcId } from '../../content/data/npcs';
 import { DEFAULT_TUNING, TUNING_LABELS, type TuningKey } from '../../content/data/tuning';
 import { loadError, store, tuning } from '../game';
 import * as A from '../state/actions';
+import { startChapterTwo } from '../systems/chapters';
 
 /**
  * A DOM overlay for testing and tuning: inspect the GameState, poke it, save
@@ -94,6 +95,13 @@ export function installDebugPanel(): void {
             if (!confirm('Start a new game? The current save is overwritten when Signe next stops.')) return null;
             store.newGame();
             return 'New game started.';
+          })),
+          button('Start chapter 2', act(() => {
+            if (!confirm('Start chapter 2 from a default chapter 1 (nobody hollowed, the nets mended)? The current game is replaced.')) return null;
+            store.newGame();
+            store.rebuild((st) => startChapterTwo(st));
+            store.save();
+            return 'Chapter 2 started at the south gate of Järnfors.';
           })),
           button('Copy JSON', act(() => {
             void navigator.clipboard?.writeText(store.exportJson());

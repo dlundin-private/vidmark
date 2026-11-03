@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest';
+import jarnforsJson from '../../assets/maps/jarnfors.json';
+import { parseTiledMap, type TiledJson } from './tiledMap';
 import storyJson from '../../content/ink/main.ink';
 import { DEFAULT_TUNING } from '../../content/data/tuning';
 import { NPCS } from '../../content/data/npcs';
@@ -345,3 +347,19 @@ describe('dialogue', () => {
   });
 });
 
+
+describe('Järnfors', () => {
+  it('has words for every place there that can be looked at closely', () => {
+    const { runner } = setup();
+    const knots = parseTiledMap(jarnforsJson as TiledJson).objects.filter((o) => o.inspect).map((o) => o.inspect!);
+    expect(knots.length).toBeGreaterThan(4);
+    for (const knot of knots) expect(play(runner, knot).at(-1)).toEqual({ kind: 'end' });
+  });
+
+  it("reads Jon's name on the lintel only if Signe has seen it before", () => {
+    const { store, runner } = setup();
+    expect(text(play(runner, 'place_apprentices_hall'))).not.toContain('JON');
+    store.update((s) => A.setFlag(s, 'read_doorpost', true));
+    expect(text(play(runner, 'place_apprentices_hall'))).toContain('JON');
+  });
+});

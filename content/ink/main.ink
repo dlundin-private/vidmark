@@ -20,6 +20,7 @@ INCLUDE meetings.ink
 INCLUDE death.ink
 INCLUDE places.ink
 INCLUDE hollowing.ink
+INCLUDE jarnfors-places.ink
 
 -> END
 

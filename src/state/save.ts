@@ -36,6 +36,8 @@ const MIGRATIONS: Record<number, (state: Record<string, unknown>) => Record<stri
   3: (s) => ({ ...s, sketched: { tiles: '', places: [] } }),
   // 5: chapters. Everyone so far is in chapter 1, and is past the intro.
   4: (s) => ({ ...s, chapter: 1, chapters: [], flags: { ...((s.flags ?? {}) as Record<string, unknown>), intro_seen: true } }),
+  // 6: more than one map. Everyone so far is in Kallsjö.
+  5: (s) => ({ ...s, map: 'kallsjo', elsewhere: {} }),
 };
 
 export function serialize(state: GameState, now = new Date()): string {
@@ -91,6 +93,7 @@ function checkShape(s: Record<string, unknown>): void {
   if (!isObject(s.impressions)) fail('memories of people are missing');
   if (!Array.isArray(s.heldWeaves)) fail('carried Weaves are missing');
   if (typeof s.chapter !== 'number' || !Array.isArray(s.chapters)) fail('the chapter is missing');
+  if (typeof s.map !== 'string' || !isObject(s.elsewhere)) fail('the map is missing');
   if (!isObject(s.sketched) || typeof s.sketched.tiles !== 'string' || !Array.isArray(s.sketched.places)) fail('the journal map is missing');
   if (s.position !== null && !isObject(s.position)) fail('position is invalid');
 }

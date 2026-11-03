@@ -253,7 +253,10 @@ export class Journal {
 const ICE = new Set([4, 5, 10]);
 const THIN = 13;
 const WATER = 6;
-const ROAD = new Set([8, 9]);
+/** Road-like ground: roads, and Järnfors' paving and dam stone. */
+const ROAD = new Set([8, 9, 14, 15]);
+/** Järnfors' river: drawn like open water. */
+const RIVER = 16;
 const ROCK = 12;
 const WOOD = 11;
 
@@ -285,7 +288,7 @@ function drawSketch(canvas: HTMLCanvasElement, src: SketchSource, explored: Expl
           n++;
           const fr = src.frame(x, y);
           const obj = src.objectAt(x, y) ?? '';
-          if (ICE.has(fr) || fr === WATER) ice++;
+          if (ICE.has(fr) || fr === WATER || fr === RIVER) ice++;
           if (fr === THIN) thin++;
           if (fr === ROCK || obj.startsWith('mountain')) rock++;
           if (obj.startsWith('birch')) trees++;
