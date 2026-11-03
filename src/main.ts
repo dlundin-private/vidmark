@@ -4,6 +4,7 @@ import { fitToWindow } from './pixelScale';
 import { BootScene } from './scenes/BootScene';
 import { installDebugPanel } from './scenes/DebugPanel';
 import { WorldScene } from './scenes/WorldScene';
+import { sound } from './audio/sound';
 
 function currentFit() {
   return fitToWindow(VIEW_SHORT_SIDE, window.innerWidth, window.innerHeight, window.devicePixelRatio || 1);
@@ -42,11 +43,16 @@ installDebugPanel();
 if (import.meta.env.DEV) {
   // For poking at the game from the browser console during development.
   (window as unknown as { game: Phaser.Game }).game = game;
-  // A faint cold vignette at the edges of the view, under every overlay.
-  const vignette = document.createElement('div');
-  vignette.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:1;background:radial-gradient(ellipse at 50% 45%, rgba(0,0,0,0) 55%, rgba(12,22,38,0.38) 100%);';
-  document.body.appendChild(vignette);
 }
+
+// A faint cold vignette at the edges of the view, under every overlay.
+const vignette = document.createElement('div');
+vignette.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:1;background:radial-gradient(ellipse at 50% 45%, rgba(0,0,0,0) 55%, rgba(12,22,38,0.38) 100%);';
+document.body.appendChild(vignette);
+
+// Sound starts with the first tap or key (browsers allow nothing earlier).
+sound.mountButton();
+for (const type of ['pointerdown', 'keydown'] as const) window.addEventListener(type, () => sound.unlock(), { capture: true });
 // Browser zoom changes devicePixelRatio and fires resize too; phones also fire orientationchange.
 window.addEventListener('resize', applyFit);
 window.addEventListener('orientationchange', () => setTimeout(applyFit, 150));

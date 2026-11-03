@@ -1,6 +1,7 @@
 import { KEEPSAKES, type KeepsakeId } from '../../content/data/keepsakes';
 import { NPCS } from '../../content/data/npcs';
 import * as A from '../state/actions';
+import { sound } from '../audio/sound';
 import type { GameStore } from '../state/store';
 import { questStatuses } from '../systems/quests';
 import { rememberedPeople } from '../systems/impressions';
@@ -234,6 +235,7 @@ export class Journal {
     const burn = button(`Burn it: +${gain} Power`, () => {
       this.confirmingBurn = null;
       this.store.update((st, t) => A.burnKeepsake(st, id, t));
+      sound.play('burn');
       this.store.save();
     });
     burn.className = 'keepsake-burn';

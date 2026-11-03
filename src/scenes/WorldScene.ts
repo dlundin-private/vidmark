@@ -41,6 +41,7 @@ import { FightView } from './FightView';
 import { WolfFight, encodeTrackStarts, trackTiles, wolfStarts, type FightEvent } from '../systems/combat';
 import { TILESET_KEY } from './BootScene';
 import mapJson from '../../assets/maps/kallsjo.json';
+import { sound, type Surface } from '../audio/sound';
 
 const SIGNE_SPRITE = 'signe';
 /** The wolf fight is on (saved, so a reload brings the pack back), and it is over. */
@@ -51,6 +52,8 @@ const FLAG_WOLF_TRACKS = 'wolf_tracks';
 const MARKER_SPRITE = 'marker';
 /** Tileset frame drawn by the collision debug overlay (the "blocked" tile). */
 const BLOCKED_FRAME = 7;
+/** Tileset frame of the wooden jetty (her steps sound different on it). */
+const WOOD_FRAME = 11;
 /** Extra world pixels around the camera view that are drawn too, so edges never pop in. */
 const VIEW_MARGIN = 64;
 /** Tints for objects under a Craft effect. */
@@ -341,6 +344,7 @@ export class WorldScene extends Phaser.Scene {
     try {
       const events = store.update(updateQuests);
       for (const e of events) hud.announce(e.kind === 'started' ? `New quest: ${e.quest.title}` : `Quest done: ${e.quest.title}`, e.text);
+      if (events.length > 0) sound.play('chime');
       if (events.length > 0) store.save();
     } finally {
       this.checkingQuests = false;
@@ -352,6 +356,8 @@ export class WorldScene extends Phaser.Scene {
     if (!wouldBreakUnderPerson(this.world, to)) return false; // the common case: no state change, no redraw
     const through = store.update((s, t) => personStepsOnto(this.world, s, t, id, to));
     if (through) {
+      sound.play('crack');
+      sound.play('splash');
       const name = NPCS.find((n) => n.id === id)!.name;
       bubbles.play([{ who: id, text: 'The ice! Help, the ice—' }]);
       hud.say(`${name} went through the ice and dragged themself out, soaked and bleeding.`, 6000);
@@ -385,6 +391,7 @@ export class WorldScene extends Phaser.Scene {
     }
     if (this.fight) this.updateFight(delta);
     this.updateSnow(delta);
+    this.updateAmbience();
     this.placeSigne();
     this.refreshView();
     this.sortDepth();
@@ -476,6 +483,8 @@ export class WorldScene extends Phaser.Scene {
     store.save();
     hud.select(null); // clears the "tap what to work on" prompt, so say the result after
     hud.say(`${message} (−${plan.cost} Power)`);
+    sound.play(done.spell.action);
+    if (done.spell.action === 'weaken' && done.tiles && done.spell.modifier !== 'trigger') sound.play('crack');
     if (this.fight) this.afterFightCast(done);
   }
 
@@ -517,6 +526,7 @@ export class WorldScene extends Phaser.Scene {
     this.spell = null;
     hud.select(null);
     const resumed = !!store.state.flags[FLAG_WOLVES_HUNTING];
+    sound.play('howl');
     store.update((s) => A.setFlag(s, FLAG_WOLVES_HUNTING, true));
     store.save(); // a reload in the middle of the fight brings the pack back
     hud.announce(
@@ -578,6 +588,7 @@ export class WorldScene extends Phaser.Scene {
         run: () => {
           if (!this.fight || logic.wolfBeside() !== wolf) return;
           store.update((s, t) => A.hollowWolf(s, t));
+          sound.play('hollow');
           const events = logic.remove(wolf.id, 'hollowed');
           logic.spend();
           hud.say(`Hunger, cold, the pack: it pours into you. +${tuning.values.wolfHollowingReserve} Power, once.`, 5000);
@@ -600,13 +611,17 @@ export class WorldScene extends Phaser.Scene {
 
   private fightEvent(e: FightEvent): void {
     const t = tuning.values;
+    if (e.kind === 'hit') sound.play('hit');
     if (e.kind === 'bite') {
+      sound.play('bite');
       store.update((s, tt) => {
         for (let i = 0; i < t.wolfBiteWounds; i++) A.addWound(s, tt);
       });
       if (!deathScreen.isOpen) hud.say('Teeth in your arm. You tear free.', 2500);
     }
     if (e.kind === 'drowned') {
+      sound.play('crack');
+      sound.play('splash');
       // It stays open: a dark patch on the road where a wolf went through (step 7).
       store.update((s) => A.breakIce(s, e.at.x, e.at.y, Number.MAX_SAFE_INTEGER));
       hud.say('The ice opens under the wolf. It does not come up.', 3000);
@@ -683,6 +698,7 @@ export class WorldScene extends Phaser.Scene {
     let previous = before;
     for (const tile of entered) {
       this.sketchMemory.push(tile);
+      sound.step(this.surfaceAt(tile));
       this.noteCrossing(previous, tile);
       if (this.meetsWolves(previous, tile)) {
         this.walker.setPath([]);
@@ -691,6 +707,8 @@ export class WorldScene extends Phaser.Scene {
       }
       const through = wouldBreakUnderSigne(this.world, tile) && store.update((s, t) => stepOnto(this.world, s, t, tile));
       if (through) {
+        sound.play('crack');
+        sound.play('splash');
         this.walker.teleport(previous);
         if (deathScreen.isOpen) return;
         hud.say(this.world.isThinIce(tile.x, tile.y) || this.world.band && tile.y >= this.world.band.y0 && tile.y <= this.world.band.y1
@@ -719,7 +737,10 @@ export class WorldScene extends Phaser.Scene {
     }
     for (const id of result.found) {
       const place = map.places.find((p) => p.id === id);
-      if (place) hud.announce(`Found: ${place.name}`, PLACES[id]?.found ?? '');
+      if (place) {
+        hud.announce(`Found: ${place.name}`, PLACES[id]?.found ?? '');
+        sound.play('chime');
+      }
     }
     if (forgotten > 0 && result.newTiles > 0) hud.say('You walked a long way without stopping. The start of it is a blur on the page.', 4500);
   }
@@ -743,6 +764,7 @@ export class WorldScene extends Phaser.Scene {
    * home (decided by Daniel), told as a memory she had wrong.
    */
   private die(): void {
+    sound.play('fall');
     this.walker.setPath([]);
     this.pendingVisit = null;
     hud.select(null);
@@ -796,12 +818,16 @@ export class WorldScene extends Phaser.Scene {
       const murmur = whom && ambientDialogue.linesOf(`hunger_${whom.id}`)[0];
       if (murmur) {
         hud.say(`An Echo: “${murmur.text}”`, 5000);
+        sound.play('echo');
         return;
       }
     }
     const who = echoes[Math.floor(Math.random() * echoes.length)]!;
     const line = ambientDialogue.linesOf(`echo_${who}`)[0];
-    if (line) hud.say(`An Echo: “${line.text}”`, 5000);
+    if (line) {
+      hud.say(`An Echo: “${line.text}”`, 5000);
+      sound.play('echo');
+    }
   }
 
   /** Someone close enough to see Signe hollow a person (not the person, not another Hollow). */
@@ -953,6 +979,31 @@ export class WorldScene extends Phaser.Scene {
     this.lastSortKey = '';
   }
 
+  /** What Signe's feet are on, for the sound of her steps. */
+  private surfaceAt(t: Tile): Surface {
+    const frame = this.world.groundFrame(t.x, t.y);
+    if (frame === WOOD_FRAME) return 'wood';
+    return this.world.isIce(t.x, t.y) ? 'ice' : 'snow';
+  }
+
+  private fireAt: Tile | null | undefined;
+  private ambienceTile = '';
+
+  /** Wind blows harder out on the open ice; the fire crackles when she is near it. */
+  private updateAmbience(): void {
+    const t = this.walker.tile;
+    const key = `${t.x},${t.y}`;
+    if (key === this.ambienceTile) return;
+    this.ambienceTile = key;
+    sound.setExposure(this.world.isIce(t.x, t.y) ? 1 : 0.25);
+    if (this.fireAt === undefined) {
+      const fire = this.world.objects.find((o) => o.type === 'firepit');
+      this.fireAt = fire ? { x: fire.footprint.x, y: fire.footprint.y } : null;
+    }
+    const d = this.fireAt ? distance(t, this.fireAt) : 99;
+    sound.setFireNearness(Math.max(0, 1 - d / 7));
+  }
+
   /** Snow drifts down across the view; flakes wrap around it, on whole pixels. */
   private updateSnow(delta: number): void {
     const v = this.cameras.main.worldView;
@@ -1047,6 +1098,7 @@ export class WorldScene extends Phaser.Scene {
         // Not the Hearth: a one-time reserve, so tell the player where the Power went.
         const gained = `+${tuning.values.hollowingReserve} Power, once. Your Hearth will refill less from now on.`;
         // Anyone close by sees it, and then the village knows (Daniel: only by evidence).
+        sound.play('hollow');
         const witness = this.witnessOf(who.id);
         if (witness) {
           store.update((s) => A.seenHollowing(s, who.id, witness.id));
