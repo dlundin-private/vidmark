@@ -3,6 +3,7 @@
 
 === gerda ===
 { is_hollowed("gerda"): -> hollowed("Old Gerda") }
+{ flag("hurt_by_trap_gerda"): Old Gerda: I went through the ice like a girl. At my age. Someone has been at it, and I'd like to know who. }
 { flag("met_gerda"):
     Old Gerda: Sit, if you're staying.
 - else:

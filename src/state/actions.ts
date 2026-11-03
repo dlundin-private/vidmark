@@ -90,6 +90,16 @@ function teach(state: GameState, npc: NpcId, levels: number): void {
   if (skill) state.skills[skill].taught += levels;
 }
 
+/**
+ * A villager went through Signe's trap ice and climbed out hurt (decided by
+ * Daniel: hurt, not killed). If they were in her Hearth, they lose faith in her.
+ * Their dialogue can read the flag.
+ */
+export function hurtByTrap(state: GameState, npc: NpcId, t: Tuning): void {
+  state.flags[`hurt_by_trap_${npc}`] = true;
+  if (state.npcs[npc].offered && !state.npcs[npc].hollowed) setFaithLost(state, npc, true, t);
+}
+
 export function setFaithLost(state: GameState, npc: NpcId, lost: boolean, t: Tuning): void {
   state.npcs[npc].faithLost = lost;
   clampPower(state, t);

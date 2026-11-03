@@ -13,14 +13,16 @@ export interface NpcDef {
   startsHollow?: boolean;
   /** The skill their memories deepen (design: "memories teach"). */
   teaches?: CraftAction;
+  /** The memory they give Signe as an Offering, as her Hearth shows it. Drafts. */
+  offering?: string;
   /** How they move around their spot on the map. Radius 0: they stay put, but others can walk over to them. */
   wander: { radius: number; onIce?: boolean };
 }
 
 // People in the vertical slice (docs/design.md, "Vertical slice: content").
 export const NPCS: readonly NpcDef[] = [
-  { id: 'ebbe', name: 'Ebbe', role: 'Net-mender who has forgotten his craft', domain: 'craft', teaches: 'mend', wander: { radius: 3 } },
-  { id: 'hermit', name: 'The hermit', role: 'Remembers the old safe route across the ice', domain: 'kin', wander: { radius: 4 } },
+  { id: 'ebbe', name: 'Ebbe', role: 'Net-mender who has forgotten his craft', domain: 'craft', teaches: 'mend', offering: 'His wife on the jetty, the first spring, laughing at his clumsy knots', wander: { radius: 3 } },
+  { id: 'hermit', name: 'The hermit', role: 'Remembers the old safe route across the ice', domain: 'kin', offering: 'The one safe way across the cracked ice', wander: { radius: 4 } },
   { id: 'gerda', name: 'Old Gerda', role: 'Her grandmother knew Maren as a girl', domain: 'thought', wander: { radius: 2 } },
   { id: 'olle', name: 'Reeve Olle', role: 'The Tithe-collector', domain: 'thought', wander: { radius: 4 } },
   { id: 'hollow', name: 'The Hollow', role: 'The blank man in the boathouse', domain: 'craft', startsHollow: true, wander: { radius: 0 } },

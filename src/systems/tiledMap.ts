@@ -59,6 +59,8 @@ export interface IsoMap extends WalkGrid {
   readonly ground: readonly number[];
   readonly objects: readonly MapObject[];
   readonly spawn: Tile;
+  /** Whole-number map properties (spawnX, bandY0, safeRouteX...). */
+  readonly numbers: Readonly<Record<string, number>>;
 }
 
 const LAYER_GROUND = 'ground';
@@ -106,9 +108,13 @@ export function parseTiledMap(json: TiledJson): IsoMap {
     y: numberProperty(json.properties, 'spawnY') ?? 0,
   };
 
+  const numbers: Record<string, number> = {};
+  for (const p of json.properties ?? []) if (typeof p.value === 'number') numbers[p.name] = p.value;
+
   return {
     width,
     height,
+    numbers,
     tileWidth: json.tilewidth,
     tileHeight: json.tileheight,
     ground,

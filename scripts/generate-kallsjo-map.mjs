@@ -18,7 +18,7 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 // Global tile ids: tileset order in generate-placeholders.mjs, firstgid 1.
 const GID = {
   snow: 1, snow2: 2, shore: 3, shore2: 4, ice: 5, ice2: 6, water: 7, blocked: 8,
-  road: 9, road2: 10, iceRoad: 11, wood: 12, rock: 13,
+  road: 9, road2: 10, iceRoad: 11, wood: 12, rock: 13, thinIce: 14,
 };
 
 // --- Noise -------------------------------------------------------------------
@@ -214,8 +214,18 @@ for (const [dx, dy] of [[-2, -2], [2, -1], [-1, 2]]) place('ruin', ISLAND.x + dx
 // A hole in the ice away from the road.
 for (const [dx, dy] of [[0, 0], [1, 0], [0, 1], [1, 1], [2, 1], [1, 2]]) set(LAKE.x + 30 + dx, LAKE.y - 18 + dy, 'water');
 
+// The ice road is breaking up: a band of cracked ice, three tiles deep, runs right
+// across the lake halfway over and cuts the road in two (quest: The ice road).
+const BAND = { y0: Math.round((north.y + sy) / 2) - 1, y1: Math.round((north.y + sy) / 2) + 1 };
+for (let y = BAND.y0; y <= BAND.y1; y++) {
+  for (let x = 0; x < SIZE; x++) if (get(x, y) === 'ice' || get(x, y) === 'iceRoad') set(x, y, 'thinIce');
+}
+// The hermit remembers one place where the cracked ice is thick enough to walk: east of the road.
+const SAFE_ROUTE_X = V.x + 16;
+
 // Ice road markers every 6 tiles along both edges.
 for (let y = north.y + 3; y <= sy - 3; y += 6) {
+  if (y >= BAND.y0 - 1 && y <= BAND.y1 + 1) continue;
   for (const x of [V.x + 2, V.x + 6]) if (get(x, y) === 'ice' && free(x, y, 1, 1)) place('ice-marker', x, y);
 }
 
@@ -278,6 +288,7 @@ for (let y = 0; y < SIZE; y++) {
       snow: alt ? GID.snow2 : GID.snow,
       shore: alt ? GID.shore2 : GID.shore,
       ice: alt ? GID.ice2 : GID.ice,
+      thinIce: GID.thinIce,
       water: GID.water,
       mountain: GID.rock,
       road: alt ? GID.road2 : GID.road,
@@ -318,10 +329,17 @@ const map = {
   properties: [
     { name: 'spawnX', type: 'int', value: spawn.x },
     { name: 'spawnY', type: 'int', value: spawn.y },
+    // The cracked-ice band (rows) and the hermit's safe route through it (one column).
+    { name: 'bandY0', type: 'int', value: BAND.y0 },
+    { name: 'bandY1', type: 'int', value: BAND.y1 },
+    { name: 'safeRouteX', type: 'int', value: SAFE_ROUTE_X },
+    // Ice road columns, which the village marks safe once the road is open again.
+    { name: 'iceRoadX0', type: 'int', value: V.x + 3 },
+    { name: 'iceRoadX1', type: 'int', value: V.x + 5 },
   ],
   tilesets: [{
-    firstgid: 1, name: 'tiles', image: '../sprites/tiles.png', imagewidth: TILE_W * 13, imageheight: TILE_H,
-    tilewidth: TILE_W, tileheight: TILE_H, tilecount: 13, columns: 13, margin: 0, spacing: 0,
+    firstgid: 1, name: 'tiles', image: '../sprites/tiles.png', imagewidth: TILE_W * 14, imageheight: TILE_H,
+    tilewidth: TILE_W, tileheight: TILE_H, tilecount: 14, columns: 14, margin: 0, spacing: 0,
   }],
   layers: [
     tileLayer(1, 'ground', ground),
@@ -342,7 +360,7 @@ const W = SIZE * 2 * (PX / 2) * 1, H = SIZE * 2 * (PY / 2);
 const img = Buffer.alloc(W * H * 4);
 const colour = {
   snow: [221, 228, 236], shore: [138, 130, 117], ice: [167, 198, 217], water: [44, 70, 88], mountain: [109, 111, 114],
-  road: [184, 170, 140], iceRoad: [214, 226, 234], wood: [122, 92, 68],
+  road: [184, 170, 140], iceRoad: [214, 226, 234], wood: [122, 92, 68], thinIce: [93, 127, 150],
 };
 const objColour = (name) =>
   name.startsWith('mountain') ? [150, 152, 156]
@@ -381,6 +399,7 @@ const labels = [
   label('Pass south (way out)', V.x, SIZE - 12),
   label('Pass north', V.x + 4, 8, 14),
   label('Open water', LAKE.x + 31, LAKE.y - 17),
+  label('Cracked ice', V.x - 30, BAND.y0),
   label('Birch forest', 60, 175),
   label('Birch forest', 190, 60),
   label('Mountains', 20, 20, 14),

@@ -9,6 +9,8 @@ export interface PeopleWorld extends WalkGrid {
   isIce(x: number, y: number): boolean;
   /** Tells the world where someone now stands, so they block that tile. */
   placePerson(id: NpcId, tile: Tile): void;
+  /** Someone is about to step onto a tile. Return true if it gave way under them: they stay where they were. */
+  stepping?(id: NpcId, from: Tile, to: Tile): boolean;
 }
 
 export interface PersonSetup {
@@ -176,6 +178,14 @@ export class PeopleSim {
     }
     p.blockedFor = 0;
     p.route.shift();
+    if (this.world.stepping?.(p.id, p.walker.tile, next)) {
+      // Went through and climbed back out: stand still a good while.
+      p.route = [];
+      if (p.meeting) this.endMeeting(p.meeting);
+      p.mode = 'idle';
+      p.until = this.now + 4 * this.timing.idleMs[1];
+      return;
+    }
     this.world.placePerson(p.id, next);
     p.walker.setPath([next]);
   }

@@ -31,7 +31,8 @@ Build steps 1–4 of 7 are done: Kallsjö, a 256×256 valley with a frozen lake,
 | Show blocked tiles | | C |
 | Use Craft | Tap an action at the bottom, then tap what to work on | 1–4, then click; Esc cancels |
 | Cast a saved Weave | Tap it at the bottom, then tap where | 5–9 |
-| Craft a Weave | Weaves… | V |
+| Craft a Weave (once Ebbe has taught you) | Weaves… | V |
+| Quests, Hearth, Keepsakes | Journal | J |
 | Rest (refill Power) | Tap Signe's home | |
 | Debug panel | Gear button, top right | ` (backtick) |
 
@@ -55,6 +56,15 @@ In the Weave screen she combines an action, a target (object, one tile of ice, o
 Power refills when she rests at home. Mend and Weaken grow surer with use on new things.
 
 Signe can take three wounds. The third kills her, and the game goes back to the last time she rested at home: resting is also where she'll pick up again.
+
+## Quests
+
+Both slice quests are in, with their progress in the journal and a banner when one starts or ends:
+
+- **The net-mender's hands** (Ebbe): mend his two torn net racks, or accept the memory he offers. Either way, he then teaches Signe to prepare Weaves.
+- **The ice road**: a band of cracked ice cuts the road across the lake. Make it hold with Strengthen (an area Weave covers the road's width), or get the safe route from the hermit's memory; then cross. Hollowing the hermit, the design's third way, comes with build step 5.
+
+The journal's **Hearth** page shows who has given Signe a memory, what they gave and the Power each adds, stacked like a pyramid on her own.
 
 ## The village
 
@@ -95,7 +105,7 @@ npm run gen:map   # the 256x256 Kallsjö map, plus docs/map-overview.svg
 
 - [Phaser 3](https://phaser.io/) with strict TypeScript, built with [Vite](https://vite.dev/)
 - Isometric [Tiled](https://www.mapeditor.org/) maps, 32×16 px tiles
-- Fixed 480×270 resolution, scaled by whole device pixels only so pixels stay sharp on any screen
+- Fills any screen in either orientation at a whole number of device pixels per game pixel (the short side shows about 270 game pixels), so pixels stay sharp
 - [Ink](https://www.inklestudios.com/ink/) dialogue via inkjs, bound to the game state
 - Depth sorting by tile footprint, so characters walk correctly in front of and behind multi-tile buildings
 - Only what's on screen is drawn and sorted, so the 256×256 map with 8,000 objects runs at full speed

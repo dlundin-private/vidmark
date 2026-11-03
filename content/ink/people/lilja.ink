@@ -3,6 +3,7 @@
 
 === lilja ===
 { is_hollowed("lilja"): -> hollowed("Lilja") }
+{ flag("hurt_by_trap_lilja"): Lilja: I fell in! The ice just opened. I wasn't even past the reeds. I'm so cold. }
 { not has_keepsake("swim"): -> stranger }
 Lilja: {name_known(): Signe! Signe, look! | Look! Look!}
 Lilja: I slid all the way from the jetty to the reeds and I didn't fall once.

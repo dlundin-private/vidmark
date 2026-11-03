@@ -7,8 +7,10 @@
 
 === ebbe ===
 { is_hollowed("ebbe"): -> hollowed("Ebbe") }
-{ has_offered("ebbe"): -> after_offering }
+{ flag("hurt_by_trap_ebbe"): Ebbe: Someone's been at the ice by the shore. Went through to my waist. Ice doesn't open like that by itself. }
 { flag("nets_mended") and (flag("ebbe_seen_mended") < flag("nets_mended")): -> sees_mended }
+{ (all_nets() or has_offered("ebbe")) and not flag("weaves_taught"): -> teach_weaves }
+{ has_offered("ebbe"): -> after_offering }
 { flag("met_ebbe"):
     { flag("nets_mended"):
         Ebbe: {all_nets(): The nets are holding. I keep checking them anyway. | Back again. One of them's whole, at least.}
@@ -68,6 +70,8 @@ Ebbe: Tight, even knots. I used to tie them like that. I think.
     { all_nets():
         Ebbe: Then the village eats this winter. I owe you for that, and I don't forget what I owe.
         Ebbe: Not yet, anyway.
+        ~ set_flag("ebbe_knows_signe_mended", true)
+        -> teach_weaves
     - else:
         Ebbe: Then do the other, if you can. The ice won't wait.
     }
@@ -76,6 +80,17 @@ Ebbe: Tight, even knots. I used to tie them like that. I think.
 * [Say nothing about it] Signe: They look good.
     Ebbe: They do. Strange. Like my hands remembered, for one night.
     -> talk
+
+// Ebbe's quest is done: he passes on the one thing about craft he still has.
+// Unlocks Weave crafting (the HUD reads the flag).
+= teach_weaves
+~ set_flag("weaves_taught", true)
+Ebbe: One more thing, before you go.
+Ebbe: My father used to say a net is made before the fish comes. You don't mend it with the fish thrashing in it.
+Ebbe: Whatever it is you do with your hands, I'd wager the same holds. Shape it by the fire. Have it ready when the ice cracks.
+You understand him better than he knows. Your Craft can be shaped ahead of time, and carried ready.
+(You can now craft Weaves.)
+-> END
 
 = after_offering
 Ebbe: The nets again.

@@ -52,6 +52,7 @@ const TILES = [
   { name: 'ice-road', base: '#c3d3dc', speck: '#d8e3ea', edge: '#9fb7c6', density: 0.2 },
   { name: 'wood', base: '#7a5c44', speck: '#5e4533', edge: '#4f3a2b', density: 0, planks: true },
   { name: 'rock', base: '#6d6f72', speck: '#7e8083', edge: '#55575a', density: 0.25 },
+  { name: 'thin-ice', base: '#b4cfdf', speck: '#5d7f96', edge: '#8fb1c6', density: 0, cracks: true },
 ];
 
 function generateTileset() {
@@ -62,7 +63,8 @@ function generateTileset() {
         if (!inDiamond(x, y)) continue;
         // Darken the two lower edges a little so the grid reads without hard lines.
         const lowerEdge = y >= HALF_H && !inDiamond(x, y + 1);
-        const speck = tile.planks ? (x + 2 * y) % 8 === 0 : hash(x, y, i) < tile.density;
+        const crack = tile.cracks && (Math.abs(y - 8 - (x - 16) * 0.45) < 0.7 || Math.abs(x - 11 + (y - 5) * 1.6) < 0.7 || Math.abs(y - 11 + (x - 22) * 0.2) < 0.6);
+        const speck = crack || (tile.planks ? (x + 2 * y) % 8 === 0 : hash(x, y, i) < tile.density);
         const colour = lowerEdge ? tile.edge : speck ? tile.speck : tile.base;
         canvas.set(i * TILE_W + x, y, colour, tile.alpha ?? 255);
       }
@@ -248,6 +250,10 @@ function generateEffects() {
   overlay('fx-armed.png', (c, x, y) => {
     const crack = Math.abs(y - 8 - (x - 16) * 0.3) < 0.6 || Math.abs(x - 20 + (y - 8) * 1.2) < 0.6;
     if (crack) c.set(x, y, '#5a7f99', 170);
+  });
+  // The hermit's safe route through the cracked ice: small dark dots in a line.
+  overlay('fx-route.png', (c, x, y) => {
+    if ((Math.abs(x - 12) < 2 && Math.abs(y - 6) < 1) || (Math.abs(x - 20) < 2 && Math.abs(y - 10) < 1)) c.set(x, y, '#2b3f4f', 230);
   });
   // Targeting: where the chosen ability can land.
   overlay('fx-target.png', (c, x, y) => {

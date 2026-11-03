@@ -3,6 +3,7 @@
 
 === torvald ===
 { is_hollowed("torvald"): -> hollowed("Torvald") }
+{ flag("hurt_by_trap_torvald"): Torvald: Went through by my own hole this morning. Thirty years on this ice, and it's never done that. }
 Torvald: {name_known(): There's my girl. | There you are.}
 -> talk
 
@@ -15,6 +16,15 @@ Torvald: {name_known(): There's my girl. | There you are.}
         He laughs and starts a story about a saint and a starving lake.
         You've never heard it before. You listen politely, and you can't tell why his voice catches near the end.
         Torvald: You used to say it along with me.
+    }
+    -> talk
+* [Ask about the ice road] Signe: Can the ice road be crossed?
+    ~ set_flag("heard_ice_road", true)
+    { flag("ice_road_open"):
+        Torvald: It can now. Folk are using it again, thanks to whoever made it hold.
+    - else:
+        Torvald: Not this year. Halfway over there's a band of rotten ice, right across the lake. You'd go straight through.
+        Torvald: The old hermit out on the point used to know where it's thick. Don't you go trying it.
     }
     -> talk
 * [Ask about the fishing] Signe: How's the catch?

@@ -3,6 +3,7 @@
 
 === olle ===
 { is_hollowed("olle"): -> hollowed("Reeve Olle") }
+{ flag("hurt_by_trap_olle"): Reeve Olle: The ice by the village opened under me. I'll be writing that down. }
 { flag("met_olle"):
     Reeve Olle: Something else?
 - else:

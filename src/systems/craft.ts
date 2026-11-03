@@ -1,4 +1,5 @@
 import { ACTIONS, CRAFTABLES, type CraftAction, type WeaveModifier, type WeaveTarget } from '../../content/data/craft';
+import type { NpcId } from '../../content/data/npcs';
 import type { Tuning } from '../../content/data/tuning';
 import type { Tile } from '../iso/types';
 import * as A from '../state/actions';
@@ -35,7 +36,7 @@ export type CastPlan =
       /** Push: where the object ends up. */
       pushTo?: Tile;
     }
-  | { ok: false; reason: string };
+  | { ok: false; reason: string; /** 'range': fine, but Signe must get closer. */ code?: 'range' };
 
 /** Which modifiers make sense for an action and target; the Weave screen offers only these. */
 export function allowedModifiers(action: CraftAction, target: WeaveTarget): WeaveModifier[] {
@@ -77,13 +78,14 @@ export function spellCost(state: GameState, t: Tuning, spell: Spell, pushTiles =
 export function planCast(world: WorldModel, state: GameState, t: Tuning, spell: Spell, aim: Aim, signe: Tile, pushTo?: Tile): CastPlan {
   const reach = spell.modifier === 'range' ? t.craftRangeExtended : t.craftRange;
   const fail = (reason: string): CastPlan => ({ ok: false, reason });
+  const tooFar: CastPlan = { ok: false, reason: 'Too far away.', code: 'range' };
 
   if (spell.target === 'object') {
     const object = aim.kind === 'object' ? world.object(aim.id) : world.objectAt(aim.x, aim.y);
     if (!object) return fail('There is nothing made there to work on.');
     if (!(object.type in CRAFTABLES)) return fail(object.npc ? 'Craft works on made things, not people.' : 'Craft works on made things.');
     const fp = world.footprintOf(object);
-    if (distanceTo(signe, fp) > reach) return fail('Too far away.');
+    if (distanceTo(signe, fp) > reach) return tooFar;
     const effect = world.objectEffect(object);
     const def = CRAFTABLES[object.type]!;
 
@@ -131,7 +133,7 @@ export function planCast(world: WorldModel, state: GameState, t: Tuning, spell: 
   if (spell.action === 'push' || spell.action === 'mend') return fail('That works on objects only.');
   if (aim.kind !== 'tile') return fail('Aim at the ice.');
   if (!world.isIce(aim.x, aim.y)) return fail('Only ice can be worked as a surface.');
-  if (Math.abs(aim.x - signe.x) + Math.abs(aim.y - signe.y) > reach) return fail('Too far away.');
+  if (Math.abs(aim.x - signe.x) + Math.abs(aim.y - signe.y) > reach) return tooFar;
   const radius = (spell.target === 'area' ? 1 : 0) + (spell.modifier === 'size' ? 1 : 0);
   const tiles: Tile[] = [];
   for (let y = aim.y - radius; y <= aim.y + radius; y++) {
@@ -208,6 +210,7 @@ export function cast(world: WorldModel, state: GameState, t: Tuning, plan: Extra
     const first = plan.tiles[0]!;
     trainedOn = `tile:${tileKey(first.x, first.y)}`;
     for (const { x, y } of plan.tiles) {
+      if (spell.action === 'strengthen' && world.isThinIce(x, y)) A.setFlag(state, FLAG_STRENGTHENED_CRACKED_ICE, true);
       if (spell.action === 'strengthen') A.setTileEffect(state, x, y, effect('strengthened'));
       else if (spell.modifier === 'trigger') A.setTileEffect(state, x, y, effect('weakened'));
       else A.breakIce(state, x, y, iceRests(t, spell));
@@ -235,12 +238,43 @@ function iceRests(t: Tuning, spell: Spell): number {
   return t.iceRefreezeRests + (spell.modifier === 'duration' ? t.durationExtraRests : 0);
 }
 
-/** Signe steps onto a tile: armed weakened ice breaks under her. Returns true if she went through. */
+/** Flags set the first time Signe goes through cracked ice, and strengthens it (the ice road quest reads them). */
+export const FLAG_FELL_THROUGH_CRACKED_ICE = 'fell_through_cracked_ice';
+export const FLAG_STRENGTHENED_CRACKED_ICE = 'strengthened_cracked_ice';
+
+/**
+ * Signe steps onto a tile: her own armed ice, or cracked ice that nothing
+ * made safe, breaks under her. Returns true if she went through.
+ */
+/** True if stepping here would break the ice under Signe (checked before changing anything). */
+export function wouldBreakUnderSigne(world: WorldModel, tile: Tile): boolean {
+  const e = world.tileEffect(tile.x, tile.y);
+  return (e?.armed === true && e.kind === 'weakened') || world.isDangerousIce(tile.x, tile.y, true);
+}
+
+/** True if stepping here would break Signe's trap under a villager. */
+export function wouldBreakUnderPerson(world: WorldModel, tile: Tile): boolean {
+  const e = world.tileEffect(tile.x, tile.y);
+  return e?.armed === true && e.kind === 'weakened';
+}
+
 export function stepOnto(world: WorldModel, state: GameState, t: Tuning, tile: Tile): boolean {
+  const e = world.tileEffect(tile.x, tile.y);
+  const trap = e?.armed === true && e.kind === 'weakened';
+  const cracked = world.isDangerousIce(tile.x, tile.y, true);
+  if (!trap && !cracked) return false;
+  if (cracked) A.setFlag(state, FLAG_FELL_THROUGH_CRACKED_ICE, true);
+  A.breakIce(state, tile.x, tile.y, t.iceRefreezeRests);
+  for (let i = 0; i < t.woundsFromBreakingThrough; i++) A.addWound(state, t);
+  return true;
+}
+
+/** A villager steps onto Signe's armed ice: it breaks, and they climb out hurt. Returns true if they went through. */
+export function personStepsOnto(world: WorldModel, state: GameState, t: Tuning, npc: NpcId, tile: Tile): boolean {
   const e = world.tileEffect(tile.x, tile.y);
   if (!e?.armed || e.kind !== 'weakened') return false;
   A.breakIce(state, tile.x, tile.y, t.iceRefreezeRests);
-  for (let i = 0; i < t.woundsFromBreakingThrough; i++) A.addWound(state, t);
+  A.hurtByTrap(state, npc, t);
   return true;
 }
 

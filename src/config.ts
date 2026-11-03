@@ -1,9 +1,12 @@
 // Engine and presentation constants. Gameplay tuning (Power, costs, wounds)
 // belongs in content/data/tuning.ts, not here.
 
-/** Fixed internal resolution; the canvas is scaled up by whole numbers only. */
-export const GAME_WIDTH = 480;
-export const GAME_HEIGHT = 270;
+/**
+ * The game fills the window at a whole number of device pixels per game pixel,
+ * chosen so the short side of the screen shows about this many game pixels
+ * (480 x 270 on a 16:9 screen). Phones in either orientation fill the screen too.
+ */
+export const VIEW_SHORT_SIDE = 270;
 
 /** Isometric tile size in pixels (matches the Tiled maps). */
 export const TILE_WIDTH = 32;

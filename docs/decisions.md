@@ -63,6 +63,25 @@ The design gives the four actions, their costs and the Weave parts. Everything b
 | At 3 wounds Signe dies. The game goes back to her last rest at home; everything since is undone. With no rest yet, it starts over. | Decided by Daniel |
 | Death is told as a memory she had wrong: "No. That isn't how it went. You're remembering it wrong", then "Remember it again". The text is in `content/ink/death.ink`, three variants per line. | Daniel's idea, wording drafted by Claude |
 
+## Quests, the journal and the cracked ice
+
+Daniel asked for story progress to be visible as quests, and to see his givers (the Hearth).
+
+| Decision | Status |
+| --- | --- |
+| Quests are read from the game state (flags, Offerings, hollowing): they start, tick off steps and end by themselves; an ending is kept for good. Defined in `content/data/quests.ts`. | Draft |
+| The net-mender's hands starts on meeting Ebbe and ends when both nets are mended, or when he gives his memory (or, later, if he is hollowed). | Draft, from the design |
+| **Weaves are taught by Ebbe** once his quest ends, either way: "a net is made before the fish comes". The Weaves button appears only then. | Decided by Daniel (taught by a person); Ebbe and the line are Claude's draft |
+| The ice road is broken by a band of cracked ice, three tiles deep, across the whole lake, so it can't be walked around on the ice. Cracked ice breaks under Signe (a wound) unless strengthened. Villagers keep off it. | Draft |
+| The quest starts when Torvald or the hermit tells Signe about the cracked ice, or when she goes through it. It ends when she crosses the band on foot: by strengthened ice, or by the hermit's route. Then the road is open again and drawn as road. | Draft |
+| **The hermit's safe route** is a memory he gives as an Offering: one column through the band, east of the road, which Signe then sees marked. He offers it only after the nets quest is done ("do something for this village first"). | Draft |
+| **Villagers can fall through Signe's trap ice**: they climb out hurt, remember it (their dialogue says so), and someone in her Hearth loses faith. | Decided by Daniel |
+| Ebbe's memory of his wife teaches Mend: it's a memory of his knots. | Decided by Daniel |
+| Old Gerda's hint about Maren's first burn stays as it is. | Decided by Daniel |
+| The journal has three pages: Quests, Hearth (a pyramid of givers on Signe's own Power, plus anyone who lost faith and the Echoes she carries) and Keepsakes ("Your name" stays hidden). | Draft |
+| The game fills the screen at a whole-pixel scale in either orientation; the short side shows about 270 game pixels. HUD buttons are at least 48 px tall on touch screens. | Daniel asked for it to fit the screen; the numbers are a draft |
+| Tapping with a Craft action is forgiving: anywhere on an object's picture counts. Out of reach, Signe walks closer and then casts. | Draft, from Daniel's playtest |
+
 ## People moving and meeting
 
 Daniel asked for people to move about near their spots, and for nearby people to walk over to each other, talk a little and part again.
@@ -72,7 +91,7 @@ Daniel asked for people to move about near their spots, and for nearby people to
 | Each person wanders within a few tiles of their spot (in `content/data/npcs.ts`): Lilja 5 tiles and only on the ice, Olle and the hermit 4, Ebbe 3, Gerda 2. Torvald stays at his fishing hole and the Hollow doesn't move. | Draft |
 | Every 14–30 seconds, two people whose spots are near each other may meet: one walks over (whoever wanders further; Torvald is always visited, never leaves his hole), they say two or three lines in speech bubbles, then both go back. Pairs are in `content/data/meetings.ts`, lines in `content/ink/meetings.ink`. | Draft |
 | Nobody walks into Signe or her next steps. Someone Signe is talking to, or walking over to, holds still. | Draft |
-| People steer around Signe's armed trap ice, so a villager never falls through it. | Draft. **Question:** should people be able to fall through Signe's traps? That would make traps a real moral risk in the village. |
+| Villagers can fall through Signe's trap ice: see "Quests, the journal and the cracked ice". | Decided by Daniel |
 | Where people stand isn't saved: after a reload they're back at their spots. | Draft |
 | Ebbe notices when Signe mends his nets, one rack or both. Once both are whole he no longer asks for help or offers his memory. Gerda's meeting with him mentions it too. | Draft (dialogue), from Daniel's playtest note |
 

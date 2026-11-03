@@ -21,12 +21,15 @@ import { IsoProjection, depthOrder, rectsOverlap, roundPoint, tilesInView, type 
 import { TileWalker } from '../systems/movement';
 import { findPath, type WalkGrid } from '../systems/pathfinding';
 import { parseTiledMap, type MapObject, type TiledJson } from '../systems/tiledMap';
-import { WorldModel } from '../systems/world';
+import { FLAG_KNOWS_SAFE_ROUTE, WorldModel } from '../systems/world';
 import { cast, planCast, plainSpell, stepOnto, weaveSpell, type Aim, type Spell } from '../systems/craft';
 import { ambientDialogue, dialogueBox, store, tuning } from '../game';
 import { isBeside, pathToBeside } from '../systems/interaction';
 import * as A from '../state/actions';
 import { CraftHud, type Selection } from './CraftHud';
+import { Journal } from './Journal';
+import { questsWouldChange, updateQuests } from '../systems/quests';
+import { personStepsOnto, wouldBreakUnderPerson, wouldBreakUnderSigne } from '../systems/craft';
 import { WeaveScreen } from './WeaveScreen';
 import { TILESET_KEY } from './BootScene';
 import mapJson from '../../assets/maps/kallsjo.json';
@@ -71,10 +74,14 @@ const DIRECTIONS: Record<keyof DirectionKeys, Tile> = {
 // The HUD and Weave screen are page-wide; they talk to whichever World scene is running.
 let activeScene: WorldScene | null = null;
 const weaveScreen = new WeaveScreen(store);
+const journal = new Journal(store);
 const hud = new CraftHud({
   onSelect: (s) => activeScene?.onSelect(s),
   onOpenWeaves: () => weaveScreen.open(),
+  onOpenJournal: () => journal.open(),
 });
+/** Overlays that pause the world while open. */
+const menuOpen = () => dialogueBox.isOpen || weaveScreen.isOpen || journal.isOpen || deathScreen.isOpen;
 const bubbles = new SpeechBubbles(BUBBLE_MS_PER_LINE);
 const deathScreen = new DeathScreen();
 const NPC_BY_NAME = new Map(NPCS.map((n) => [n.name, n.id]));
@@ -93,6 +100,7 @@ export class WorldScene extends Phaser.Scene {
   private fxStrengthened!: Phaser.GameObjects.Blitter;
   private fxArmed!: Phaser.GameObjects.Blitter;
   private fxTarget!: Phaser.GameObjects.Blitter;
+  private fxRoute!: Phaser.GameObjects.Blitter;
   private entityLayer!: Phaser.GameObjects.Layer;
   private sortables: Sortable[] = [];
   private sortableById = new Map<number, Sortable>();
@@ -110,7 +118,7 @@ export class WorldScene extends Phaser.Scene {
   /** Who Signe is talking with; they hold still. */
   private talkingWith: NpcId | null = null;
   /** Who or what Signe is walking over to (to talk, or to rest at home). */
-  private pendingVisit: { target: () => Footprint; arrive: () => void; who: NpcId | null } | null = null;
+  private pendingVisit: { target: () => Footprint; arrive: () => void; who: NpcId | null; onTile?: boolean } | null = null;
   /** The spell chosen in the HUD, waiting for a target. */
   private spell: Spell | null = null;
   /** Push: the object chosen, waiting for where it should stop. */
@@ -156,8 +164,9 @@ export class WorldScene extends Phaser.Scene {
     this.fxStrengthened = this.add.blitter(0, 0, 'fx-strengthened');
     this.fxArmed = this.add.blitter(0, 0, 'fx-armed');
     this.fxTarget = this.add.blitter(0, 0, 'fx-target');
+    this.fxRoute = this.add.blitter(0, 0, 'fx-route');
     this.collisionOverlay = this.add.blitter(0, 0, TILESET_KEY).setVisible(false);
-    overlayLayer.add([this.fxStrengthened, this.fxArmed, this.fxTarget, this.collisionOverlay]);
+    overlayLayer.add([this.fxStrengthened, this.fxArmed, this.fxRoute, this.fxTarget, this.collisionOverlay]);
 
     this.marker = this.add.image(0, 0, MARKER_SPRITE).setOrigin(0.5, 0).setVisible(false);
     overlayLayer.add(this.marker);
@@ -186,8 +195,9 @@ export class WorldScene extends Phaser.Scene {
       {
         width: map.width,
         height: map.height,
-        isBlocked: (x, y) => this.world.isBlockedForRouting(x, y),
-        isIce: (x, y) => this.world.isIce(x, y),
+        isBlocked: (x, y) => this.world.isBlockedForPeople(x, y),
+        isIce: (x, y) => this.world.isIce(x, y) && !this.world.isThinIce(x, y),
+        stepping: (id, _from, to) => this.personStepping(id, to),
         placePerson: (id, tile) => {
           const p = this.people.find((q) => q.id === id);
           if (p) this.world.placeDynamic(p.obj.id, tile);
@@ -220,6 +230,14 @@ export class WorldScene extends Phaser.Scene {
     cam.setRoundPixels(true);
     cam.startFollow(this.signe, true);
 
+    // The game fills the window; a rotation or resize changes how much world the camera shows.
+    const onResize = (size: Phaser.Structs.Size) => {
+      this.cameras.resize(size.width, size.height);
+      this.lastViewKey = "";
+    };
+    this.scale.on(Phaser.Scale.Events.RESIZE, onResize);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.scale.off(Phaser.Scale.Events.RESIZE, onResize));
+
     this.input.on(Phaser.Input.Events.POINTER_DOWN, (pointer: Phaser.Input.Pointer) => this.onPointerDown(pointer));
     this.keys = this.createKeys();
     this.input.keyboard?.on('keydown-C', () => {
@@ -237,6 +255,7 @@ export class WorldScene extends Phaser.Scene {
       if (store.generation !== generation) return this.scene.restart();
       this.worldVersion++;
       if (A.hasFallen(store.state, tuning.values) && !deathScreen.isOpen) this.die();
+      this.checkQuests();
       this.syncObjects();
       this.lastViewKey = '';
       hud.render(store.state, tuning.values);
@@ -247,11 +266,44 @@ export class WorldScene extends Phaser.Scene {
     });
     hud.render(store.state, tuning.values);
     if (A.hasFallen(store.state, tuning.values)) this.die();
+
+    // How many nets are torn is a fact of the map; quests and dialogue count against it.
+    const racks = map.objects.filter((o) => o.type === 'net-rack' && o.broken).length;
+    if (store.state.flags.nets_total !== racks) store.update((s) => A.setFlag(s, 'nets_total', racks));
+    this.checkQuests();
+  }
+
+  private checkingQuests = false;
+
+  /** Quests start and end from what happens in the world; announce each change. */
+  private checkQuests(): void {
+    if (this.checkingQuests || !questsWouldChange(store.state)) return; // updateQuests changes the store, which calls us again
+    this.checkingQuests = true;
+    try {
+      const events = store.update(updateQuests);
+      for (const e of events) hud.announce(e.kind === 'started' ? `New quest: ${e.quest.title}` : `Quest done: ${e.quest.title}`, e.text);
+      if (events.length > 0) store.save();
+    } finally {
+      this.checkingQuests = false;
+    }
+  }
+
+  /** A villager steps onto a tile: Signe's trap ice catches them. */
+  private personStepping(id: NpcId, to: Tile): boolean {
+    if (!wouldBreakUnderPerson(this.world, to)) return false; // the common case: no state change, no redraw
+    const through = store.update((s, t) => personStepsOnto(this.world, s, t, id, to));
+    if (through) {
+      const name = NPCS.find((n) => n.id === id)!.name;
+      bubbles.play([{ who: id, text: 'The ice! Help, the ice—' }]);
+      hud.say(`${name} went through the ice and dragged themself out, soaked and bleeding.`, 6000);
+      store.save();
+    }
+    return through;
   }
 
   update(_time: number, delta: number): void {
-    const busy = dialogueBox.isOpen || weaveScreen.isOpen || deathScreen.isOpen;
-    hud.setVisible(!dialogueBox.isOpen && !deathScreen.isOpen);
+    const busy = menuOpen();
+    hud.setVisible(!dialogueBox.isOpen && !deathScreen.isOpen && !journal.isOpen);
     if (!busy) this.handleKeys();
     this.updatePeople(delta);
     const before = this.walker.tile;
@@ -262,7 +314,9 @@ export class WorldScene extends Phaser.Scene {
       if (entered.length > 0) this.autosave();
       const visit = this.pendingVisit;
       this.pendingVisit = null;
-      if (visit && isBesideFootprint(this.walker.tile, visit.target())) visit.arrive();
+      const t = this.walker.tile;
+      const there = visit && (visit.onTile ? onFootprint(t, visit.target()) : isBesideFootprint(t, visit.target()));
+      if (visit && there) visit.arrive();
     }
     this.placeSigne();
     this.refreshView();
@@ -274,6 +328,7 @@ export class WorldScene extends Phaser.Scene {
   /** The HUD picked an action or Weave (or cleared it). */
   onSelect(selection: Selection | null): void {
     this.pushing = null;
+    this.pendingVisit = null;
     this.spell = selection ? this.spellFor(selection) : null;
     if (this.spell) {
       this.pendingVisit = null;
@@ -317,6 +372,7 @@ export class WorldScene extends Phaser.Scene {
       }
     }
 
+    if (!plan.ok && plan.code === 'range' && !this.pushing) return this.walkIntoReach(worldX, worldY, tile, reach(spell));
     if (!plan.ok) {
       hud.say(plan.reason);
       return;
@@ -332,27 +388,72 @@ export class WorldScene extends Phaser.Scene {
     hud.say(`${message} (−${plan.cost} Power)`);
   }
 
-  /** The craftable object drawn under a point, or standing on the tapped tile. */
+  /**
+   * The craftable object under a tap. Forgiving, for fingers: an opaque pixel
+   * first, then anywhere inside an object's picture (a net rack is mostly
+   * gaps), then whatever stands on the tapped tile.
+   */
   private craftableAt(x: number, y: number, tile: Tile): MapObject | undefined {
-    const hit = this.spriteAt(x, y, (s) => !!s.obj && s.obj.type in CRAFTABLES);
+    const craftable = (s: Sortable) => !!s.obj && s.obj.type in CRAFTABLES;
+    const hit = this.spriteAt(x, y, craftable);
     if (hit) return hit;
+    const inside = this.onScreen.filter((s) => craftable(s) && s.bounds && x >= s.bounds.x && x < s.bounds.x + s.bounds.width && y >= s.bounds.y && y < s.bounds.y + s.bounds.height);
+    inside.sort((a, b) => b.sprite.depth - a.sprite.depth);
+    if (inside[0]?.obj) return inside[0].obj;
     const onTile = this.world.objectAt(tile.x, tile.y);
     return onTile && onTile.type in CRAFTABLES ? onTile : undefined;
+  }
+
+  /** Out of reach: walk until the target is within reach, then cast. */
+  private walkIntoReach(worldX: number, worldY: number, tile: Tile, distance: number): void {
+    const object = this.spell?.target === 'object' || this.spell?.modifier === null ? this.craftableAt(worldX, worldY, tile) : undefined;
+    const goal: Footprint = object ? this.world.footprintOf(object) : { x: tile.x, y: tile.y, w: 1, h: 1 };
+    const path = besidePath(this.routing, this.walker.planningTile, goal);
+    if (!path || path.length === 0) {
+      hud.say('Too far away, and there is no way closer.');
+      return;
+    }
+    // Stop at the first tile from which the target is within reach.
+    const near = (t: Tile) => {
+      const dx = t.x < goal.x ? goal.x - t.x : t.x >= goal.x + goal.w ? t.x - (goal.x + goal.w - 1) : 0;
+      const dy = t.y < goal.y ? goal.y - t.y : t.y >= goal.y + goal.h ? t.y - (goal.y + goal.h - 1) : 0;
+      return dx + dy <= distance;
+    };
+    const stop = path.findIndex(near);
+    const route = stop >= 0 ? path.slice(0, stop + 1) : path;
+    this.walker.setPath(route);
+    const end = route.at(-1)!;
+    this.pendingVisit = { target: () => ({ x: end.x, y: end.y, w: 1, h: 1 }), arrive: () => this.spell && this.aimAt(worldX, worldY), who: null, onTile: true };
+    hud.say('Walking closer…', 1500);
   }
 
   /** Signe moved onto new tiles: her own armed ice gives way under her. */
   private onEntered(before: Tile, entered: Tile[]): void {
     let previous = before;
     for (const tile of entered) {
-      const through = store.update((s, t) => stepOnto(this.world, s, t, tile));
+      this.noteCrossing(previous, tile);
+      const through = wouldBreakUnderSigne(this.world, tile) && store.update((s, t) => stepOnto(this.world, s, t, tile));
       if (through) {
         this.walker.teleport(previous);
         if (deathScreen.isOpen) return;
-        hud.say('The ice gives way. You haul yourself out, soaked and cut.');
+        hud.say(this.world.isThinIce(tile.x, tile.y) || this.world.band && tile.y >= this.world.band.y0 && tile.y <= this.world.band.y1
+          ? 'The cracked ice gives way. You haul yourself out, soaked and cut. It will need to be made to hold, or crossed where it is thick.'
+          : 'The ice gives way. You haul yourself out, soaked and cut.');
         this.autosave();
         return;
       }
       previous = tile;
+    }
+  }
+
+  /** Stepping off the cracked-ice band on the far side means Signe crossed it (the ice road quest). */
+  private noteCrossing(from: Tile, to: Tile): void {
+    const band = this.world.band;
+    if (!band || store.state.flags.crossed_cracked_ice) return;
+    const northward = from.y === band.y0 && to.y === band.y0 - 1;
+    const southward = from.y === band.y1 && to.y === band.y1 + 1;
+    if ((northward || southward) && this.world.isIce(to.x, to.y)) {
+      store.update((s) => A.setFlag(s, 'crossed_cracked_ice', true));
     }
   }
 
@@ -389,7 +490,7 @@ export class WorldScene extends Phaser.Scene {
       const at = roundPoint(this.proj.footprintBottom({ x: v.x, y: v.y, w: 1, h: 1 }));
       p.sprite.setPosition(at.x, at.y);
     }
-    bubbles.update(delta, (who) => this.screenPointAbove(who), dialogueBox.isOpen || weaveScreen.isOpen || deathScreen.isOpen);
+    bubbles.update(delta, (who) => this.screenPointAbove(who), menuOpen());
   }
 
   /** CSS-pixel point just above someone's head, or null if they are off screen. */
@@ -470,7 +571,8 @@ export class WorldScene extends Phaser.Scene {
 
     // The margin is at least one key step, so the area drawn always covers the real view.
     const view: Rect = { x: v.x - VIEW_MARGIN, y: v.y - VIEW_MARGIN, width: v.width + 2 * VIEW_MARGIN, height: v.height + 2 * VIEW_MARGIN };
-    for (const b of [this.ground, this.collisionOverlay, this.fxStrengthened, this.fxArmed, this.fxTarget]) b.clear();
+    for (const b of [this.ground, this.collisionOverlay, this.fxStrengthened, this.fxArmed, this.fxRoute, this.fxTarget]) b.clear();
+    const knowsRoute = !!store.state.flags[FLAG_KNOWS_SAFE_ROUTE];
     const reach = this.spell ? (this.spell.modifier === 'range' ? tuning.values.craftRangeExtended : tuning.values.craftRange) : -1;
     for (const t of tilesInView(this.proj, view, this.world.width, this.world.height)) {
       const top = this.proj.toWorld(t.x, t.y);
@@ -480,6 +582,7 @@ export class WorldScene extends Phaser.Scene {
       const effect = this.world.tileEffect(t.x, t.y);
       if (effect?.kind === 'strengthened') this.fxStrengthened.create(x, top.y);
       if (effect?.armed) this.fxArmed.create(x, top.y);
+      if (knowsRoute && this.world.isSafeRoute(t.x, t.y)) this.fxRoute.create(x, top.y);
       if (reach >= 0 && Math.abs(t.x - signe.x) + Math.abs(t.y - signe.y) <= reach) this.fxTarget.create(x, top.y);
       if (this.collisionOverlay.visible && this.world.isBlocked(t.x, t.y)) this.collisionOverlay.create(x, top.y, BLOCKED_FRAME);
     }
@@ -528,7 +631,7 @@ export class WorldScene extends Phaser.Scene {
   }
 
   private talkToSomeoneBeside(): void {
-    if (dialogueBox.isOpen || weaveScreen.isOpen || this.walker.isMoving) return;
+    if (menuOpen() || this.walker.isMoving) return;
     const who = this.people.find((p) => isBeside(this.walker.tile, this.sim.tileOf(p.id)));
     if (who) this.talkTo(who);
   }
@@ -548,7 +651,7 @@ export class WorldScene extends Phaser.Scene {
   }
 
   private onPointerDown(pointer: Phaser.Input.Pointer): void {
-    if (dialogueBox.isOpen || weaveScreen.isOpen || deathScreen.isOpen) return;
+    if (menuOpen()) return;
     if (this.spell) return this.aimAt(pointer.worldX, pointer.worldY);
     this.pendingVisit = null;
     const tile = this.proj.pick({ x: pointer.worldX, y: pointer.worldY });
@@ -621,6 +724,15 @@ export class WorldScene extends Phaser.Scene {
       right: add('right', K.D, K.RIGHT),
     };
   }
+}
+
+function onFootprint(t: Tile, f: Footprint): boolean {
+  return t.x >= f.x && t.x < f.x + f.w && t.y >= f.y && t.y < f.y + f.h;
+}
+
+/** How far a spell reaches. */
+function reach(spell: Spell): number {
+  return spell.modifier === 'range' ? tuning.values.craftRangeExtended : tuning.values.craftRange;
 }
 
 /** Beside any tile of a footprint (talking to someone, standing at a door). */

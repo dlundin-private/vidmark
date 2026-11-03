@@ -57,6 +57,9 @@ describe('dialogue', () => {
     const { store, runner } = setup();
     play(runner, 'ebbe', ['another way', 'Accept']);
     expect(A.hearth(store.state)).toEqual(['ebbe']);
+    // Next time he first teaches Weaves (his quest is done), then he is just missing her.
+    expect(text(play(runner, 'ebbe'))).toContain('a net is made before the fish comes');
+    expect(store.state.flags.weaves_taught).toBe(true);
     expect(text(play(runner, 'ebbe'))).toContain('someone used to sit with me');
   });
 
@@ -78,6 +81,41 @@ describe('dialogue', () => {
     expect(text(later)).toContain('The nets are holding');
     const options = later.find((s) => s.kind === 'choices');
     expect(options && options.kind === 'choices' && options.options.join()).not.toMatch(/mend the nets|another way/);
+  });
+
+  it('Ebbe teaches Weaves right after hearing Signe mended all his nets', () => {
+    const { store, runner } = setup();
+    store.update((s) => {
+      A.setFlag(s, 'nets_total', 2);
+      A.setFlag(s, 'nets_mended', 2);
+    });
+    expect(text(play(runner, 'ebbe', ['Tell him']))).toContain('You can now craft Weaves');
+    expect(store.state.flags.weaves_taught).toBe(true);
+  });
+
+  it('the hermit gives the safe route only once Signe has helped the village', () => {
+    const { store, runner } = setup();
+    play(runner, 'hermit', ['ice road']);
+    expect(store.state.flags.heard_ice_road).toBe(true);
+    expect(text(play(runner, 'hermit', ['safe way']))).toContain("I don't give what's mine to strangers");
+    store.update((s) => A.setFlag(s, 'quest_nets', 'mended'));
+    play(runner, 'hermit', ['safe way', 'Take his memory']);
+    expect(store.state.flags.knows_safe_route).toBe(true);
+    expect(A.hearth(store.state)).toContain('hermit');
+    expect(text(play(runner, 'hermit'))).toContain("Can't think what I told them");
+  });
+
+  it('people hurt by trap ice say so', () => {
+    const { store, runner } = setup();
+    store.update((s, t) => A.hurtByTrap(s, 'lilja', t));
+    expect(text(play(runner, 'lilja'))).toContain('The ice just opened');
+  });
+
+  it('someone in the Hearth who is hurt by a trap loses faith', () => {
+    const { store } = setup();
+    store.update((s, t) => A.recordOffering(s, 'ebbe', t));
+    store.update((s, t) => A.hurtByTrap(s, 'ebbe', t));
+    expect(A.hearth(store.state)).toEqual([]);
   });
 
   it('does not change state when a choice is only offered, not taken', () => {

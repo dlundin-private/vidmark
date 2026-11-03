@@ -3,10 +3,17 @@ import type { CraftEffect, GameState } from '../state/GameState';
 import type { WalkGrid } from './pathfinding';
 import type { IsoMap, MapObject } from './tiledMap';
 
-/** Ground frames that are ice (tileset order in scripts/generate-placeholders.mjs): ice, ice-2, ice road. */
-const ICE_FRAMES = new Set([4, 5, 10]);
+/** Ground frames (tileset order in scripts/generate-placeholders.mjs). */
+const ICE_ROAD_FRAME = 10;
+export const THIN_ICE_FRAME = 13;
+/** Ice: ice, ice-2, ice road, cracked ice. */
+const ICE_FRAMES = new Set([4, 5, ICE_ROAD_FRAME, THIN_ICE_FRAME]);
 /** Ground frame shown where the ice has been broken open. */
 export const WATER_FRAME = 6;
+
+/** World flags the map reacts to. */
+export const FLAG_ICE_ROAD_OPEN = 'ice_road_open';
+export const FLAG_KNOWS_SAFE_ROUTE = 'knows_safe_route';
 
 export const tileKey = (x: number, y: number): string => `${x},${y}`;
 
@@ -107,10 +114,45 @@ export class WorldModel implements WalkGrid {
     return this.state().world.tiles[tileKey(x, y)]?.effect;
   }
 
-  /** Ground frame to draw: broken ice shows open water. */
+  /** Ground frame to draw: broken ice shows open water; the reopened road shows as road again. */
   groundFrame(x: number, y: number): number {
     if (this.isBrokenIce(x, y)) return WATER_FRAME;
-    return this.map.ground[y * this.width + x] ?? -1;
+    const frame = this.map.ground[y * this.width + x] ?? -1;
+    if (frame === THIN_ICE_FRAME && this.isReopenedRoad(x)) return ICE_ROAD_FRAME;
+    return frame;
+  }
+
+  /** Cracked ice, whole but unsafe unless something makes it safe. */
+  isThinIce(x: number, y: number): boolean {
+    return this.inMap(x, y) && this.map.ground[y * this.width + x] === THIN_ICE_FRAME && !this.isBrokenIce(x, y);
+  }
+
+  /** On the hermit's remembered route through the cracked ice. */
+  isSafeRoute(x: number, y: number): boolean {
+    return this.isThinIce(x, y) && x === this.map.numbers.safeRouteX;
+  }
+
+  /**
+   * Cracked ice that would break under someone: not strengthened, not on the
+   * reopened road, and (for Signe, once she knows it) not on the hermit's route.
+   */
+  isDangerousIce(x: number, y: number, forSigne: boolean): boolean {
+    if (!this.isThinIce(x, y)) return false;
+    if (this.tileEffect(x, y)?.kind === 'strengthened') return false;
+    if (this.isReopenedRoad(x)) return false;
+    if (forSigne && this.state().flags[FLAG_KNOWS_SAFE_ROUTE] && this.isSafeRoute(x, y)) return false;
+    return true;
+  }
+
+  private isReopenedRoad(x: number): boolean {
+    const { iceRoadX0, iceRoadX1 } = this.map.numbers;
+    return !!this.state().flags[FLAG_ICE_ROAD_OPEN] && iceRoadX0 !== undefined && iceRoadX1 !== undefined && x >= iceRoadX0 && x <= iceRoadX1;
+  }
+
+  /** Row numbers of the cracked-ice band, if the map has one. */
+  get band(): { y0: number; y1: number } | null {
+    const { bandY0, bandY1 } = this.map.numbers;
+    return bandY0 !== undefined && bandY1 !== undefined ? { y0: bandY0, y1: bandY1 } : null;
   }
 
   isBlocked(x: number, y: number): boolean {
@@ -119,9 +161,14 @@ export class WorldModel implements WalkGrid {
     return this.terrainBlocked[i] === 1 || this.isBrokenIce(x, y) || this.objectAt(x, y) !== undefined;
   }
 
-  /** Signe's route planning also steers around her own armed traps. */
+  /** Signe's route planning also steers around her own armed traps and cracked ice she can see. */
   isBlockedForRouting(x: number, y: number): boolean {
-    return this.isBlocked(x, y) || this.tileEffect(x, y)?.armed === true;
+    return this.isBlocked(x, y) || this.tileEffect(x, y)?.armed === true || this.isDangerousIce(x, y, true);
+  }
+
+  /** Villagers know the cracked ice and keep off it, but they don't know about Signe's traps. */
+  isBlockedForPeople(x: number, y: number): boolean {
+    return this.isBlocked(x, y) || this.isDangerousIce(x, y, false);
   }
 
   private ensureBuilt(): void {
