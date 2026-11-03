@@ -172,17 +172,21 @@ Questions it must answer:
 - [ ] Does the second domain feel earned, however it was gained?
 - [ ] Does the player notice what Lilja's trace means, or that they no longer understand it?
 
-## Open questions for Daniel
+## Decided (Daniel, 3 November 2026)
 
-Recommendation first in each.
+The ten open questions of the first draft, answered. These are now design, not draft.
 
-1. **How is Brita alive a century on?** (a) She is about 117, frail and nearly blind: rare, but the image is the point. (b) She died; Edda feeds Halvar and is called "Brita's girl". (c) Tending a Hollow keeps you alive (new lore).
-2. **Do Hollows age?** The Quiet Field's Hollows are still tended a century later. (a) They age very slowly and nobody knows why, lore for later. (b) They age normally.
-3. **Keystone domain rule.** (a) The table above. (b) Järnfors always gives Kin and Runhem always Thought, with Craft as the main path.
-4. **Was Jon Halvar's apprentice?** (a) Yes, the scratched mark. (b) No; the ninth mark is an unknown apprentice.
-5. **Why the dam fails.** (a) The Tithe plus Halvar's flaw. (b) The Tithe only. (c) Kronvall lets it fail on purpose.
-6. **Crisis clock.** (a) Three rests after the flood-bell. (b) Story beats. (c) Real time.
-7. **The Hearth in a crisis.** (a) Each Järnfors giver present adds +1 Power for the casting; Kallsjö givers count only through max Power. (b) Every Hearth member adds Power wherever they are.
-8. **Kin in the slice.** (a) Four abilities mirroring Craft: Strengthen (a body), Calm, Heal (a wound), Sense. (b) Only Heal and Calm.
-9. **Starting chapter 2.** (a) From the chapter 1 save, or a default state without one (no hollowings, nets mended). (b) A short start screen to pick key choices.
-10. **Map size.** (a) One district, about 128 × 128, built by hand in Tiled. (b) The whole gorge at 256 × 256, generated like Kallsjö.
+| # | Question | Decision |
+| --- | --- | --- |
+| 1 | How is Brita alive a century on? | She is about 117, frail and nearly blind. Rare, but the image is the point. |
+| 2 | Do Hollows age? | Very slowly, and nobody knows why: lore for later. |
+| 3 | Whose domain the Keystone holds | The table above: Järnfors holds Craft and Runhem Thought, and a Keystone that would repeat the starting domain holds Kin instead. With a Craft start, Edda holds Kin. |
+| 4 | Was Jon Halvar's apprentice? | Yes: the scratched-out ninth mark is Jon, Maren's brother. |
+| 5 | Why the dam fails | The Tithe stripped the dam-wrights' knowledge, plus Halvar's flaw: he warned it was built too high, and Maren took his skill but not his caution. |
+| 6 | Crisis clock | Three rests after the flood-bell. |
+| 7 | The Hearth in a crisis | Each Järnfors giver present adds +1 Power for the casting; Kallsjö givers count only through her maximum Power. |
+| 8 | Kin in the slice | Four abilities mirroring Craft: Strengthen (a body), Calm, Heal (a wound), Sense. |
+| 9 | Starting chapter 2 | From the chapter 1 save; without one, a default state (nobody hollowed, the nets mended). |
+| 10 | Map size | One district, about 128 × 128, built by hand in Tiled. |
+
+Everything else in this document marked **Draft** is still a draft.
