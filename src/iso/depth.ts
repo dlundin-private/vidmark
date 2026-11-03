@@ -44,14 +44,17 @@ function frontKey(f: Footprint): number {
 
 /**
  * Returns the indices of `footprints` in draw order (back to front).
- * O(n^2), which is fine for the few dozen sprites on a screen.
+ * O(n^2) comparisons at most. `canOverlap` (optional) says whether two
+ * sprites can cover each other on screen; pairs that can't need no order,
+ * which keeps a busy screen cheap.
  */
-export function depthOrder(footprints: readonly Footprint[]): number[] {
+export function depthOrder(footprints: readonly Footprint[], canOverlap?: (i: number, j: number) => boolean): number[] {
   const n = footprints.length;
   const inDegree = new Array<number>(n).fill(0);
   const after: number[][] = Array.from({ length: n }, () => []);
   for (let i = 0; i < n; i++) {
     for (let j = i + 1; j < n; j++) {
+      if (canOverlap && !canOverlap(i, j)) continue;
       const c = compareFootprints(footprints[i]!, footprints[j]!);
       if (c < 0) {
         after[i]!.push(j);
@@ -68,6 +71,7 @@ export function depthOrder(footprints: readonly Footprint[]): number[] {
   for (let i = 0; i < n; i++) if (inDegree[i] === 0) ready.push(i);
   const order: number[] = [];
   const done = new Array<boolean>(n).fill(false);
+  let sorted = false;
 
   while (order.length < n) {
     if (ready.length === 0) {
@@ -76,14 +80,27 @@ export function depthOrder(footprints: readonly Footprint[]): number[] {
       for (let i = 0; i < n; i++) if (!done[i]) rest.push(i);
       rest.sort(byKey);
       ready.push(rest[0]!);
+      sorted = false;
     }
-    ready.sort(byKey);
+    if (!sorted) {
+      ready.sort(byKey);
+      sorted = true;
+    }
     const next = ready.shift()!;
     if (done[next]) continue;
     done[next] = true;
     order.push(next);
     for (const k of after[next]!) {
-      if (--inDegree[k]! === 0 && !done[k]) ready.push(k);
+      if (--inDegree[k]! !== 0 || done[k]) continue;
+      // Keep `ready` in order: insert where it belongs.
+      let lo = 0;
+      let hi = ready.length;
+      while (lo < hi) {
+        const mid = (lo + hi) >> 1;
+        if (byKey(ready[mid]!, k) < 0) lo = mid + 1;
+        else hi = mid;
+      }
+      ready.splice(lo, 0, k);
     }
   }
   return order;

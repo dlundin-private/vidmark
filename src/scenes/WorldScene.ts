@@ -162,6 +162,7 @@ export class WorldScene extends Phaser.Scene {
     this.changedIds = new Set();
     this.lastViewKey = '';
     this.lastSortKey = '';
+    this.bucketsBuilt = false;
     this.tapped = null;
     this.people = [];
     this.talkingWith = null;
@@ -887,7 +888,9 @@ export class WorldScene extends Phaser.Scene {
     const p = this.proj.footprintBottom(s.footprint());
     s.sprite.setPosition(p.x, p.y);
     const b = s.sprite.getBounds();
+    const moved = !s.bounds || s.bounds.x !== b.x || s.bounds.y !== b.y;
     s.bounds = { x: b.x, y: b.y, width: b.width, height: b.height };
+    if (moved) this.bucketsBuilt = false;
   }
 
   // --- Drawing ------------------------------------------------------------------
@@ -929,22 +932,65 @@ export class WorldScene extends Phaser.Scene {
 
     for (const s of this.onScreen) s.sprite.setVisible(false);
     // Some objects only exist once a quest has ended a certain way (step 7).
-    this.onScreen = [...this.sortables, ...(this.fight?.sortables ?? [])].filter(
+    this.onScreen = [...this.inView(view), ...(this.fight?.sortables ?? [])].filter(
       (s) => (!s.bounds || rectsOverlap(s.bounds, view)) && (!s.obj || this.world.isShown(s.obj)),
     );
     for (const s of this.onScreen) s.sprite.setVisible(true);
     this.lastSortKey = '';
   }
 
+  /** World pixels per side of a bucket in the spatial index of sprites. */
+  private static readonly BUCKET = 256;
+  private buckets = new Map<string, Sortable[]>();
+  private bucketsBuilt = false;
+
+  /**
+   * Sortables that may be in a world rectangle: everything that moves, plus
+   * fixed sprites from the buckets the rectangle touches (8,000+ objects on the map).
+   */
+  private inView(view: Rect): Sortable[] {
+    if (!this.bucketsBuilt) this.buildBuckets();
+    const B = WorldScene.BUCKET;
+    const found = new Set<Sortable>();
+    for (const s of this.sortables) if (!s.bounds) found.add(s);
+    for (let by = Math.floor(view.y / B); by <= Math.floor((view.y + view.height) / B); by++) {
+      for (let bx = Math.floor(view.x / B); bx <= Math.floor((view.x + view.width) / B); bx++) {
+        for (const s of this.buckets.get(`${bx},${by}`) ?? []) found.add(s);
+      }
+    }
+    return [...found];
+  }
+
+  private buildBuckets(): void {
+    const B = WorldScene.BUCKET;
+    this.buckets = new Map();
+    for (const s of this.sortables) {
+      if (!s.bounds) continue;
+      for (let by = Math.floor(s.bounds.y / B); by <= Math.floor((s.bounds.y + s.bounds.height) / B); by++) {
+        for (let bx = Math.floor(s.bounds.x / B); bx <= Math.floor((s.bounds.x + s.bounds.width) / B); bx++) {
+          const key = `${bx},${by}`;
+          const list = this.buckets.get(key);
+          if (list) list.push(s);
+          else this.buckets.set(key, [s]);
+        }
+      }
+    }
+    this.bucketsBuilt = true;
+  }
+
   /** Re-sorts what's on screen when the set changed, or Signe or anyone else moved. */
   private sortDepth(): void {
-    const key = [this.walker.footprint, ...this.people.map((p) => this.sim.footprintOf(p.id))]
+    // Only what moves (Signe, people, wolves: no fixed bounds) and is on screen can change the order.
+    const moving = this.onScreen.filter((s) => !s.bounds);
+    const key = moving
+      .map((s) => s.footprint())
       .map((f) => `${f.x},${f.y},${f.w},${f.h}`)
-      .join('|') + (this.fight?.view.sortKey() ?? '');
+      .join('|') + `#${this.onScreen.length}`;
     if (key === this.lastSortKey) return;
     this.lastSortKey = key;
     const footprints = this.onScreen.map((s) => s.footprint());
-    depthOrder(footprints).forEach((index, rank) => this.onScreen[index]!.sprite.setDepth(rank));
+    const rects = this.onScreen.map((s) => s.bounds ?? s.sprite.getBounds());
+    depthOrder(footprints, (i, j) => rectsOverlap(rects[i]!, rects[j]!)).forEach((index, rank) => this.onScreen[index]!.sprite.setDepth(rank));
   }
 
   /** Puts Signe's feet on her (interpolated) tile, on whole pixels. */
