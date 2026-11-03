@@ -707,11 +707,15 @@ export class WorldScene extends Phaser.Scene {
     this.tapped = null;
     this.talkingWith = who.id;
     const knewBefore = store.state.impressions[who.id]?.length ?? 0;
+    const wasHollow = store.state.npcs[who.id].hollowed;
     dialogueBox.open(who.id, () => {
       this.tapped = null;
       this.talkingWith = null;
-      if ((store.state.impressions[who.id]?.length ?? 0) > knewBefore) {
-        const name = NPCS.find((n) => n.id === who.id)!.name;
+      const name = NPCS.find((n) => n.id === who.id)!.name;
+      if (!wasHollow && store.state.npcs[who.id].hollowed) {
+        // Not the Hearth: a one-time reserve, so tell the player where the Power went.
+        hud.say(`+${tuning.values.hollowingReserve} Power, once. It will not come back when you rest. (Journal: Hearth)`, 6000);
+      } else if ((store.state.impressions[who.id]?.length ?? 0) > knewBefore) {
         hud.say(`You'll remember this about ${name}. (Journal: People)`, 3500);
       }
       // Conversations change the game (Offerings, promises, flags): keep them.

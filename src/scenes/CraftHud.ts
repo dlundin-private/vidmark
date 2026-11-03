@@ -103,7 +103,8 @@ export class CraftHud {
     this.status.replaceChildren(
       span('hud-label', 'Power '),
       span('hud-pips', pips || '—'),
-      state.reserve > 0 ? span('hud-reserve', ` +${state.reserve}`) : '',
+      // The one-time reserve (hollowing, burned Keepsakes) never refills: say so, not just a number.
+      state.reserve > 0 ? span('hud-reserve', ` +${state.reserve} once`) : '',
       span('hud-label', '   Wounds '),
       span('hud-wounds', '✕'.repeat(state.wounds) + '·'.repeat(Math.max(0, t.maxWounds - state.wounds))),
     );
