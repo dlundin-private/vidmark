@@ -161,7 +161,7 @@ const free = (x, y, w, h) => {
 function place(name, x, y, w = 1, h = 1, extra = {}) {
   if (!free(x, y, w, h)) throw new Error(`Can't place ${name} at ${x},${y}: occupied`);
   for (let ty = y; ty < y + h; ty++) for (let tx = x; tx < x + w; tx++) occupied[idx(tx, ty)] = 1;
-  objects.push({ name, sprite: extra.sprite ?? name, x, y, w, h, npc: extra.npc, broken: extra.broken, rest: extra.rest, inspect: extra.inspect, show: extra.show });
+  objects.push({ name, sprite: extra.sprite ?? name, x, y, w, h, npc: extra.npc, broken: extra.broken, rest: extra.rest, inspect: extra.inspect, show: extra.show, onIce: extra.onIce });
 }
 
 /** Clears an area of terrain to plain snow (a yard or clearing), keeping roads. */
@@ -342,6 +342,11 @@ place('torch-burnt', V.x + 9, sy, 1, 1, { show: 'played_maren' });
 for (const y of [BAND.y0 - 1, BAND.y0 + 1, BAND.y1 + 1]) {
   for (const x of [V.x + 2, V.x + 6]) if (free(x, y, 1, 1)) place('ice-marker', x, y, 1, 1, { show: 'ice_road_open' });
 }
+// On the far half of the road: a supply sled that never made it across, its load spilled.
+// It is what brought the starving wolves out onto the road, and what Signe can push into them.
+const ROAD_X = V.x + 4;
+place('sled', ROAD_X - 4, BAND.y0 - 4, 2, 1, { inspect: 'place_stranded_sled', onIce: true });
+for (const [dx, dy] of [[1, -5], [-1, -7], [3, -3], [-3, -2]]) place('crate', ROAD_X + dx, BAND.y0 + dy, 1, 1, { onIce: true });
 
 // --- Output ------------------------------------------------------------------
 
@@ -434,7 +439,8 @@ const ICE_PEOPLE = new Set(['lilja', 'torvald']);
 const LAKE_PLACES = new Set(['fishing', 'ice-road', 'cracked-ice', 'open-water']);
 const problems = [];
 for (const o of objects) {
-  const allowedOnIce = ON_ICE_ALLOWED.has(o.name) || (o.npc && ICE_PEOPLE.has(o.npc));
+  // onIce: placed out on the ice on purpose (the stranded sled and its spilled crates).
+  const allowedOnIce = ON_ICE_ALLOWED.has(o.name) || o.onIce || (o.npc && ICE_PEOPLE.has(o.npc));
   for (let ty = o.y; ty < o.y + o.h; ty++) {
     for (let tx = o.x; tx < o.x + o.w; tx++) {
       const k = get(tx, ty);

@@ -103,6 +103,8 @@ describe('the Kallsjö map', () => {
     const wrong: string[] = [];
     for (const o of map.objects) {
       if (allowedOnIce.has(o.type)) continue;
+      // The stranded supply sled and its spilled load, out on the far half of the ice road on purpose.
+      if ((o.type === 'sled' || o.type === 'crate') && o.footprint.y < (map.numbers.bandY0 ?? 0)) continue;
       const { x, y, w, h } = o.footprint;
       for (let ty = y; ty < y + h; ty++) for (let tx = x; tx < x + w; tx++) if (onLake(tx, ty)) wrong.push(`${o.type} at ${tx},${ty}`);
     }

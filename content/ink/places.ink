@@ -2,6 +2,12 @@
 // the knot). Each one teaches her something; the journal map records it.
 // ALL TEXT IS A FIRST DRAFT by Claude, for Daniel to rewrite.
 
+=== place_stranded_sled ===
+A sled from the far side, dragged half off the road. One runner is split. Whoever pulled it did not come back for it.
+The load is gone: torn sacks, fish skins licked clean, and paw prints everywhere, round and round.
+It's what brought them out onto the ice. They are as hungry as the village.
+-> END
+
 === place_statue ===
 { has_flag("maren_winter_part") and not has_flag("played_maren") and not is_hollowed("gerda"): -> marens_winter_play }
 ~ set_flag("read_statue", true)
