@@ -57,11 +57,22 @@ The design gives the four actions, their costs and the Weave parts. Everything b
 | **Duration**: an effect lasts one rest longer. Ordinary effects fade at the next rest; broken ice refreezes after one rest. | Draft |
 | Only some modifiers fit each action: Trigger only for Weaken on ice, Size not for Push, and so on. The Weave screen shows only those that fit. | Draft |
 | **Training**: Mend and Weaken level up from use on distinct things (3 for level II, 7 for III). Using them on the same thing again teaches nothing. | Draft, from the design ("not grinding") |
-| An Offering from Ebbe raises Mend by one level; hollowing him would raise it by two. | Draft. **Question:** the design says Ebbe's memory teaches Mend, but the memory he offers is of his wife. Should that memory teach Mend, or should another memory of his do it? |
+| An Offering from Ebbe raises Mend by one level; hollowing him would raise it by two. | Daniel: his memory of his wife is the one that teaches Mend. |
 | **Anchoring** consumes a memory into a Weave for good: its effects never fade. A Keepsake is lost as if burned; an Offering costs a point of max Power for good; an Echo lives on in the Weave. Anchored Weaves can't be deleted. "Your name" is never offered. | Draft, from the design |
 | **Resting** happens at Signe's home: tap the house. Power refills (the reserve doesn't), one wound heals, Craft effects tick down, broken ice refreezes. | Draft |
 | At 3 wounds Signe dies. The game goes back to her last rest at home; everything since is undone. With no rest yet, it starts over. | Decided by Daniel |
 | Death is told as a memory she had wrong: "No. That isn't how it went. You're remembering it wrong", then "Remember it again". The text is in `content/ink/death.ink`, three variants per line. | Daniel's idea, wording drafted by Claude |
+
+## World changes and playtesting (step 7)
+
+Daniel's answers before step 7. Not built yet.
+
+| Decision | Status |
+| --- | --- |
+| The hermit's hut stands empty once he has given the route: he gave away what kept him on the headland and moves into the village, near the fire. If he is hollowed instead, his Hollow sits in the empty doorway. | Daniel |
+| Being seen: hollowing someone while others are close by gets seen; the village then knows it was Signe (see above). | Daniel; "close by" is a tuning value to draft |
+| Quest endings change the village visibly: Ebbe's nets out at the fishing holes when mended or given (torn, empty racks when he is hollowed); burnt-out torches at the statue after the play (nothing if Gerda was hollowed first); fresh spruce markers along the opened ice road, with villagers walking it; open water where a wolf went through and tracks north where the pack fled. | Daniel; the look is Claude's draft |
+| Playtesting: Daniel plays the slice straight from a new game, as a new player would, against the design's slice questions. No jump points or checklist page. | Daniel |
 
 ## The hunger: hollowing made tempting
 
@@ -105,7 +116,7 @@ Daniel's answers to the step-5 questions, and the drafts built on them.
 | Lilja's promise can be kept once the ice road is open: Signe walks her across. | Daniel |
 | Hollowing the hermit gives Signe the safe route (it was in him). The ice road and Maren's Winter get "hollowed" endings; Maren's Winter ends with no play if Gerda is hollowed first. | Claude's draft |
 | How others react to a hollowing (Torvald about Lilja, Gerda about Ebbe, Olle and the hermit about "someone emptying people") and every Echo's lines. | Claude's draft, for Daniel to rewrite |
-| **Question:** in the full game, does the village ever find out it was Signe? | Open |
+| The village finds out it was Signe only by evidence: nobody can tell from a Hollow who did it, but a hollowing with others close by is seen, and then the village knows. They react (doors shut, nobody offers) without the game ever judging. Built in the slice (step 7). | Daniel |
 
 ## The journal map, places to find, and two more quests
 
@@ -118,7 +129,7 @@ Daniel asked for a sketched map of what Signe has found, sketched when she stops
 | Places worth finding, each with a note on the map and (for some) something to learn by looking closely: the island doorpost (Maren and Jon's heights; Jon's stop), the statue's inscription ("She carried us" / "and what did she carry?"), the cairn of names at the pass north, a stove-in Tithe sled whose ledger can be read once mended, and an empty village on the west shore whose shelter becomes a second rest point once its door is mended. | Draft lore and places, invented by Claude to make exploring pay off |
 | **The Hollow in the boathouse** (design side quest): ask someone in the village about him (Gerda tells, Ebbe won't), read the Tithe ledger, read the cairn. Ends on what the Tithe does when a village can't pay: takes a person whole. | Draft, from the design's one-line description |
 | **Maren's Winter** (design side quest): Gerda asks Signe to play young Maren at the statue. If she still has *the story*, the play (Maren gave up nothing) contradicts Father's version (she gave up something dear); if she has seen the doorpost, she notices the play has no brother. | Draft, from the design ("the first lore crack") |
-| The ledger's last page has a mark beside Lilja's name: foreshadowing the end of chapter 1. | Draft. **Question:** too much? |
+| The ledger's last page has a mark beside Lilja's name: foreshadowing the end of chapter 1. | Daniel: keep it. |
 | The bar separates the four plain actions from carried Weaves (a divider and a ✦). A Weave that is only a plain action (an object, no twist, no memory) can't be saved. | Draft, from Daniel's confusion over "7 Weaves" |
 
 ## Memories of people, and carrying Weaves
