@@ -94,6 +94,32 @@ describe('the Kallsjö map', () => {
     for (const id of ['island', 'abandoned', 'tithe-sled', 'cairn']) expect(ids).toContain(id);
   });
 
+  // Ice is solid while frozen and open water once broken: either way, not ground to build on.
+  const LAKE = new Set([...FRAME.ice, FRAME.water, FRAME.iceRoad, 13]);
+  const onLake = (x: number, y: number) => LAKE.has(frameAt(x, y));
+
+  it('stands every building, ruin, sled, boat, crate and cairn on land', () => {
+    const allowedOnIce = new Set(['ice-marker', 'reeds', 'npc']);
+    const wrong: string[] = [];
+    for (const o of map.objects) {
+      if (allowedOnIce.has(o.type)) continue;
+      const { x, y, w, h } = o.footprint;
+      for (let ty = y; ty < y + h; ty++) for (let tx = x; tx < x + w; tx++) if (onLake(tx, ty)) wrong.push(`${o.type} at ${tx},${ty}`);
+    }
+    expect(wrong).toEqual([]);
+  });
+
+  it('never puts anyone or anything in open water', () => {
+    const wrong = map.objects.filter((o) => frameAt(o.footprint.x, o.footprint.y) === FRAME.water).map((o) => o.name);
+    expect(wrong).toEqual([]);
+  });
+
+  it('puts lake places on the lake and every other place on land', () => {
+    const lakePlaces = new Set(['fishing', 'ice-road', 'cracked-ice', 'open-water']);
+    const wrong = map.places.filter((p) => lakePlaces.has(p.id) !== onLake(p.tile.x, p.tile.y)).map((p) => p.id);
+    expect(wrong).toEqual([]);
+  });
+
   it('has Lilja out on the ice, as her dialogue says', () => {
     const { x, y } = person('lilja');
     expect(FRAME.ice).toContain(frameAt(x, y));

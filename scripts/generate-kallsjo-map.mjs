@@ -93,9 +93,13 @@ for (let y = 0; y < SIZE; y++) {
 }
 
 /** Where the lake ends going from the centre along a line (the first non-ice tile). */
+/** Ice is solid while frozen, open water once melted or broken: either way it is lake, not land. */
+const LAKE_KINDS = new Set(['ice', 'thinIce', 'iceRoad', 'water']);
+const isLake = (x, y) => LAKE_KINDS.has(get(x, y));
+
 function shoreAlong(dx, dy) {
   let x = LAKE.x, y = LAKE.y;
-  while (get(x, y) === 'ice' || get(x, y) === 'water') { x += dx; y += dy; }
+  while (inMap(x, y) && isLake(x, y)) { x += dx; y += dy; }
   return { x, y };
 }
 
@@ -395,6 +399,32 @@ const map = {
     tileLayer(3, 'collision', collision, false),
   ],
 };
+
+// --- Checks: nothing stands on the wrong ground ----------------------------------
+// Only these may stand on the ice; everything else needs land under every tile.
+const ON_ICE_ALLOWED = new Set(['ice-marker', 'reeds']);
+const ICE_PEOPLE = new Set(['lilja', 'torvald']);
+const LAKE_PLACES = new Set(['fishing', 'ice-road', 'cracked-ice', 'open-water']);
+const problems = [];
+for (const o of objects) {
+  const allowedOnIce = ON_ICE_ALLOWED.has(o.name) || (o.npc && ICE_PEOPLE.has(o.npc));
+  for (let ty = o.y; ty < o.y + o.h; ty++) {
+    for (let tx = o.x; tx < o.x + o.w; tx++) {
+      const k = get(tx, ty);
+      if (k === 'water') problems.push(`${o.name} at ${tx},${ty} stands in open water`);
+      else if (isLake(tx, ty) && !allowedOnIce) problems.push(`${o.name} at ${tx},${ty} stands on the ice`);
+      else if (!isLake(tx, ty) && o.npc && ICE_PEOPLE.has(o.npc)) problems.push(`${o.name} should be out on the ice, not at ${tx},${ty}`);
+    }
+  }
+}
+for (const [id, , x, y] of PLACES) {
+  const onLake = isLake(x, y);
+  if (LAKE_PLACES.has(id) !== onLake) problems.push(`place ${id} at ${x},${y} is ${onLake ? 'on the lake' : 'on land'}`);
+}
+if (problems.length > 0) {
+  console.error('The map has things on the wrong ground:\n  ' + problems.join('\n  '));
+  process.exit(1);
+}
 
 mkdirSync(join(root, 'assets', 'maps'), { recursive: true });
 writeFileSync(join(root, 'assets', 'maps', 'kallsjo.json'), JSON.stringify(map) + '\n');
