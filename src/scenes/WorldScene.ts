@@ -416,6 +416,11 @@ export class WorldScene extends Phaser.Scene {
       plan = planCast(this.world, store.state, t, spell, { kind: 'object', id: this.pushing.id }, signe, tile, this.wolfAt());
     } else {
       const object = this.craftableAt(worldX, worldY, tile);
+      // Craft works on made things, never on the living (Daniel: keep the domain rule). Say what Push can do instead.
+      if (spell.action === 'push' && !object && this.fight?.logic.wolfAt(tile.x, tile.y)) {
+        hud.say('Craft moves made things, not living ones. Stand in line with an ice marker and push it into the wolf.', 5000);
+        return;
+      }
       // A plain Strengthen or Weaken works on whatever was tapped: an object, or the ice.
       let s = spell;
       if (spell.modifier === null && spell.target === 'object' && !object && (spell.action === 'strengthen' || spell.action === 'weaken')) {

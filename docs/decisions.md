@@ -77,6 +77,7 @@ Daniel's answers before step 7, and how they were built.
 | Built: the hermit walks to a new village fire in the street; Lilja plays out on the near half of the opened road and Olle walks the far half, toward Kronvall. Anyone with no way to walk to their new spot is simply there. | Claude's draft |
 | Built: "seen" means another unhollowed villager within 6 tiles (tuning). Ebbe, Gerda and Lilja then never offer (the hermit already refuses anyone who has emptied someone), and each person says they know. Hollowing a wolf on the ice is never seen. | Claude's draft |
 | Built: a wolf's hole on the road never freezes over; tracks run 12 tiles north from where each fled wolf turned. Torvald has a line for the nets out by the hole. | Claude's draft |
+| Push never moves a wolf: Craft works on made things (Daniel: keep the domain rule). Tapping a wolf with Push says to push an ice marker into it instead. Aiming stays as everywhere else. | Daniel |
 | Fixed (Daniel's playtest): trees no longer grow within 3 tiles of ruins, the shelter or places to look at, so Maren's house and the shelter door are reachable; the empty village's shelter has a dark window. A map test keeps it so. | Daniel's report |
 
 ## The hunger: hollowing made tempting
