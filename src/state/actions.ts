@@ -329,6 +329,16 @@ export function makePromise(state: GameState, id: string, to: NpcId): void {
   state.promises.push({ id, to, kept: null });
 }
 
+/** Signe kept a promise she made. */
+export function keepPromise(state: GameState, id: string): void {
+  const p = state.promises.find((q) => q.id === id);
+  if (p) p.kept = true;
+}
+
+export function promiseKept(state: GameState, id: string): boolean {
+  return state.promises.some((p) => p.id === id && p.kept === true);
+}
+
 export function setPosition(state: GameState, tile: Tile): void {
   state.position = { x: tile.x, y: tile.y };
 }

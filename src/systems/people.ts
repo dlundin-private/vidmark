@@ -56,6 +56,8 @@ interface Person extends PersonSetup {
   until: number;
   blockedFor: number;
   meeting: MeetingDef | null;
+  /** A Hollow: stands where they are, goes nowhere, meets nobody. */
+  hollow: boolean;
 }
 
 /**
@@ -85,6 +87,7 @@ export class PeopleSim {
       until: this.between(timing.idleMs),
       blockedFor: 0,
       meeting: null,
+      hollow: false,
     }));
     this.nextMeetingAt = this.between(timing.meetingIntervalMs);
   }
@@ -104,6 +107,14 @@ export class PeopleSim {
     return this.person(id).walker.visual;
   }
 
+  /** Someone became a Hollow (or is one from the start): they stop where they stand. */
+  setHollow(id: NpcId, hollow: boolean): void {
+    const p = this.person(id);
+    if (p.hollow === hollow) return;
+    p.hollow = hollow;
+    if (hollow && p.meeting) this.endMeeting(p.meeting);
+  }
+
   isTalking(id: NpcId): boolean {
     return this.person(id).mode === 'talk';
   }
@@ -120,7 +131,7 @@ export class PeopleSim {
 
   private think(p: Person, deltaMs: number, ctx: PeopleContext): void {
     if (p.walker.isMoving) return;
-    if (ctx.frozen.has(p.id)) {
+    if (ctx.frozen.has(p.id) || p.hollow) {
       p.route = [];
       if (p.mode === 'wander') p.mode = 'idle';
       return;
@@ -221,7 +232,7 @@ export class PeopleSim {
   private startMeeting(): void {
     const free = (id: NpcId) => {
       const p = this.person(id);
-      return p.mode === 'idle' && !p.walker.isMoving;
+      return p.mode === 'idle' && !p.walker.isMoving && !p.hollow;
     };
     const options = this.meetings.filter((m) => {
       const a = this.person(m.a);

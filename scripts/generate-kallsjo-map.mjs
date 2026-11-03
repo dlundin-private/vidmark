@@ -5,6 +5,7 @@
 // The layout follows docs/design.md and is a draft (docs/decisions.md). The
 // output is a normal Tiled JSON map; once the layout is approved it can be
 // hand-edited in Tiled instead of regenerated.
+import process from 'node:process';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';

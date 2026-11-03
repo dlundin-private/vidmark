@@ -3,6 +3,7 @@
 
 === olle ===
 { is_hollowed("olle"): -> hollowed("Reeve Olle") }
+-> reacts("olle") ->
 { flag("hurt_by_trap_olle"): Reeve Olle: The ice by the village opened under me. I'll be writing that down. }
 { flag("met_olle"):
     Reeve Olle: Something else?
@@ -30,4 +31,5 @@
     Reeve Olle looks at the ledger instead of at you.
     Reeve Olle: Then Kronvall decides. Not me.
     -> talk
++ [Take everything] -> take_everything("olle", "Reeve Olle")
 + [Leave] -> END

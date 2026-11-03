@@ -3,6 +3,7 @@
 
 === torvald ===
 { is_hollowed("torvald"): -> hollowed("Torvald") }
+-> reacts("torvald") ->
 { flag("hurt_by_trap_torvald"): Torvald: Went through by my own hole this morning. Thirty years on this ice, and it's never done that. }
 ~ remember("torvald", "met")
 Torvald: {name_known(): There's my girl. | There you are.}
@@ -40,4 +41,5 @@ Torvald: {name_known(): There's my girl. | There you are.}
     ~ remember("torvald", "told_promise")
     Torvald: Then you'd better keep it. She'll hold you to it until you're both grey.
     -> talk
++ [Take everything] -> take_everything("torvald", "Torvald")
 + [Leave] -> END

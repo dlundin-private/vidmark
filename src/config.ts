@@ -38,3 +38,9 @@ export const MEETING_INTERVAL_MS: readonly [number, number] = [14000, 30000];
 export const MEETING_MAX_DISTANCE = 18;
 /** How long each line of a meeting stays in its speech bubble. */
 export const BUBBLE_MS_PER_LINE = 3200;
+
+// --- Hollows and Echoes ---
+/** Time between two Echoes speaking up inside Signe, in ms (min, max). */
+export const ECHO_INTERVAL_MS: readonly [number, number] = [40000, 90000];
+/** A Hollow is drawn greyed out. */
+export const HOLLOW_TINT = 0x8c8c94;

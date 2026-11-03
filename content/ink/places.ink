@@ -3,7 +3,7 @@
 // ALL TEXT IS A FIRST DRAFT by Claude, for Daniel to rewrite.
 
 === place_statue ===
-{ has_flag("maren_winter_part") and not has_flag("played_maren"): -> marens_winter_play }
+{ has_flag("maren_winter_part") and not has_flag("played_maren") and not is_hollowed("gerda"): -> marens_winter_play }
 ~ set_flag("read_statue", true)
 Saint Maren looks out over the lake, hands open. The stone is worn smooth where people touch it in passing.
 Cut into the plinth: SHE CARRIED US.

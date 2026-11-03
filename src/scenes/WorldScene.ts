@@ -1,6 +1,8 @@
 import Phaser from 'phaser';
 import {
   BUBBLE_MS_PER_LINE,
+  ECHO_INTERVAL_MS,
+  HOLLOW_TINT,
   MEETING_INTERVAL_MS,
   MEETING_MAX_DISTANCE,
   PERSON_IDLE_MS,
@@ -13,6 +15,7 @@ import {
 } from '../config';
 import { MEETINGS } from '../../content/data/meetings';
 import { NPCS } from '../../content/data/npcs';
+import { KEEPSAKES } from '../../content/data/keepsakes';
 import { ACTIONS, CRAFTABLES } from '../../content/data/craft';
 import type { NpcId } from '../../content/data/npcs';
 import { PeopleSim } from '../systems/people';
@@ -124,6 +127,8 @@ export class WorldScene extends Phaser.Scene {
   private sketchIconUntil = 0;
   /** Who Signe is talking with; they hold still. */
   private talkingWith: NpcId | null = null;
+  /** Ms until an Echo next speaks up. */
+  private echoIn = between(ECHO_INTERVAL_MS);
   /** Who or what Signe is walking over to (to talk, or to rest at home). */
   private pendingVisit: { target: () => Footprint; arrive: () => void; who: NpcId | null; onTile?: boolean } | null = null;
   /** The spell chosen in the HUD, waiting for a target. */
@@ -410,7 +415,11 @@ export class WorldScene extends Phaser.Scene {
       return;
     }
     if (A.availablePower(store.state) < plan.cost) {
-      hud.say(`That needs ${plan.cost} Power. You have ${A.availablePower(store.state)}.`);
+      const text = `That needs ${plan.cost} Power. You have ${A.availablePower(store.state)}.`;
+      // Out of Power: the Keepsakes are the one thing she can always spend.
+      if (KEEPSAKES.some((k) => !k.hiddenUntilLate && A.hasKeepsake(store.state, k.id))) {
+        hud.ask(text, [{ label: 'Burn a Keepsake…', run: () => journal.open('keepsakes') }]);
+      } else hud.say(text);
       return;
     }
     const done = plan;
@@ -540,11 +549,30 @@ export class WorldScene extends Phaser.Scene {
       },
     });
     for (const p of this.people) {
+      const hollow = store.state.npcs[p.id].hollowed;
+      this.sim.setHollow(p.id, hollow);
+      // The boathouse Hollow has his own look; anyone Signe empties greys out.
+      if (hollow && !NPCS.find((n) => n.id === p.id)?.startsHollow) p.sprite.setTint(HOLLOW_TINT);
+      else p.sprite.clearTint();
       const v = this.sim.visualOf(p.id);
       const at = roundPoint(this.proj.footprintBottom({ x: v.x, y: v.y, w: 1, h: 1 }));
       p.sprite.setPosition(at.x, at.y);
     }
     bubbles.update(delta, (who) => this.screenPointAbove(who), menuOpen());
+    this.updateEchoes(delta);
+  }
+
+  /** Now and then, what is left of someone Signe hollowed speaks up inside her. */
+  private updateEchoes(delta: number): void {
+    if (menuOpen() || this.talkingWith) return;
+    this.echoIn -= delta;
+    if (this.echoIn > 0) return;
+    this.echoIn = between(ECHO_INTERVAL_MS);
+    const echoes = A.echoes(store.state);
+    if (echoes.length === 0) return;
+    const who = echoes[Math.floor(Math.random() * echoes.length)]!;
+    const line = ambientDialogue.linesOf(`echo_${who}`)[0];
+    if (line) hud.say(`An Echo: “${line.text}”`, 5000);
   }
 
   /** CSS-pixel point just above someone's head, or null if they are off screen. */
@@ -827,4 +855,8 @@ function besidePath(grid: WalkGrid, from: Tile, f: Footprint): Tile[] | null {
     }
   }
   return best;
+}
+
+function between([min, max]: readonly [number, number]): number {
+  return min + Math.random() * (max - min);
 }

@@ -103,6 +103,7 @@ export class DialogueRunner {
       return v !== undefined && v !== false && v !== 0 && v !== '';
     }, true);
     story.BindExternalFunction('promise_made', (id: unknown) => s().promises.some((p) => p.id === id), true);
+    story.BindExternalFunction('promise_kept', (id: unknown) => A.promiseKept(s(), String(id)), true);
     story.BindExternalFunction('power', () => A.availablePower(s()), true);
     story.BindExternalFunction('remembers', (who: unknown, key: unknown) => A.remembers(s(), npc(who), String(key)), true);
 
@@ -118,6 +119,12 @@ export class DialogueRunner {
     }, false);
     story.BindExternalFunction('offer', (who: unknown) => {
       this.store.update((st, t) => A.recordOffering(st, npc(who), t));
+    }, false);
+    story.BindExternalFunction('hollow_person', (who: unknown) => {
+      this.store.update((st, t) => A.recordHollowing(st, npc(who), t));
+    }, false);
+    story.BindExternalFunction('keep_promise', (id: unknown) => {
+      this.store.update((st) => A.keepPromise(st, String(id)));
     }, false);
   }
 }

@@ -197,4 +197,105 @@ describe('dialogue', () => {
     expect(store.state.promises).toEqual([{ id: 'lilja_ice', to: 'lilja', kept: null }]);
     expect(text(play(runner, 'torvald', ['promise to Lilja']))).toContain('keep it');
   });
+
+  describe('hollowing (step 5)', () => {
+    const villagers = NPCS.filter((n) => !n.startsHollow);
+
+    it('lets Signe take everything from anyone, family included, and asks twice', () => {
+      for (const n of villagers) {
+        const { store, runner } = setup();
+        play(runner, n.id, ['Take everything', 'Let it be']);
+        expect(store.state.npcs[n.id].hollowed).toBe(false);
+        play(runner, n.id, ['Take everything', 'Take everything']);
+        expect(store.state.npcs[n.id].hollowed).toBe(true);
+        expect(store.state.reserve).toBe(DEFAULT_TUNING.hollowingReserve);
+        expect(A.echoes(store.state)).toEqual([n.id]);
+      }
+    });
+
+    it('hollowing the hermit gives Signe his safe route', () => {
+      const { store, runner } = setup();
+      play(runner, 'hermit', ['Take everything', 'Take everything']);
+      expect(store.state.flags.knows_safe_route).toBe(true);
+    });
+
+    it('the village notices', () => {
+      const { runner } = setup();
+      play(runner, 'lilja', ['Take everything', 'Take everything']);
+      expect(text(play(runner, 'torvald'))).toContain("Lilja doesn't know me");
+      expect(text(play(runner, 'olle'))).toContain('taking without a ledger');
+    });
+
+    it('every Echo has something to say', () => {
+      const { runner } = setup();
+      for (const n of villagers) expect(runner.linesOf(`echo_${n.id}`).length).toBe(1);
+    });
+
+    it('a girl Signe no longer knows can still be hollowed', () => {
+      const { store, runner } = setup();
+      store.update((st, t) => A.burnKeepsake(st, 'swim', t));
+      play(runner, 'lilja', ['Take everything', 'Take everything']);
+      expect(store.state.npcs.lilja.hollowed).toBe(true);
+    });
+  });
+
+  describe('Offerings are hard to give (step 5)', () => {
+    it('the hermit trusts her after any help he would hear of, but not once she has emptied someone', () => {
+      const { store, runner } = setup();
+      play(runner, 'hermit', ['ice road']);
+      store.update((s) => A.setFlag(s, 'shelter_mended', true));
+      expect(text(play(runner, 'hermit', ['safe way', 'Not yet']))).toContain('put a door back on that shelter');
+      const other = setup();
+      play(other.runner, 'hermit', ['ice road']);
+      other.store.update((s, t) => {
+        A.setFlag(s, 'shelter_mended', true);
+        A.recordHollowing(s, 'olle', t);
+      });
+      expect(text(play(other.runner, 'hermit', ['safe way']))).toContain("I don't give what's mine to strangers");
+    });
+
+    it("Gerda gives her grandmother's Maren after the play, and then cannot tell it", () => {
+      const { store, runner } = setup();
+      expect(() => play(runner, 'gerda', ["when she's gone"])).toThrow(/No choice/);
+      store.update((s) => A.setFlag(s, 'quest_marens-winter', 'played'));
+      play(runner, 'gerda', ["when she's gone", 'Take her memory']);
+      expect(A.hearth(store.state)).toContain('gerda');
+      const after = play(runner, 'gerda');
+      expect(text(after)).toContain('A statue on the shore');
+      expect(() => play(runner, 'gerda', ['statue on the shore'])).toThrow(/No choice/);
+    });
+
+    it('Lilja gives the swim once Signe knows the Tithe takes people', () => {
+      const { store, runner } = setup();
+      store.update((s) => A.setFlag(s, 'knows_tithe_takes_people', true));
+      play(runner, 'lilja', ['stay close to home', 'Take her memory']);
+      expect(A.hearth(store.state)).toContain('lilja');
+      expect(A.remembers(store.state, 'lilja', 'gave_swim')).toBe(true);
+    });
+
+    it('Torvald and Olle never offer', () => {
+      const { store, runner } = setup();
+      for (const flag of ['quest_nets', 'shelter_mended', 'knows_tithe_takes_people', 'ice_road_open']) store.update((s) => A.setFlag(s, flag, true));
+      for (const who of ['torvald', 'olle'] as const) {
+        runner.start(who);
+        for (let step = runner.next(); step.kind !== 'end'; step = runner.next()) {
+          if (step.kind === 'choices') {
+            expect(step.options.join('|')).not.toMatch(/memory/i);
+            runner.choose(step.options.findIndex((o) => o.includes('Leave')));
+          }
+        }
+        expect(A.hearth(store.state)).not.toContain(who);
+      }
+    });
+  });
+
+  it('Signe can keep her promise to Lilja once the ice road is open', () => {
+    const { store, runner } = setup();
+    play(runner, 'lilja', ['Promise']);
+    expect(() => play(runner, 'lilja', ['across the ice road'])).toThrow(/No choice/);
+    store.update((s) => A.setFlag(s, 'ice_road_open', true));
+    expect(text(play(runner, 'lilja', ['across the ice road']))).toContain('You kept it');
+    expect(store.state.promises[0]!.kept).toBe(true);
+    expect(() => play(runner, 'lilja', ['across the ice road'])).toThrow(/No choice/);
+  });
 });

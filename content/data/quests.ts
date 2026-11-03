@@ -77,6 +77,12 @@ export const QUESTS: readonly QuestDef[] = [
     ],
     outcomes: [
       {
+        id: 'hollowed',
+        when: (v) => !!v.flag('crossed_cracked_ice') && !!v.flag('knows_safe_route') && v.hollowed('hermit'),
+        text: 'You crossed by the way you took from the hermit. He sits in his hut and does not look at the lake.',
+        sets: 'ice_road_open',
+      },
+      {
         id: 'route',
         when: (v) => !!v.flag('crossed_cracked_ice') && !!v.flag('knows_safe_route'),
         text: "You crossed by the hermit's old route. He no longer remembers it.",
@@ -122,6 +128,7 @@ export const QUESTS: readonly QuestDef[] = [
       { text: () => 'Play your part, at the statue on the shore', done: (v) => !!v.flag('played_maren') },
     ],
     outcomes: [
+      { id: 'hollowed', when: (v) => v.hollowed('gerda') && !v.flag('played_maren'), text: 'There is no play this year. Nobody else remembers the lines.' },
       {
         id: 'noticed',
         when: (v) => !!v.flag('played_maren') && !!v.flag('noticed_play_differs'),

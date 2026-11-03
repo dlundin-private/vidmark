@@ -63,6 +63,23 @@ The design gives the four actions, their costs and the Weave parts. Everything b
 | At 3 wounds Signe dies. The game goes back to her last rest at home; everything since is undone. With no rest yet, it starts over. | Decided by Daniel |
 | Death is told as a memory she had wrong: "No. That isn't how it went. You're remembering it wrong", then "Remember it again". The text is in `content/ink/death.ink`, three variants per line. | Daniel's idea, wording drafted by Claude |
 
+## Offering, hollowing and burning (step 5)
+
+Daniel's answers to the step-5 questions, and the drafts built on them.
+
+| Decision | Status |
+| --- | --- |
+| Anyone can be hollowed, family included. *Take everything* is in every conversation, never highlighted, and always asks a second time. | Daniel |
+| A Hollow stays where they are, blank, greyed out, and leaves an Echo in Signe that speaks up now and then (every 40–90 s). | Daniel; timing and lines are drafts |
+| Keepsakes are burned from the journal, any time; the confirmation names only the gain. When a cast lacks Power, the prompt offers *Burn a Keepsake…*. | Daniel; the prompt is Claude's draft |
+| Offerings are hard decisions with a reason, not rewards; not everyone gives, and only valuable memories count. Roster: Ebbe (his wife; necessity), the hermit (the route; trust), Gerda (her grandmother's Maren, after the play; so someone remembers), Lilja (the swim, once Signe knows the Tithe takes people; so you'll remember me). Torvald and Olle refuse. | Daniel chose the roster; reasons and lines are drafts |
+| The hermit trusts Signe once she has mended Ebbe's nets, the empty village's shelter, or learned what the Tithe does; never once she has hollowed someone in the village. | Daniel ("when he trusts her"); the conditions are drafts |
+| The Tithe ledger's mark beside Lilja stays. | Daniel |
+| Lilja's promise can be kept once the ice road is open: Signe walks her across. | Daniel |
+| Hollowing the hermit gives Signe the safe route (it was in him). The ice road and Maren's Winter get "hollowed" endings; Maren's Winter ends with no play if Gerda is hollowed first. | Claude's draft |
+| How others react to a hollowing (Torvald about Lilja, Gerda about Ebbe, Olle and the hermit about "someone emptying people") and every Echo's lines. | Claude's draft, for Daniel to rewrite |
+| **Question:** in the full game, does the village ever find out it was Signe? | Open |
+
 ## The journal map, places to find, and two more quests
 
 Daniel asked for a sketched map of what Signe has found, sketched when she stops (walk too long and she remembers less), for places that make exploring worth it, and for the remaining quests.

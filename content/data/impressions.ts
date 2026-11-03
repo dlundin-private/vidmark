@@ -66,6 +66,7 @@ export const MEMORIES: Record<NpcId, PersonMemory> = {
       },
       { key: 'hollow', text: "\"We don't say his name. It would be cruel.\" His family couldn't pay, so the Tithe took him instead.", cold: 'The man in the boathouse was payment. The Tithe took all of him.' },
       { key: 'winter', text: 'She wants me as young Maren in the festival play. "You\'ve the face for it."' },
+      { key: 'gave', text: "She gave you her grandmother's Maren so it wouldn't die with her. Now the statue is only a statue to her.", cold: 'She gave you the true Maren. It was worth more than she was.' },
     ],
   },
   olle: {
@@ -90,6 +91,8 @@ export const MEMORIES: Record<NpcId, PersonMemory> = {
       { key: 'met', text: 'Your sister. Slides from the jetty to the reeds and never falls.', blurred: 'Bright, fearless on the ice. She seemed to know you.' },
       { key: 'careful', text: 'You told her not past the reeds. She reminded you that you taught her to swim.', blurred: 'You told her to keep off the thin ice. She said something about swimming.' },
       { key: 'promise', text: 'You promised to take her all the way across when the road is safe.', blurred: 'You promised her something. Across the ice.' },
+      { key: 'gave_swim', text: "She gave you the swim, so you would always remember her. She doesn't remember learning.", blurred: 'She gave you something. You keep it without knowing why.', cold: 'She gave you the swim. It was the best thing she had.' },
+      { key: 'kept_promise', text: 'You took her all the way across. On the far shore she looked back at the village and said: you kept it.', blurred: 'You walked a girl across the ice road. She seemed to think you owed her that.' },
     ],
   },
   torvald: {

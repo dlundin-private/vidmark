@@ -8,7 +8,7 @@ This repo builds the **vertical slice**: one village by the frozen lake in Kalls
 
 ## Status
 
-Build steps 1–4 of 7 are done: Kallsjö, a 256×256 valley with a frozen lake, birch forest, mountains, an ice road and Signe's village to walk around; the game state with save/load; conversations with everyone in the slice that react to what Signe has lost; and Craft magic: Strengthen, Weaken, Push and Mend, Weave crafting, training and resting. There's no combat yet. All art is placeholder, and all dialogue is a first draft.
+Build steps 1–5 of 7 are done: Kallsjö, a 256×256 valley with a frozen lake, birch forest, mountains, an ice road and Signe's village to walk around; the game state with save/load; conversations with everyone in the slice that react to what Signe has lost; and Craft magic: Strengthen, Weaken, Push and Mend, Weave crafting, training and resting; and the two ways to get Power from people, asking (Offerings) and taking (hollowing), plus burning Keepsakes. There's no combat yet. All art is placeholder, and all dialogue is a first draft.
 
 | Step | What | Status |
 | --- | --- | --- |
@@ -16,8 +16,8 @@ Build steps 1–4 of 7 are done: Kallsjö, a 256×256 valley with a frozen lake,
 | 2 | Game state and save/load | Done |
 | 3 | Ink dialogue wired to the game state | Done |
 | 4 | Craft abilities, Power, Weave crafting and skill training | Done |
-| 5 | Offering, hollowing and Keepsake burning | Next |
-| 6 | Turn-based combat and the wolf fight | |
+| 5 | Offering, hollowing and Keepsake burning | Done |
+| 6 | Turn-based combat and the wolf fight | Next |
 | 7 | Both quests, world changes and playtesting | |
 
 ## Controls
@@ -62,7 +62,7 @@ Signe can take three wounds. The third kills her, and the game goes back to the 
 Both slice quests are in, with their progress in the journal and a banner when one starts or ends:
 
 - **The net-mender's hands** (Ebbe): mend his two torn net racks, or accept the memory he offers. Either way, he then teaches Signe to prepare Weaves.
-- **The ice road**: a band of cracked ice cuts the road across the lake. Make it hold with Strengthen (an area Weave covers the road's width), or get the safe route from the hermit's memory; then cross. Hollowing the hermit, the design's third way, comes with build step 5.
+- **The ice road**: a band of cracked ice cuts the road across the lake. Make it hold with Strengthen (an area Weave covers the road's width), or get the safe route from the hermit's memory; then cross. Or take everything from the hermit, route included.
 
 Signe carries three Weaves at once; the rest she knows. Shaping new ones and changing which she carries happens by the fire at home.
 
@@ -74,6 +74,13 @@ The journal's **Hearth** page shows who has given Signe a memory, what they gave
 
 - **The Hollow in the boathouse**: who was he, and what does the Tithe do when a village can't pay?
 - **Maren's Winter**: play young Maren in Gerda's festival play at the statue.
+
+## Asking and taking
+
+- **Offerings** are hard to give and not a reward. Each giver has a reason: Ebbe because it's the only way to feed the village, the hermit once he trusts Signe (she has helped the village in a way he'd hear of), Old Gerda so her grandmother's Maren doesn't die with her (after the play), and Lilja so Signe will always remember her (once Signe knows the Tithe takes people). Torvald and Reeve Olle never offer. A giver no longer has what they gave.
+- **Hollowing**: every conversation ends with *Take everything*, for anyone, family included. It always asks a second time. A Hollow stops moving and greys out, the village talks about it, and what is left of them, an **Echo**, speaks up inside Signe now and then.
+- **Burning Keepsakes**: in the journal's Keepsakes page, or from the prompt when a cast needs more Power than she has. The confirmation only names what she gains.
+- **Lilja's promise** can be kept once the ice road is open.
 
 ## The map
 

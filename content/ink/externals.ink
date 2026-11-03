@@ -14,6 +14,7 @@ EXTERNAL name_known()          // false once "your name" is burned: then nobody 
 EXTERNAL flag(name)            // a world flag; 0 if never set (reads as false, and compares as a number)
 EXTERNAL has_flag(name)        // true if a flag is set to anything (use for flags holding text, like quest outcomes)
 EXTERNAL promise_made(id)
+EXTERNAL promise_kept(id)
 EXTERNAL power()               // Power Signe can spend right now
 EXTERNAL remembers(who, key)   // Signe remembers this about someone (an impression, or that she asked)
 
@@ -21,4 +22,6 @@ EXTERNAL remembers(who, key)   // Signe remembers this about someone (an impress
 EXTERNAL set_flag(name, value)
 EXTERNAL make_promise(id, who)
 EXTERNAL offer(who)            // record an Offering from this person
+EXTERNAL hollow_person(who)         // Signe takes everything from this person: they become a Hollow
+EXTERNAL keep_promise(id)      // Signe kept a promise
 EXTERNAL remember(who, key)    // Signe forms an impression of someone (texts: content/data/impressions.ts)

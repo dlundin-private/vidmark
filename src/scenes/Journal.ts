@@ -1,4 +1,4 @@
-import { KEEPSAKES } from '../../content/data/keepsakes';
+import { KEEPSAKES, type KeepsakeId } from '../../content/data/keepsakes';
 import { NPCS } from '../../content/data/npcs';
 import * as A from '../state/actions';
 import type { GameStore } from '../state/store';
@@ -31,6 +31,8 @@ export class Journal {
   private readonly root: HTMLDivElement;
   private page: Page = 'quests';
   private source: SketchSource | null = null;
+  /** The Keepsake whose Burn button was pressed once: the second press burns it. */
+  private confirmingBurn: KeepsakeId | null = null;
 
   constructor(private readonly store: GameStore) {
     const style = document.createElement('style');
@@ -72,6 +74,7 @@ export class Journal {
 
   close(): void {
     this.root.hidden = true;
+    this.confirmingBurn = null;
   }
 
   private render(): void {
@@ -199,13 +202,32 @@ export class Journal {
     const s = this.store.state;
     const items = KEEPSAKES.filter((k) => !k.hiddenUntilLate && s.keepsakes[k.id].formed).map((k) => {
       const status = s.keepsakes[k.id].status;
-      if (status === 'kept') return el('div', 'keepsake', [el('div', 'keepsake-title', k.title), el('p', 'keepsake-memory', k.memory)]);
+      if (status === 'kept') return el('div', 'keepsake', [el('div', 'keepsake-title', k.title), el('p', 'keepsake-memory', k.memory), this.burnControls(k.id)]);
       return el('div', 'keepsake gone', [
         el('div', 'keepsake-title', k.title),
         el('p', 'keepsake-memory', status === 'burned' ? 'Something used to be written here.' : 'Woven into something. You can feel its shape, not what it was.'),
       ]);
     });
     return el('div', 'journal-page', [el('p', 'journal-lead', 'The memories that make you who you are. Each can be burned for Power, once.'), ...items]);
+  }
+
+  /**
+   * Burning asks twice, and the second ask names only what she gains (decided by
+   * Daniel): what she loses she finds out afterwards, in the world.
+   */
+  private burnControls(id: KeepsakeId): HTMLElement {
+    const gain = this.store.tuningValues[KEEPSAKES.find((k) => k.id === id)!.burnTuning];
+    if (this.confirmingBurn !== id) {
+      return el('div', 'keepsake-actions', [button('Burn', () => { this.confirmingBurn = id; this.render(); })]);
+    }
+    const burn = button(`Burn it: +${gain} Power`, () => {
+      this.confirmingBurn = null;
+      this.store.update((st, t) => A.burnKeepsake(st, id, t));
+      this.store.save();
+    });
+    burn.className = 'keepsake-burn';
+    const keep = button('Keep it', () => { this.confirmingBurn = null; this.render(); });
+    return el('div', 'keepsake-actions', [burn, keep]);
   }
 }
 
@@ -480,5 +502,8 @@ const CSS = `
 .keepsake-title { color: #f0d9a8; font-size: 18px; }
 .keepsake-memory { margin: 2px 0; }
 .keepsake.gone { opacity: 0.45; }
+.keepsake-actions { display: flex; gap: 8px; margin: 6px 0 0; }
+.keepsake-actions button { background: none; color: #b9ad97; border: 1px solid #4a4337; border-radius: 6px; padding: 8px 14px; font: 15px system-ui, sans-serif; cursor: pointer; }
+.keepsake-actions .keepsake-burn { color: #f0c79a; border-color: #8a5a3a; }
 .keepsake.gone .keepsake-memory { font-style: italic; }
 `;

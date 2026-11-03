@@ -147,4 +147,20 @@ describe('PeopleSim meetings', () => {
     const sim = new PeopleSim(w, setups, [{ a: 'ebbe', b: 'gerda', knot: 'k' }], timing, seeded(7));
     expect(() => run(sim, 8000, ctx())).not.toThrow();
   });
+
+  it('never moves a Hollow, and never sends anyone to meet one', () => {
+    const w = world(open(20, 5));
+    const setups: PersonSetup[] = [
+      { id: 'ebbe', home: { x: 2, y: 2 }, radius: 3 },
+      { id: 'gerda', home: { x: 8, y: 2 }, radius: 3 },
+    ];
+    place(w, setups);
+    let meetings = 0;
+    const sim = new PeopleSim(w, setups, [{ a: 'ebbe', b: 'gerda', knot: 'k' }], timing, seeded(8));
+    sim.setHollow('ebbe', true);
+    run(sim, 8000, ctx({ meet: () => { meetings++; return 500; } }), () => {
+      expect(sim.tileOf('ebbe')).toEqual({ x: 2, y: 2 });
+    });
+    expect(meetings).toBe(0);
+  });
 });

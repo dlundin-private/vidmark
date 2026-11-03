@@ -101,3 +101,25 @@ describe('The ice road', () => {
     expect(status(s, 'ice-road').outcome).toBeNull();
   });
 });
+
+describe('quests that end with someone hollowed', () => {
+  it('the ice road, crossed by the way taken from the hermit', () => {
+    const s = createNewGame(2);
+    A.setFlag(s, 'heard_ice_road', true);
+    A.recordHollowing(s, 'hermit', t);
+    A.setFlag(s, 'knows_safe_route', true);
+    A.setFlag(s, 'crossed_cracked_ice', true);
+    updateQuests(s);
+    expect(status(s, 'ice-road').outcome?.id).toBe('hollowed');
+    expect(s.flags.ice_road_open).toBe(true);
+  });
+
+  it("Maren's Winter, when Gerda is hollowed before the play", () => {
+    const s = createNewGame(2);
+    A.setFlag(s, 'maren_winter_part', true);
+    updateQuests(s);
+    A.recordHollowing(s, 'gerda', t);
+    updateQuests(s);
+    expect(status(s, 'marens-winter').outcome?.id).toBe('hollowed');
+  });
+});

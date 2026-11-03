@@ -19,6 +19,7 @@ INCLUDE people/torvald.ink
 INCLUDE meetings.ink
 INCLUDE death.ink
 INCLUDE places.ink
+INCLUDE hollowing.ink
 
 -> END
 

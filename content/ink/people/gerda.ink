@@ -3,6 +3,8 @@
 
 === gerda ===
 { is_hollowed("gerda"): -> hollowed("Old Gerda") }
+-> reacts("gerda") ->
+{ has_offered("gerda"): Old Gerda: Maren? A saint. A statue on the shore. What more is there to say about her? }
 { flag("hurt_by_trap_gerda"): Old Gerda: I went through the ice like a girl. At my age. Someone has been at it, and I'd like to know who. }
 { flag("met_gerda"):
     Old Gerda: Sit, if you're staying.
@@ -14,12 +16,12 @@
 -> talk
 
 = talk
-* {not remembers("gerda", "statue")} [Ask about the statue on the shore] Signe: Who carved the statue of Saint Maren?
+* {not has_offered("gerda") and not remembers("gerda", "statue")} [Ask about the statue on the shore] Signe: Who carved the statue of Saint Maren?
     ~ remember("gerda", "statue")
     Old Gerda: Someone who never met her.
     Old Gerda: My grandmother did. She said Maren was a skinny girl with chapped hands, before she was anybody's saint.
     -> talk
-* {not remembers("gerda", "grandmother")} [Ask what her grandmother said] Signe: What else did your grandmother say about her?
+* {not has_offered("gerda") and not remembers("gerda", "grandmother")} [Ask what her grandmother said] Signe: What else did your grandmother say about her?
     ~ remember("gerda", "grandmother")
     Old Gerda: That she loved her little brother more than her own eyes.
     Old Gerda: And that the winter she saved the lake, she stopped knowing her mother's face.
@@ -48,4 +50,18 @@
     ** [Not this year] Signe: Ask someone else.
         Old Gerda: There's nobody else who remembers the lines. Never mind. I'll do it myself, and creak.
         -> talk
+* {has_flag("quest_marens-winter") and not has_offered("gerda")} [Ask who will read the saint's part when she's gone] Signe: Who'll read Maren's part, when you're gone?
+    Old Gerda: Nobody. That's the trouble.
+    Old Gerda: When I go, my grandmother's Maren goes with me. The chapped hands, the brother, her mother's face. All of it.
+    Old Gerda: Take it. I'd rather it lived in you than died with me.
+    ** [Take her memory] Signe: I'll keep it.
+        ~ offer("gerda")
+        ~ remember("gerda", "gave")
+        Old Gerda closes her eyes. When she opens them she looks at the statue on the shore as if it were only a statue.
+        Old Gerda: There. Now, what were we talking about?
+        -> END
+    ** [Refuse] Signe: Keep it, Gerda. Tell it to someone else.
+        Old Gerda: There's nobody else who listens.
+        -> talk
++ [Take everything] -> take_everything("gerda", "Old Gerda")
 + [Leave] -> END

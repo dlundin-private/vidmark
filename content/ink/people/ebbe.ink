@@ -7,6 +7,7 @@
 
 === ebbe ===
 { is_hollowed("ebbe"): -> hollowed("Ebbe") }
+-> reacts("ebbe") ->
 { flag("hurt_by_trap_ebbe"): Ebbe: Someone's been at the ice by the shore. Went through to my waist. Ice doesn't open like that by itself. }
 { flag("nets_mended") and (flag("ebbe_seen_mended") < flag("nets_mended")): -> sees_mended }
 { (all_nets() or has_offered("ebbe")) and not flag("weaves_taught"): -> teach_weaves }
@@ -57,6 +58,7 @@
     Ebbe: Don't.
     Ebbe: He was one of us. Then the Tithe came, and his people couldn't pay. Ask Gerda, if you must. I won't.
     -> talk
++ [Take everything] -> take_everything("ebbe", "Ebbe")
 + [Leave] -> END
 
 // Signe has mended one or both of his net racks since he last saw them.
@@ -110,4 +112,4 @@ Three shapes, you find. A fourth presses on something of your own, and you let i
 = after_offering
 Ebbe: The nets again.
 Ebbe: Strange. I keep thinking someone used to sit with me while I worked. Can't think who.
--> END
+-> talk

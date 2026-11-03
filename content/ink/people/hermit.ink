@@ -4,6 +4,7 @@
 
 === hermit ===
 { is_hollowed("hermit"): -> hollowed("The hermit") }
+-> reacts("hermit") ->
 { flag("hurt_by_trap_hermit"): The hermit: Went through the ice this morning. Fifty winters, and it's never opened under me like that. Somebody did that. }
 { has_offered("hermit"): -> after_offering }
 { flag("met_hermit"):
@@ -23,9 +24,9 @@
     The hermit: It always breaks. Halfway over there's a band of rotten ice, right across the lake. Every spring, the same place.
     The hermit: Folk forgot where it's thick enough to walk. I didn't. I walked it before most of them were born.
     -> talk
-* {flag("heard_ice_road") and (not remembers("hermit", "refused_route") or has_flag("quest_nets"))} [Ask him for the safe way across] Signe: Will you tell me where the ice is thick?
-    { has_flag("quest_nets"):
-        The hermit: Word gets out here, even. You're the one who sorted Ebbe's nets.
+* {not has_offered("hermit") and flag("heard_ice_road") and (not remembers("hermit", "refused_route") or hermit_trusts())} [Ask him for the safe way across] Signe: Will you tell me where the ice is thick?
+    { hermit_trusts():
+        The hermit: Word gets out here, even. {has_flag("quest_nets"): You're the one who sorted Ebbe's nets.|{has_flag("shelter_mended"): You're the one who put a door back on that shelter in the empty village.|You've been asking after the Tithe. Good. Somebody should.}}
         The hermit: My legs don't go on the ice anymore. Telling you won't do. You'd need to remember it the way I do, every step.
         The hermit: I can give it to you. Then it's yours, and not mine.
         ** [Take his memory of the route] Signe: I'll walk it carefully.
@@ -47,8 +48,13 @@
     ~ remember("hermit", "alone")
     The hermit: The Tithe-men count heads in the village. Out here they forget to count.
     -> talk
++ [Take everything] -> take_everything("hermit", "The hermit")
 + [Leave] -> END
 
 = after_offering
 The hermit: Somebody asked me about the ice once. Can't think what I told them.
--> END
+-> talk
+
+// He trusts her once she has helped the village in any way he would hear of (decided by Daniel), unless she has been emptying people.
+=== function hermit_trusts() ===
+~ return (has_flag("quest_nets") or has_flag("shelter_mended") or has_flag("knows_tithe_takes_people")) and not emptied_someone()
