@@ -31,7 +31,8 @@ export class DialogueBox {
     return !this.root.hidden;
   }
 
-  open(who: NpcId, onClose: () => void): void {
+  /** Opens a conversation: a person's id, or any knot (a place Signe looks at). */
+  open(who: NpcId | string, onClose: () => void): void {
     this.runner.start(who);
     this.onClose = onClose;
     this.root.hidden = false;

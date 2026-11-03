@@ -39,6 +39,13 @@ describe('serialize / deserialize', () => {
     expect(state.impressions).toEqual({ ebbe: ['met'] });
   });
 
+  it('migrates a version 3 save: an empty journal map', () => {
+    const file = JSON.parse(serialize(createNewGame(2)));
+    file.version = 3;
+    delete file.state.sketched;
+    expect(deserialize(JSON.stringify(file)).sketched).toEqual({ tiles: '', places: [] });
+  });
+
   it('rejects saves from a newer version', () => {
     const file = JSON.parse(serialize(createNewGame(2)));
     file.version = 99;

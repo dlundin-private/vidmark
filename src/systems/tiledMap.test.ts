@@ -39,7 +39,7 @@ describe('parseTiledMap', () => {
 
   it('converts isometric object coordinates to tile footprints', () => {
     const [obj] = parseTiledMap(tinyMap()).objects;
-    expect(obj).toEqual({ id: 7, name: 'boathouse', type: 'boathouse', sprite: 'boathouse', npc: null, broken: false, rest: false, footprint: { x: 1, y: 0, w: 2, h: 1 } });
+    expect(obj).toEqual({ id: 7, name: 'boathouse', type: 'boathouse', sprite: 'boathouse', npc: null, broken: false, rest: false, inspect: null, footprint: { x: 1, y: 0, w: 2, h: 1 } });
   });
 
   it('reads the spawn tile from map properties', () => {
@@ -82,6 +82,16 @@ describe('the Kallsjö map', () => {
       const { x, y } = p.footprint;
       expect(beside(x, y).some((t) => findPath(map, map.spawn, t) !== null)).toBe(true);
     }
+  });
+
+  it('names places worth finding, each on the map', () => {
+    expect(map.places.length).toBeGreaterThan(10);
+    for (const p of map.places) {
+      expect(p.tile.x).toBeGreaterThanOrEqual(0);
+      expect(p.tile.x).toBeLessThan(256);
+    }
+    const ids = map.places.map((p) => p.id);
+    for (const id of ['island', 'abandoned', 'tithe-sled', 'cairn']) expect(ids).toContain(id);
   });
 
   it('has Lilja out on the ice, as her dialogue says', () => {

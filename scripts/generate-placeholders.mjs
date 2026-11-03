@@ -255,6 +255,15 @@ function generateEffects() {
   overlay('fx-route.png', (c, x, y) => {
     if ((Math.abs(x - 12) < 2 && Math.abs(y - 6) < 1) || (Math.abs(x - 20) < 2 && Math.abs(y - 10) < 1)) c.set(x, y, '#2b3f4f', 230);
   });
+  // Sketching: a small open journal with a pencil line.
+  const book = new Canvas(14, 10);
+  for (let y = 1; y < 9; y++) for (let x = 0; x < 14; x++) {
+    const page = x !== 6 && x !== 7;
+    book.set(x, y, y === 1 || y === 8 || x === 0 || x === 13 ? '#3b2a1e' : page ? '#efe6d2' : '#8a6a4e');
+  }
+  for (const [x, y] of [[2, 3], [3, 3], [4, 4], [9, 3], [10, 4], [11, 4], [2, 6], [3, 6], [9, 6]]) book.set(x, y, '#4a3b30');
+  save('fx-sketch.png', book);
+
   // Targeting: where the chosen ability can land.
   overlay('fx-target.png', (c, x, y) => {
     const edge = !inDiamond(x - 1, y) || !inDiamond(x + 1, y) || !inDiamond(x, y - 1) || !inDiamond(x, y + 1);
@@ -347,7 +356,7 @@ function generateHouses() {
       pattern: (hit) => {
         if (hit.face === 'top') return wall;
         const base = hit.face === 'left' ? wall : wallDark;
-        const isDoor = hit.face === 'left' && Math.abs(hit.u - door) < 0.28 && hit.z < wallH * 0.7;
+        const isDoor = hit.face === 'left' && Math.abs(hit.u - door) < (wall === '#4d4237' ? 0.42 : 0.28) && hit.z < wallH * (wall === '#4d4237' ? 0.85 : 0.7);
         const isWindow = hit.face === 'right' && Math.abs(hit.v - h / 2) < 0.22 && hit.z > wallH * 0.35 && hit.z < wallH * 0.7;
         if (isDoor) return '#1d1612';
         if (isWindow) return '#e8c27a';
@@ -367,6 +376,10 @@ function generateHouses() {
   save('house.png', house(3, 2, 20, '#6b4a36', '#4a3326', 1.5));
   save('house-small.png', house(2, 2, 16, '#5d4636', '#41312a', 1));
   save('hut.png', house(2, 2, 12, '#55493d', '#3b332b', 0.9));
+  // The shelter in the abandoned village: the same hut, door broken in and snow drifted against it.
+  const broken = house(2, 2, 12, '#4d4237', '#352d26', 0.9);
+  save('shelter.png', house(2, 2, 12, '#55493d', '#3b332b', 0.9));
+  save('shelter-broken.png', broken);
 }
 
 function generateMountains() {
@@ -418,6 +431,13 @@ function generateNature() {
   save('ice-marker.png', drawBoxes(1, 1, 22, [
     { u: 0.46, v: 0.46, du: 0.08, dv: 0.08, z: 0, dz: 18, top: '#6b5444', left: '#5b463a', right: '#3d2f27' },
     { u: 0.38, v: 0.38, du: 0.24, dv: 0.24, z: 14, dz: 7, top: '#3f5a3a', left: '#35502f', right: '#273d23' },
+  ]));
+  // A cairn of stones at the northern pass.
+  save('cairn.png', drawBoxes(1, 1, 26, [
+    { u: 0.15, v: 0.15, du: 0.7, dv: 0.7, z: 0, dz: 7, top: '#8d8d88', left: '#77776f', right: '#5f5f59' },
+    { u: 0.25, v: 0.25, du: 0.5, dv: 0.5, z: 7, dz: 6, top: '#9a9a94', left: '#83837c', right: '#6a6a64' },
+    { u: 0.33, v: 0.33, du: 0.34, dv: 0.34, z: 13, dz: 5, top: '#a5a59f', left: '#8e8e88', right: '#73736d' },
+    { u: 0.4, v: 0.4, du: 0.2, dv: 0.2, z: 18, dz: 4, top: '#eef2f6', left: '#d3dbe3', right: '#aab6c2' },
   ]));
   save('sled.png', drawBoxes(2, 1, 12, [
     { u: 0.1, v: 0.3, du: 1.8, dv: 0.4, z: 0, dz: 3, top: '#5b463a', left: '#4a3a30', right: '#3d2f27' },

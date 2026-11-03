@@ -186,6 +186,8 @@ export function cast(world: WorldModel, state: GameState, t: Tuning, plan: Extra
       case 'mend':
         A.setObjectBroken(state, o.id, false);
         A.setObjectEffect(state, o.id, undefined);
+        if (o.type === 'tithe-sled') A.setFlag(state, 'tithe_sled_mended', true);
+        if (o.type === 'shelter') A.setFlag(state, 'shelter_mended', true);
         if (o.type === 'net-rack') {
           const racks = world.objects.filter((x) => x.type === 'net-rack' && x.broken);
           A.setFlag(state, 'nets_total', racks.length);

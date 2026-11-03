@@ -87,4 +87,6 @@ export const CRAFTABLES: Record<string, CraftableDef> = {
   hut: { mendLevel: 3 },
   statue: { mendLevel: 2 },
   'ice-marker': { pushable: true, mendLevel: 1 },
+  shelter: { mendLevel: 1 },
+  'tithe-sled': { mendLevel: 1 },
 };

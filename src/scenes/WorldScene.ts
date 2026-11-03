@@ -22,6 +22,8 @@ import { TileWalker } from '../systems/movement';
 import { findPath, type WalkGrid } from '../systems/pathfinding';
 import { parseTiledMap, type MapObject, type TiledJson } from '../systems/tiledMap';
 import { FLAG_KNOWS_SAFE_ROUTE, WorldModel } from '../systems/world';
+import { SketchMemory } from '../state/explored';
+import { PLACES } from '../../content/data/places';
 import { cast, planCast, plainSpell, stepOnto, weaveSpell, type Aim, type Spell } from '../systems/craft';
 import { ambientDialogue, dialogueBox, store, tuning } from '../game';
 import { isBeside, pathToBeside } from '../systems/interaction';
@@ -114,8 +116,12 @@ export class WorldScene extends Phaser.Scene {
   /** Last direction tapped, kept until used: a tap can go down and up within one frame. */
   private tapped: keyof DirectionKeys | null = null;
   private people: Person[] = [];
-  private home: MapObject | null = null;
   private sim!: PeopleSim;
+  /** Steps walked since she last stopped to sketch. */
+  private sketchMemory = new SketchMemory();
+  private stillMs = 0;
+  private sketchIcon!: Phaser.GameObjects.Image;
+  private sketchIconUntil = 0;
   /** Who Signe is talking with; they hold still. */
   private talkingWith: NpcId | null = null;
   /** Who or what Signe is walking over to (to talk, or to rest at home). */
@@ -143,6 +149,8 @@ export class WorldScene extends Phaser.Scene {
     this.people = [];
     this.talkingWith = null;
     this.pendingVisit = null;
+    this.sketchMemory = new SketchMemory();
+    this.stillMs = 0;
     bubbles.clear();
     this.spell = null;
     this.pushing = null;
@@ -158,6 +166,7 @@ export class WorldScene extends Phaser.Scene {
     const groundLayer = this.add.layer();
     const overlayLayer = this.add.layer();
     this.entityLayer = this.add.layer();
+    const topLayer = this.add.layer();
 
     // Ground and overlays are blitted for the visible area only (see refreshView).
     this.ground = this.add.blitter(0, 0, TILESET_KEY);
@@ -190,7 +199,6 @@ export class WorldScene extends Phaser.Scene {
       this.sortableById.set(obj.id, sortable);
       if (!npc) this.applyLook(sortable);
       if (npc) this.people.push({ id: npc, obj, sprite });
-      if (obj.rest) this.home = obj;
     }
     this.syncObjects();
     this.sim = new PeopleSim(
@@ -226,6 +234,18 @@ export class WorldScene extends Phaser.Scene {
     this.entityLayer.add(this.signe);
     this.sortables.push({ sprite: this.signe, obj: null, footprint: () => this.walker.footprint, bounds: null });
     this.placeSigne();
+    this.sketchIcon = this.add.image(0, 0, 'fx-sketch').setOrigin(0.5, 1).setVisible(false);
+    topLayer.add(this.sketchIcon);
+    journal.setMap({
+      width: map.width,
+      height: map.height,
+      frame: (x, y) => this.world.groundFrame(x, y),
+      objectAt: (x, y) => this.world.objectAt(x, y)?.type,
+      places: map.places,
+      signe: () => this.walker.tile,
+    });
+    // Whatever she can see where she wakes up goes straight into the journal.
+    store.update((s, t) => A.sketchSeen(s, [this.walker.tile], t.sightRadius, map, map.places));
 
     const cam = this.cameras.main;
     cam.setBounds(0, 0, size.width, size.height);
@@ -311,6 +331,10 @@ export class WorldScene extends Phaser.Scene {
     const before = this.walker.tile;
     const entered = this.walker.update(delta);
     if (entered.length > 0) this.onEntered(before, entered);
+    this.stillMs = this.walker.isMoving ? 0 : this.stillMs + delta;
+    if (this.stillMs > 450 && this.sketchMemory.pending > 0 && !menuOpen()) this.sketch();
+    this.sketchIcon.setVisible(this.time.now < this.sketchIconUntil);
+    if (this.sketchIcon.visible) this.sketchIcon.setPosition(this.signe.x + 7, this.signe.y - this.signe.height - 1);
     if (!this.walker.isMoving) {
       this.marker.setVisible(false);
       if (entered.length > 0) this.autosave();
@@ -327,7 +351,8 @@ export class WorldScene extends Phaser.Scene {
 
   /** Beside her house: where she rests, shapes Weaves and refocuses. */
   isAtHome(): boolean {
-    return !!this.home && !this.walker.isMoving && isBesideFootprint(this.walker.tile, this.world.footprintOf(this.home));
+    if (this.walker.isMoving) return false;
+    return this.world.objects.some((o) => o.rest && !this.world.isBroken(o) && isBesideFootprint(this.walker.tile, this.world.footprintOf(o)));
   }
 
   // --- Craft ------------------------------------------------------------------
@@ -438,6 +463,7 @@ export class WorldScene extends Phaser.Scene {
   private onEntered(before: Tile, entered: Tile[]): void {
     let previous = before;
     for (const tile of entered) {
+      this.sketchMemory.push(tile);
       this.noteCrossing(previous, tile);
       const through = wouldBreakUnderSigne(this.world, tile) && store.update((s, t) => stepOnto(this.world, s, t, tile));
       if (through) {
@@ -451,6 +477,24 @@ export class WorldScene extends Phaser.Scene {
       }
       previous = tile;
     }
+  }
+
+  /**
+   * Signe stops: she brings out the journal and sketches what she saw on the
+   * way, as far back as she can remember (Daniel's design). A walk that went
+   * on too long loses its start.
+   */
+  private sketch(): void {
+    const t = tuning.values;
+    const { kept, forgotten } = this.sketchMemory.flush(t.sketchMemorySteps);
+    const map = this.world.map;
+    const result = store.update((s) => A.sketchSeen(s, [...kept, this.walker.tile], t.sightRadius, map, map.places));
+    if (result.newTiles > 0) this.sketchIconUntil = this.time.now + 1100;
+    for (const id of result.found) {
+      const place = map.places.find((p) => p.id === id);
+      if (place) hud.announce(`Found: ${place.name}`, PLACES[id]?.found ?? '');
+    }
+    if (forgotten > 0 && result.newTiles > 0) hud.say('You walked a long way without stopping. The start of it is a blur on the page.', 4500);
   }
 
   /** Stepping off the cracked-ice band on the far side means Signe crossed it (the ice road quest). */
@@ -644,6 +688,15 @@ export class WorldScene extends Phaser.Scene {
     });
   }
 
+  /** Looks closely at a place (its Ink knot); what she learns goes into the journal map. */
+  private lookAt(thing: MapObject): void {
+    this.tapped = null;
+    dialogueBox.open(thing.inspect!, () => {
+      this.tapped = null;
+      this.autosave();
+    });
+  }
+
   private talkToSomeoneBeside(): void {
     if (menuOpen() || this.walker.isMoving) return;
     const who = this.people.find((p) => isBeside(this.walker.tile, this.sim.tileOf(p.id)));
@@ -669,12 +722,17 @@ export class WorldScene extends Phaser.Scene {
     if (this.spell) return this.aimAt(pointer.worldX, pointer.worldY);
     this.pendingVisit = null;
     const tile = this.proj.pick({ x: pointer.worldX, y: pointer.worldY });
-    const tapped = this.spriteAt(pointer.worldX, pointer.worldY, (s) => !!s.obj?.npc || !!s.obj?.rest) ?? this.world.objectAt(tile.x, tile.y);
+    const tapped = this.spriteAt(pointer.worldX, pointer.worldY, (s) => !!s.obj?.npc || !!s.obj?.rest || !!s.obj?.inspect) ?? this.world.objectAt(tile.x, tile.y);
     const person = tapped?.npc ? this.people.find((p) => p.id === tapped.npc) : undefined;
     if (person) return this.walkBeside(() => this.sim.footprintOf(person.id), () => this.talkTo(person), person.id);
-    if (tapped?.rest) {
+    // A place to rest: home, or the shelter once its door is mended.
+    if (tapped?.rest && !this.world.isBroken(tapped)) {
       const home = tapped;
       return this.walkBeside(() => this.world.footprintOf(home), () => this.offerRest());
+    }
+    if (tapped?.inspect) {
+      const thing = tapped;
+      return this.walkBeside(() => this.world.footprintOf(thing), () => this.lookAt(thing));
     }
     this.walkTo(tile);
   }

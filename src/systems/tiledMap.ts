@@ -47,8 +47,10 @@ export interface MapObject {
   npc: string | null;
   /** Starts broken (Mend can repair it). */
   broken: boolean;
-  /** Signe can rest here (her home). */
+  /** Signe can rest here (her home; the shelter, once mended). */
   rest: boolean;
+  /** Ink knot to play when Signe looks at it (places worth finding). */
+  inspect: string | null;
 }
 
 /** A Tiled map reduced to what the world needs: ground frames, collision and objects. */
@@ -61,11 +63,20 @@ export interface IsoMap extends WalkGrid {
   readonly spawn: Tile;
   /** Whole-number map properties (spawnX, bandY0, safeRouteX...). */
   readonly numbers: Readonly<Record<string, number>>;
+  /** Named places for the journal map. */
+  readonly places: readonly MapPlace[];
+}
+
+export interface MapPlace {
+  id: string;
+  name: string;
+  tile: Tile;
 }
 
 const LAYER_GROUND = 'ground';
 const LAYER_OBJECTS = 'objects';
 const LAYER_COLLISION = 'collision';
+const LAYER_PLACES = 'places';
 
 // Tiled stores flip flags in the top bits of each gid.
 const GID_MASK = 0x1fffffff;
@@ -94,6 +105,7 @@ export function parseTiledMap(json: TiledJson): IsoMap {
     type: o.type || o.name,
     broken: boolProperty(o.properties, 'broken'),
     rest: boolProperty(o.properties, 'rest'),
+    inspect: stringProperty(o.properties, 'inspect') ?? null,
     // Isometric object coordinates are measured along the tile axes in tile-height units.
     footprint: {
       x: Math.round(o.x / json.tileheight),
@@ -108,6 +120,15 @@ export function parseTiledMap(json: TiledJson): IsoMap {
     y: numberProperty(json.properties, 'spawnY') ?? 0,
   };
 
+  const placeLayer = json.layers.find(
+    (l): l is Extract<TiledLayer, { type: 'objectgroup' }> => l.type === 'objectgroup' && l.name === LAYER_PLACES,
+  );
+  const places: MapPlace[] = (placeLayer?.objects ?? []).map((o) => ({
+    id: stringProperty(o.properties, 'place') ?? String(o.id),
+    name: o.name,
+    tile: { x: Math.floor(o.x / json.tileheight), y: Math.floor(o.y / json.tileheight) },
+  }));
+
   const numbers: Record<string, number> = {};
   for (const p of json.properties ?? []) if (typeof p.value === 'number') numbers[p.name] = p.value;
 
@@ -115,6 +136,7 @@ export function parseTiledMap(json: TiledJson): IsoMap {
     width,
     height,
     numbers,
+    places,
     tileWidth: json.tilewidth,
     tileHeight: json.tileheight,
     ground,

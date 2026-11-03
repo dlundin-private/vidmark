@@ -156,7 +156,7 @@ const free = (x, y, w, h) => {
 function place(name, x, y, w = 1, h = 1, extra = {}) {
   if (!free(x, y, w, h)) throw new Error(`Can't place ${name} at ${x},${y}: occupied`);
   for (let ty = y; ty < y + h; ty++) for (let tx = x; tx < x + w; tx++) occupied[idx(tx, ty)] = 1;
-  objects.push({ name, sprite: extra.sprite ?? name, x, y, w, h, npc: extra.npc, broken: extra.broken, rest: extra.rest });
+  objects.push({ name, sprite: extra.sprite ?? name, x, y, w, h, npc: extra.npc, broken: extra.broken, rest: extra.rest, inspect: extra.inspect });
 }
 
 /** Clears an area of terrain to plain snow (a yard or clearing), keeping roads. */
@@ -183,7 +183,7 @@ place('net-rack', ...[V.x - 15, sy + 1], 2, 1, { broken: true });
 place('net-rack', ...[V.x - 11, sy + 2], 2, 1, { broken: true });
 place('boathouse', ...[V.x - 9, sy], 3, 2); // the boathouse where the Hollow sits
 place('boathouse', ...[V.x + 14, sy], 3, 2);
-place('statue', ...[V.x + 8, sy], 1, 1); // Saint Maren on the shore
+place('statue', ...[V.x + 8, sy], 1, 1, { inspect: 'place_statue' }); // Saint Maren on the shore
 place('sled', ...at(3, 1), 2, 1); // the Tithe-collector's sled
 // By the boathouses: a stove-in boat (too big for Mend at first) and crates to push.
 place('boat', ...[V.x - 6, sy], 2, 1, { broken: true });
@@ -209,7 +209,7 @@ clear(hermitHut.x - 3, hermitHut.y - 3, hermitHut.x + 5, hermitHut.y + 6);
 place('hut', hermitHut.x, hermitHut.y, 2, 2);
 
 // Maren's ruined birth village on the island.
-for (const [dx, dy] of [[-2, -2], [2, -1], [-1, 2]]) place('ruin', ISLAND.x + dx, ISLAND.y + dy, 2, 2);
+for (const [i, [dx, dy]] of [[-2, -2], [2, -1], [-1, 2]].entries()) place('ruin', ISLAND.x + dx, ISLAND.y + dy, 2, 2, i === 0 ? { inspect: 'place_maren_home' } : {});
 
 // A hole in the ice away from the road.
 for (const [dx, dy] of [[0, 0], [1, 0], [0, 1], [1, 1], [2, 1], [1, 2]]) set(LAKE.x + 30 + dx, LAKE.y - 18 + dy, 'water');
@@ -242,6 +242,45 @@ const people = [
 for (const [name, npc, x, y] of people) place(name, x, y, 1, 1, { npc, sprite: `npc-${npc}` });
 
 const spawn = { x: V.x - 3, y: V.y + 5 }; // at the door of Signe's home
+
+// --- Places worth finding (drafts, docs/decisions.md) ---------------------------
+const west = shoreAlong(-1, 0);
+// The abandoned village on the west shore: one of the "fishing villages ringing the lake", empty now.
+const WV = { x: west.x - 8, y: west.y + 2 };
+clear(WV.x - 6, WV.y - 6, WV.x + 7, WV.y + 7);
+place('ruin', WV.x - 4, WV.y - 3, 2, 2);
+place('ruin', WV.x + 3, WV.y + 3, 2, 2);
+place('ruin', WV.x - 3, WV.y + 4, 2, 2);
+// Its shelter: Mend the door and Signe can rest here, far from home.
+place('shelter', WV.x + 1, WV.y - 2, 2, 2, { broken: true, rest: true, sprite: 'shelter', inspect: 'place_shelter' });
+road([[V.x - 18, V.y], [V.x - 40, V.y - 10], [WV.x + 2, WV.y + 6]], 2);
+// A stove-in Tithe sled by the road south, with the ledger inside.
+const sledAt = { x: V.x + 3, y: SIZE - 34 };
+place('tithe-sled', sledAt.x, sledAt.y, 2, 1, { broken: true, sprite: 'sled', inspect: 'place_tithe_sled' });
+// The cairn at the northern pass: the way to Kronvall.
+const cairnAt = { x: V.x + 7, y: 14 };
+clear(cairnAt.x - 2, cairnAt.y - 2, cairnAt.x + 2, cairnAt.y + 2);
+place('cairn', cairnAt.x, cairnAt.y, 1, 1, { inspect: 'place_cairn' });
+
+/** Named places for the map: found when Signe sketches near them. */
+const PLACES = [
+  ['home', 'Home', spawn.x, spawn.y],
+  ['jetty', 'The jetty', V.x - 4, sy - 4],
+  ['boathouse', 'The boathouse', V.x - 8, sy + 1],
+  ['statue', 'Saint Maren', V.x + 8, sy],
+  ['ebbe', "Ebbe's nets", V.x - 14, sy + 1],
+  ['fishing', "Father's fishing hole", hole.x, hole.y],
+  ['ice-road', 'The ice road', V.x + 4, sy - 20],
+  ['cracked-ice', 'The cracked ice', V.x + 4, BAND.y0 + 1],
+  ['open-water', 'Open water', LAKE.x + 31, LAKE.y - 17],
+  ['island', "Maren's village", ISLAND.x, ISLAND.y],
+  ['hermit', "The hermit's hut", hermitHut.x, hermitHut.y],
+  ['abandoned', 'The empty village', WV.x, WV.y],
+  ['tithe-sled', 'The Tithe sled', sledAt.x, sledAt.y],
+  ['cairn', 'The cairn', cairnAt.x, cairnAt.y],
+  ['pass-south', 'The pass south', V.x, SIZE - 8],
+  ['pass-north', 'The pass north', V.x + 4, 6],
+];
 
 // Mountains: cover every mountain tile with mountain blocks, biggest first.
 for (const size of [8, 4, 2, 1]) {
@@ -319,13 +358,14 @@ const tiledObjects = objects.map((o, i) => ({
     ...(o.npc ? [{ name: 'npc', type: 'string', value: o.npc }] : []),
     ...(o.broken ? [{ name: 'broken', type: 'bool', value: true }] : []),
     ...(o.rest ? [{ name: 'rest', type: 'bool', value: true }] : []),
+    ...(o.inspect ? [{ name: 'inspect', type: 'string', value: o.inspect }] : []),
   ],
 }));
 
 const map = {
   type: 'map', version: '1.10', tiledversion: '1.11.0', orientation: 'isometric', renderorder: 'right-down',
   infinite: false, width: SIZE, height: SIZE, tilewidth: TILE_W, tileheight: TILE_H,
-  nextlayerid: 4, nextobjectid: tiledObjects.length + 1,
+  nextlayerid: 5, nextobjectid: tiledObjects.length + 1 + 32,
   properties: [
     { name: 'spawnX', type: 'int', value: spawn.x },
     { name: 'spawnY', type: 'int', value: spawn.y },
@@ -344,6 +384,14 @@ const map = {
   layers: [
     tileLayer(1, 'ground', ground),
     { id: 2, name: 'objects', type: 'objectgroup', x: 0, y: 0, opacity: 1, visible: true, draworder: 'topdown', objects: tiledObjects },
+    {
+      id: 4, name: 'places', type: 'objectgroup', x: 0, y: 0, opacity: 1, visible: true, draworder: 'topdown',
+      objects: PLACES.map(([id, label, x, y], i) => ({
+        id: tiledObjects.length + 1 + i, name: label, type: 'place', point: true,
+        x: x * TILE_H + TILE_H / 2, y: y * TILE_H + TILE_H / 2, width: 0, height: 0, rotation: 0, visible: true,
+        properties: [{ name: 'place', type: 'string', value: id }],
+      })),
+    },
     tileLayer(3, 'collision', collision, false),
   ],
 };
@@ -403,6 +451,9 @@ const labels = [
   label('Birch forest', 60, 175),
   label('Birch forest', 190, 60),
   label('Mountains', 20, 20, 14),
+  label('Empty village', WV.x, WV.y),
+  label('Tithe sled', sledAt.x, sledAt.y),
+  label('Cairn', cairnAt.x, cairnAt.y, 14),
 ];
 const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">
 <title>Kallsjö slice map, draft layout</title>

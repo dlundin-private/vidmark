@@ -2,6 +2,7 @@ import { NPCS, type NpcId } from '../../content/data/npcs';
 import { keepsakeDef, type KeepsakeId } from '../../content/data/keepsakes';
 import type { Tuning } from '../../content/data/tuning';
 import type { Tile } from '../iso/types';
+import { ExploredMap } from './explored';
 import type { CraftEffect, FlagValue, GameState, SavedWeave, SkillId, WeaveAnchor } from './GameState';
 
 // Reads and changes to GameState. Actions mutate the state they are given;
@@ -295,6 +296,31 @@ export function remembers(state: GameState, npc: NpcId, key: string): boolean {
 /** People Signe has formed any impression of, in the order of NPCS. */
 export function peopleMet(state: GameState): NpcId[] {
   return NPCS.map((n) => n.id).filter((id) => (state.impressions[id]?.length ?? 0) > 0);
+}
+
+/**
+ * Signe stops and sketches: everything within sight of the steps she still
+ * remembers goes into her journal map, and any place she saw is found.
+ * Returns how many tiles were new and which places she found.
+ */
+export function sketchSeen(
+  state: GameState,
+  steps: readonly Tile[],
+  sight: number,
+  size: { width: number; height: number },
+  places: readonly { id: string; tile: Tile }[],
+): { newTiles: number; found: string[] } {
+  const map = ExploredMap.fromBase64(state.sketched.tiles, size.width, size.height);
+  const newTiles = map.sketchAround(steps, sight);
+  if (newTiles > 0) state.sketched.tiles = map.toBase64();
+  const found: string[] = [];
+  for (const p of places) {
+    if (!state.sketched.places.includes(p.id) && map.has(p.tile.x, p.tile.y)) {
+      state.sketched.places.push(p.id);
+      found.push(p.id);
+    }
+  }
+  return { newTiles, found };
 }
 
 /** Records a promise Signe made; whether it was kept is decided later (chapter 5 tests them). */

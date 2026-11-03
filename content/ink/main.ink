@@ -18,6 +18,7 @@ INCLUDE people/lilja.ink
 INCLUDE people/torvald.ink
 INCLUDE meetings.ink
 INCLUDE death.ink
+INCLUDE places.ink
 
 -> END
 

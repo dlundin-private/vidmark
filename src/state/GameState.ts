@@ -4,7 +4,7 @@ import { NPCS, type NpcId } from '../../content/data/npcs';
 import type { Tile } from '../iso/types';
 
 /** Bump when the shape changes, and add a migration in save.ts. */
-export const STATE_VERSION = 3;
+export const STATE_VERSION = 4;
 
 /**
  * kept: Signe still has it. burned: spent for Power; gone.
@@ -105,6 +105,8 @@ export interface GameState {
    * questions live here too, so they aren't asked twice.
    */
   impressions: Partial<Record<NpcId, string[]>>;
+  /** Her journal map: tiles she has sketched (explored.ts, base64 bits) and places she has found (map place ids). */
+  sketched: { tiles: string; places: string[] };
 }
 
 export function createNewGame(basePower: number): GameState {
@@ -131,5 +133,6 @@ export function createNewGame(basePower: number): GameState {
     position: null,
     world: { objects: {}, tiles: {} },
     impressions: {},
+    sketched: { tiles: '', places: [] },
   };
 }
