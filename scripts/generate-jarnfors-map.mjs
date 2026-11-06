@@ -124,7 +124,7 @@ const free = (x, y, w, h) => {
 function place(name, x, y, w = 1, h = 1, extra = {}) {
   if (!free(x, y, w, h)) throw new Error(`Can't place ${name} at ${x},${y}: occupied`);
   for (let ty = y; ty < y + h; ty++) for (let tx = x; tx < x + w; tx++) occupied[idx(tx, ty)] = 1;
-  objects.push({ name, sprite: extra.sprite ?? name, x, y, w, h, rest: extra.rest, inspect: extra.inspect, type: extra.type });
+  objects.push({ name, sprite: extra.sprite ?? name, x, y, w, h, rest: extra.rest, inspect: extra.inspect, type: extra.type, npc: extra.npc });
 }
 
 // On the crest: Saint Maren, one hand flat on the stone.
@@ -157,6 +157,16 @@ place('sled', 95, 58, 2, 1);
 // The lower quarter: forges and huts packed by the river, where the poor live.
 for (const [x, y] of [[32, 100], [36, 104], [32, 110], [38, 112], [48, 100], [52, 106], [58, 112], [48, 114]]) place('hut', x, y, 2, 2);
 place('forge', 56, 100, 2, 2);
+// Where people stand (chapter 2, step 2). Listed before the trees, so no tree grows in front of them.
+const PEOPLE = [
+  ['Edda', 'edda', 30, 46], // at the Hollow-house door
+  ['Brita', 'brita', 34, 44], // at the window, with the bowl
+  ['Halvar', 'halvar', 34, 43], // beside her, looking up at the dam
+  ['Gudmund', 'gudmund', 91, 62], // in his yard
+  ['The clerk', 'clerk', 90, 46], // in the Tithe-house door
+  ['Arn', 'arn', 92, 46], // on the step
+  ['Knut', 'knut', 55, 103], // by the forge in the lower quarter
+];
 // A few spruce on the snow, and rock heaped on the walls.
 for (let y = 0; y < SIZE; y++) {
   for (let x = 0; x < SIZE; x++) {
@@ -170,9 +180,13 @@ for (let y = 0; y < SIZE; y++) {
 }
 function nearStone(x, y) {
   for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) if (['stone', 'dam', 'wood'].includes(get(x + dx, y + dy))) return true;
+  for (const [, , px, py] of PEOPLE) if (Math.abs(x - px) <= 3 && Math.abs(y - py) <= 3) return true;
   for (const o of objects) if (x >= o.x - 3 && x < o.x + o.w + 3 && y >= o.y - 3 && y < o.y + o.h + 3 && o.name !== 'birch' && o.name !== 'birch-2') return true;
   return false;
 }
+
+// People (chapter 2, step 2): placed last, so earlier objects keep their ids; listed in PEOPLE (above).
+for (const [name, npc, x, y] of PEOPLE) place(name, x, y, 1, 1, { npc, sprite: `npc-${npc}` });
 
 // Where Signe arrives: the south gate, from the Tithe road.
 const spawn = { x: 45, y: 124 };
@@ -224,7 +238,7 @@ const besideReached = (o) => {
   return false;
 };
 for (const [id, , x, y] of PLACES) if (!reached[idx(x, y)] && !besideReached({ x, y, w: 1, h: 1 })) problems.push(`place ${id} at ${x},${y} can't be reached`);
-for (const o of objects) if ((o.inspect || o.rest) && !besideReached(o)) problems.push(`${o.name} at ${o.x},${o.y} can't be reached`);
+for (const o of objects) if ((o.inspect || o.rest || o.npc) && !besideReached(o)) problems.push(`${o.name} at ${o.x},${o.y} can't be reached`);
 if (!walkable(spawn.x, spawn.y)) problems.push('the spawn is blocked');
 if (problems.length > 0) {
   console.error('The Järnfors map has problems:\n  ' + problems.join('\n  '));
@@ -258,7 +272,7 @@ for (let y = 0; y < SIZE; y++) {
 const tiledObjects = objects.map((o, i) => ({
   id: i + 1,
   name: o.name,
-  type: o.type ?? o.name,
+  type: o.npc ? 'npc' : o.type ?? o.name,
   x: o.x * TILE_H,
   y: o.y * TILE_H,
   width: o.w * TILE_H,
@@ -267,6 +281,7 @@ const tiledObjects = objects.map((o, i) => ({
   visible: true,
   properties: [
     { name: 'sprite', type: 'string', value: o.sprite },
+    ...(o.npc ? [{ name: 'npc', type: 'string', value: o.npc }] : []),
     ...(o.rest ? [{ name: 'rest', type: 'bool', value: true }] : []),
     ...(o.inspect ? [{ name: 'inspect', type: 'string', value: o.inspect }] : []),
   ],

@@ -95,6 +95,63 @@ export const MEMORIES: Record<NpcId, PersonMemory> = {
       { key: 'kept_promise', text: 'You took her all the way across. On the far shore she looked back at the village and said: you kept it.', blurred: 'You walked a girl across the ice road. She seemed to think you owed her that.' },
     ],
   },
+  // --- Järnfors (chapter 2) ---
+  edda: {
+    impressions: [
+      { key: 'met', text: 'Edda, who runs the Hollow-house. "If you\'ve come to help, there\'s water to carry."', cold: 'Edda. She has Kin in her, deep. She would never give it.' },
+      { key: 'heard', text: 'She had heard of me before I came: the girl from the lake who empties people.' },
+      { key: 'house', text: 'The Tithe takes a whole person when a family can\'t pay. They end up in her rows of cots.' },
+      { key: 'grandfather', text: 'Halvar is her grandfather. The city calls him a coward. Her grandmother doesn\'t.' },
+      { key: 'dam', text: '"Everyone here asks the dam for something. It always takes someone." She is afraid of being needed.', cold: 'She is afraid of being needed. That is a lever.' },
+      { key: 'lilja', text: 'Every sled stops at the Tithe-house. Ask the clerk, or the boy on the step.' },
+    ],
+  },
+  brita: {
+    impressions: [
+      { key: 'met', text: 'Brita, so old she is almost light. She feeds Halvar at the window, and knew I was from away by my step.' },
+      { key: 'reeve', text: '"You look at people like a reeve. Weighing them."' },
+      { key: 'refused', text: 'Halvar said no to Maren. That is all he did. She took him in front of his apprentices.' },
+      { key: 'why', text: '"Because he would do it for me. Because somebody has to remember he was a man, not a story."', tiedTo: 'coat' },
+    ],
+  },
+  halvar: {
+    impressions: [
+      { key: 'met', text: 'Halvar, the builder. A Hollow for a hundred years, and his hands still look like a builder\'s.' },
+      { key: 'hands', text: 'Old mortar in the creases of his knuckles that a century of washing hasn\'t got out.' },
+      { key: 'eyes', text: 'He looks up the gorge at the dam. He has been looking at it for a hundred years.' },
+    ],
+  },
+  gudmund: {
+    impressions: [
+      { key: 'met', text: 'Gudmund, the dam-master, staring at a stone as if it should explain itself.' },
+      { key: 'heard', text: '"Lake girl. Keep your hands where I can see them."' },
+      { key: 'forgot', text: 'He knew every drain in the dam, like his father. The Tithe took it. "Now it\'s just a wall."', cold: 'The keeping is mostly gone from him. Mostly.' },
+      { key: 'gallery', text: 'The gallery runs through the inside of the dam. The roof fell in the autumn; nobody remembers how to shore it.' },
+      { key: 'saint', text: '"I\'d settle for a mason who remembered his mortar."' },
+    ],
+  },
+  clerk: {
+    impressions: [
+      { key: 'met', text: 'The Tithe-house clerk, ink on every finger, standing in the door as if he were the door.' },
+      { key: 'heard', text: 'The Reeve\'s report reached him: "takes without a ledger".' },
+      { key: 'tithe', text: 'They wait for the sled, then Kronvall. "Then they are Kronvall\'s concern, and not mine."' },
+      { key: 'wiped', text: 'The names are wiped when the sled leaves. He won\'t talk about her.' },
+    ],
+  },
+  arn: {
+    impressions: [
+      { key: 'met', text: 'Arn, a boy on the Tithe-house step. Left behind because Kronvall doesn\'t pay for the dying.' },
+      { key: 'left', text: '"I\'m not dead, though. I keep checking."' },
+      { key: 'girl', text: 'He waited with a girl from Kallsjö who said there is a whole other sky under the ice. It was Lilja.', blurred: 'He waited with a girl from Kallsjö who talked about swimming.', tiedTo: 'swim' },
+    ],
+  },
+  knut: {
+    impressions: [
+      { key: 'met', text: 'Knut, a forge-hand from the lower quarter, sharpening a pry-bar.' },
+      { key: 'cramps', text: 'He prises the iron cramps out of the dam at night and sells them downriver. "Everyone down here knows it\'s going."' },
+      { key: 'quarter', text: 'When the dam goes, the upper city gets wet feet. The lower quarter drowns.' },
+    ],
+  },
   torvald: {
     impressions: [
       { key: 'met', text: 'Your father, at his hole in the ice. "There\'s my girl."' },

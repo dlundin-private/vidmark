@@ -38,6 +38,12 @@ const MIGRATIONS: Record<number, (state: Record<string, unknown>) => Record<stri
   4: (s) => ({ ...s, chapter: 1, chapters: [], flags: { ...((s.flags ?? {}) as Record<string, unknown>), intro_seen: true } }),
   // 6: more than one map. Everyone so far is in Kallsjö.
   5: (s) => ({ ...s, map: 'kallsjo', elsewhere: {} }),
+  // 7: the people of Järnfors. Nobody there has met Signe yet.
+  6: (s) => {
+    const npcs = { ...((s.npcs ?? {}) as Record<string, unknown>) };
+    for (const n of NPCS) npcs[n.id] ??= { offered: false, hollowed: !!n.startsHollow, faithLost: false };
+    return { ...s, npcs };
+  },
 };
 
 export function serialize(state: GameState, now = new Date()): string {

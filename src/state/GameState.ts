@@ -4,7 +4,7 @@ import { NPCS, type NpcId } from '../../content/data/npcs';
 import type { Tile } from '../iso/types';
 
 /** Bump when the shape changes, and add a migration in save.ts. */
-export const STATE_VERSION = 6;
+export const STATE_VERSION = 7;
 
 /**
  * kept: Signe still has it. burned: spent for Power; gone.

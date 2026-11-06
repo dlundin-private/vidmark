@@ -370,6 +370,14 @@ function generatePeople() {
     hollow: { coat: '#9a9a96', coatDark: '#7a7a76', hood: '#b8b8b2', skin: '#c9c3bb', skinLight: '#d6d0c8', skinDark: '#b0aaa2' },
     lilja: { coat: '#c26a3a', coatDark: '#8f4b28', hood: '#e0b040', scale: 0.8 },
     torvald: { coat: '#3f5a6b', coatDark: '#2c3f4b', hood: '#6b5444' },
+    // Järnfors.
+    edda: { coat: '#6b4a5a', coatDark: '#4a3340', hood: '#c9b9a0' },
+    brita: { coat: '#3d3a45', coatDark: '#2a2830', hood: '#e2e2dc', scale: 0.85 },
+    halvar: { coat: '#9a9690', coatDark: '#7a7670', hood: '#b8b4ae', skin: '#c9c3bb', skinLight: '#d6d0c8', skinDark: '#b0aaa2' },
+    gudmund: { coat: '#6b6250', coatDark: '#4a4438', hood: '#5a5248' },
+    clerk: { coat: '#2a2a33', coatDark: '#1c1c22', hood: '#2a2a33' },
+    arn: { coat: '#7a6a4a', coatDark: '#5a4e36', hood: '#a89878', scale: 0.72 },
+    knut: { coat: '#5a3a2a', coatDark: '#3f281d', hood: '#3a2a20' },
   };
   for (const [id, colours] of Object.entries(people)) save(`npc-${id}.png`, figure(colours));
 }

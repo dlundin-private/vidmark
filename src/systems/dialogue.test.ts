@@ -363,3 +363,50 @@ describe('Järnfors', () => {
     expect(text(play(runner, 'place_apprentices_hall'))).toContain('JON');
   });
 });
+
+describe('the people of Järnfors read what chapter 1 decided', () => {
+  it("Arn's girl from Kallsjö is Lilja only while Signe still has the swim", () => {
+    const { store, runner } = setup();
+    store.update((s) => {
+      A.formKeepsake(s, 'whyYouLeft');
+      A.setFlag(s, 'why_you_left_for', 'sister');
+    });
+    expect(text(play(runner, 'arn', ['who he waited with']))).toContain('It was Lilja');
+    expect(store.state.flags.lilja_trace_known).toBe(true);
+
+    const other = setup();
+    other.store.update((s, t) => {
+      A.formKeepsake(s, 'whyYouLeft');
+      A.burnKeepsake(s, 'swim', t);
+      A.setFlag(s, 'why_you_left_for', 'stranger');
+    });
+    const t2 = text(play(other.runner, 'arn', ['who he waited with']));
+    expect(t2).toContain('talked about swimming');
+    expect(t2).toContain('finds nothing there');
+  });
+
+  it('a hollowed Lilja was a girl who said nothing', () => {
+    const { store, runner } = setup();
+    store.update((s) => A.setFlag(s, 'why_you_left_for', 'hollow'));
+    expect(text(play(runner, 'arn', ['who he waited with']))).toContain('paid in full');
+  });
+
+  it("Brita's question about feeding him needs the coat; hollowing the hermit made Signe a reeve", () => {
+    const { store, runner } = setup();
+    play(runner, 'brita', ['why she still feeds him']);
+    store.update((s, t) => A.burnKeepsake(s, 'coat', t));
+    expect(() => play(runner, 'brita', ['why she still feeds him'])).toThrow(/No choice/);
+    store.update((s, t) => A.recordHollowing(s, 'hermit', t));
+    expect(text(play(runner, 'brita'))).toContain('like a reeve');
+  });
+
+  it('word that the village knew travels up the Tithe road', () => {
+    const { store, runner } = setup();
+    store.update((s, t) => {
+      A.recordHollowing(s, 'olle', t);
+      A.seenHollowing(s, 'olle', 'gerda');
+    });
+    expect(text(play(runner, 'edda'))).toContain('empties people');
+    expect(text(play(runner, 'clerk'))).toContain('without a ledger');
+  });
+});

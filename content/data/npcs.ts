@@ -2,7 +2,10 @@ import type { CraftAction } from './craft';
 import type { QuestView } from './quests';
 import type { Domain } from './keepsakes';
 
-export type NpcId = 'ebbe' | 'hermit' | 'gerda' | 'olle' | 'hollow' | 'lilja' | 'torvald';
+export type NpcId =
+  | 'ebbe' | 'hermit' | 'gerda' | 'olle' | 'hollow' | 'lilja' | 'torvald'
+  // Järnfors (chapter 2, docs/chapter-2-jarnfors.md).
+  | 'edda' | 'brita' | 'halvar' | 'gudmund' | 'clerk' | 'arn' | 'knut';
 
 export interface NpcDef {
   id: NpcId;
@@ -16,6 +19,8 @@ export interface NpcDef {
   teaches?: CraftAction;
   /** The memory they give Signe as an Offering, as her Hearth shows it. Drafts. Torvald and Olle give none (decided by Daniel: not everyone is willing). */
   offering?: string;
+  /** The map they live on (src/systems/maps.ts); Kallsjö if not given. */
+  map?: string;
   /** How they move around their spot on the map. Radius 0: they stay put, but others can walk over to them. */
   wander: { radius: number; onIce?: boolean };
   /** A new spot once the world has changed (step 7); the first that holds wins. They walk there. */
@@ -46,4 +51,18 @@ export const NPCS: readonly NpcDef[] = [
     moves: [{ when: roadOpen, to: 'ice-road-near', radius: 6, onIce: true }],
   },
   { id: 'torvald', name: 'Torvald', role: "Signe's father, a fisherman", domain: 'craft', wander: { radius: 0 } },
+
+  // People in Järnfors (chapter 2). Drafts from docs/chapter-2-jarnfors.md; Daniel decided Brita is about 117.
+  { id: 'edda', map: 'jarnfors', name: 'Edda', role: "Runs the Hollow-house; Halvar and Brita's granddaughter", domain: 'kin', wander: { radius: 3 } },
+  { id: 'brita', map: 'jarnfors', name: 'Brita', role: "Halvar's widow, about 117, nearly blind", domain: 'kin', offering: 'The morning Halvar refused, and what he said to her after', wander: { radius: 0 } },
+  { id: 'halvar', map: 'jarnfors', name: 'Halvar', role: 'The master builder Maren hollowed, a century ago', domain: 'craft', startsHollow: true, wander: { radius: 0 } },
+  { id: 'gudmund', map: 'jarnfors', name: 'Gudmund', role: 'The dam-master, who lost the keeping to the Tithe', domain: 'craft', teaches: 'mend', offering: 'His first stone: the day he learned to read one', wander: { radius: 4 } },
+  { id: 'clerk', map: 'jarnfors', name: 'The clerk', role: 'Keeps the Tithe-house and its ledger', domain: 'thought', offering: 'The first child he signed away to Kronvall', wander: { radius: 2 } },
+  { id: 'arn', map: 'jarnfors', name: 'Arn', role: 'A sick boy left behind at the Tithe-house', domain: 'kin', wander: { radius: 1 } },
+  { id: 'knut', map: 'jarnfors', name: 'Knut', role: 'A forge-hand in the lower quarter', domain: 'craft', wander: { radius: 4 } },
 ];
+
+/** The people who live on a map. */
+export function peopleOf(map: string): NpcDef[] {
+  return NPCS.filter((n) => (n.map ?? 'kallsjo') === map);
+}

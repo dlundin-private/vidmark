@@ -94,6 +94,31 @@ It would be yours. All of it, at once.
 {~Father is close.|All of your childhood is in him. All of it.|He would give it to you, if you asked. Why ask?}
 -> END
 
+// Järnfors.
+=== hunger_edda ===
+{~Edda is close. Forty Hollows in her hands, and every one of them remembered.|She holds everything she can't give anyone. Take it, then.|She fears being needed. Need her.}
+-> END
+
+=== hunger_brita ===
+{~The old woman. A hundred years of one man in her.|Brita is close. She will not last the winter anyway.|All that love, and nobody to give it to.}
+-> END
+
+=== hunger_gudmund ===
+{~The dam-master. What's left of the keeping is in there somewhere.|Gudmund is close. Maren took a builder once. It worked.|A whole wall's worth of knowing. Half of it, anyway.}
+-> END
+
+=== hunger_clerk ===
+{~The clerk. Every name that went north is in his head.|He signs children away. Who would miss him?|The road to Kronvall is in him, step by step.}
+-> END
+
+=== hunger_arn ===
+{~The boy. Small. Sick. Nobody is coming for him.|Arn is close. He saw her. He remembers her.|He'll die on the step anyway. Wouldn't it be kinder?}
+-> END
+
+=== hunger_knut ===
+{~The forge-hand. Strong hands, quick, sure.|Knut is close. He's robbing the dam. Rob him.|Nobody in the upper city would ask where he went.}
+-> END
+
 // --- Echoes: what is left of a hollowed life inside Signe. Now and then one speaks.
 === echo_ebbe ===
 {~Over, under, pull. Over, under, pull.|Forty winters on that shore, and you took them in one breath.|She used to laugh at my knots. Who did?}
@@ -118,6 +143,30 @@ It would be yours. All of it, at once.
 // A hollowed wolf has no words: only what it felt.
 === echo_wolf ===
 {~(Hunger. The smell of the village on the wind.)|(Cold under the paws. The pack, close, warm.)|(Something small and quick under the snow. Not enough.)}
+-> END
+
+=== echo_edda ===
+{~Turn them in the night, or they get sores.|Whoever the dam needs, it takes.|Grandmother? Is that broth still warm?}
+-> END
+
+=== echo_brita ===
+{~Was he a coward? Go on. Ask.|Twice a day. Twice a day. Twice a day.|He said no to her. That's all he did.}
+-> END
+
+=== echo_gudmund ===
+{~Every drain. My father knew every drain.|It's just a wall. It's just a wall.|Listen to it. Every spring, we listened.}
+-> END
+
+=== echo_clerk ===
+{~Wiped when the sled leaves. Nothing to discuss.|Kronvall's concern, not mine. Not mine.|The first one cried. I wrote it down anyway.}
+-> END
+
+=== echo_arn ===
+{~I'm not dead. I keep checking.|Is the sled coming back?|A whole other sky, under the ice.}
+-> END
+
+=== echo_knut ===
+{~Fetches a good price downriver.|We get drowned. They get wet feet.|Pry, twist, lift. Pry, twist, lift.}
 -> END
 
 === echo_torvald ===

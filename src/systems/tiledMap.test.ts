@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { parseTiledMap, type TiledJson } from './tiledMap';
 import { findPath } from './pathfinding';
 import kallsjo from '../../assets/maps/kallsjo.json';
-import { NPCS } from '../../content/data/npcs';
+import { peopleOf } from '../../content/data/npcs';
 
 function tinyMap(): TiledJson {
   return {
@@ -78,7 +78,7 @@ describe('the Kallsjö map', () => {
 
   it('puts every person on the map, each reachable from where Signe starts', () => {
     const people = map.objects.filter((o) => o.npc);
-    expect(people.map((o) => o.npc).sort()).toEqual(NPCS.map((n) => n.id).sort());
+    expect(people.map((o) => o.npc).sort()).toEqual(peopleOf('kallsjo').map((n) => n.id).sort());
     for (const p of people) {
       const { x, y } = p.footprint;
       expect(beside(x, y).some((t) => findPath(map, map.spawn, t) !== null)).toBe(true);
@@ -165,6 +165,22 @@ describe('the Järnfors map', () => {
   it('has the places of the chapter 2 draft', () => {
     const ids = j.places.map((p) => p.id);
     for (const id of ['dam-crest', 'dam-statue', 'gallery', 'hollow-house', 'apprentices-hall', 'inn', 'tithe-house', 'lower-quarter', 'relief-cut']) expect(ids).toContain(id);
+  });
+
+  it('keeps trees away from its people, so nobody is hidden behind one', () => {
+    const people = j.objects.filter((o) => o.npc);
+    const hidden = j.objects.filter((t) => t.type.startsWith('birch') && people.some((p) => Math.abs(t.footprint.x - p.footprint.x) <= 3 && Math.abs(t.footprint.y - p.footprint.y) <= 3));
+    expect(hidden).toEqual([]);
+  });
+
+  it('puts every person of Järnfors on it, each reachable from the gate', () => {
+    const people = j.objects.filter((o) => o.npc);
+    expect(people.map((o) => o.npc).sort()).toEqual(peopleOf('jarnfors').map((n) => n.id).sort());
+    for (const p of people) {
+      const { x, y } = p.footprint;
+      const around = [[x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]].map(([tx, ty]) => ({ x: tx!, y: ty! }));
+      expect(around.some((t) => !j.isBlocked(t.x, t.y) && findPath(j, j.spawn, t) !== null)).toBe(true);
+    }
   });
 
   it('has an inn to rest at', () => {

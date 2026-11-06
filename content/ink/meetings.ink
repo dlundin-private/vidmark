@@ -55,3 +55,16 @@ Torvald: Thin catch without them.
 Reeve Olle: Torvald. Your girls are well?
 Torvald: They're mine. That's all you need to write down.
 -> END
+
+// Järnfors.
+=== meet_edda_brita ===
+{ is_hollowed("edda") or is_hollowed("brita"): -> END }
+Edda: You've let it go cold again, Grandmother.
+Brita: He doesn't mind. He never minded anything once I'd started.
+-> END
+
+=== meet_clerk_arn ===
+{ is_hollowed("clerk") or is_hollowed("arn"): -> END }
+Arn: Is it coming today? The sled?
+The clerk: Not for you. Go inside, you're letting the cold in.
+-> END

@@ -83,6 +83,15 @@ Daniel: "Build" chapter 2, after deciding the ten Järnfors questions. Built a s
 | The district, laid out on purpose by scripts/generate-jarnfors-map.mjs (a Tiled map, editable in Tiled): the frozen reservoir, Maren's Dam with its statue, the gallery door in the dam face, the spillway and river, the city on both banks with three bridges, the Hollow-house, the apprentices' hall, the inn (rest), the Tithe-house, Gudmund's yard, the lower quarter, and Halvar's sealed relief cut hidden in the west wall, reached by one gap in the rock. A check refuses the map if any place is out of reach. | Daniel: one district, about 128 × 128, built by hand; the layout is Claude's draft |
 | Lore to find: the dam statue ("She held the water" / "with whose hands?"), the lintel's nine marks (the ninth reads JON if Signe saw the island doorpost or has Gerda's Maren), the fallen gallery, the plug marked H, the Hollow-house, the wiped slate at the Tithe-house. | Design and Daniel's decisions; text is Claude's draft |
 
+## Chapter 2, step 2: the people of Järnfors
+
+| Decision | Status |
+| --- | --- |
+| Seven people, as the chapter 2 design names them: Edda (the Hollow-house, Kin), Brita (about 117, feeding Halvar at the window), Halvar (a Hollow from the start), Gudmund (the dam-master), the clerk (the Tithe-house), Arn (the boy left on the step) and Knut (a forge-hand who prises iron out of the dam). Each has a first conversation, memories Signe keeps, an Echo and hunger lines, and can be emptied like anyone. | Design names them; all lines are Claude's draft |
+| What chapter 1 decided reaches them: Arn's girl from Kallsjö is Lilja only while Signe has the swim (and Why you left); a hollowed Lilja was a girl who said nothing, "paid in full". Brita's question about why she feeds him needs the coat. Hollowing the hermit makes Signe "look at people like a reeve". If the village knew, word has come up the Tithe road (Edda, Gudmund, the clerk). | Chapter 2 design (carry-over table); lines are Claude's draft |
+| People belong to a map; an old save gains the Järnfors people, unmet (save version 7). Two meetings: Edda and Brita, the clerk and Arn. No tree grows within three tiles of anyone (Daniel's earlier report). | Claude |
+| Offerings, Kin from Edda and the side quests come in steps 3 and 4. | Build order |
+
 ## After the slice: intro, ending, sound, art, chapters
 
 Daniel, after his playthrough: fix the art a bit, consider performance, add sound, prepare for the next slice, an intro that introduces Signe without giving too much away, and a move to the next slice that reflects what the player did.

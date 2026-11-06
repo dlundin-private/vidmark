@@ -16,6 +16,7 @@ INCLUDE people/olle.ink
 INCLUDE people/hollow.ink
 INCLUDE people/lilja.ink
 INCLUDE people/torvald.ink
+INCLUDE people/jarnfors.ink
 INCLUDE meetings.ink
 INCLUDE death.ink
 INCLUDE places.ink

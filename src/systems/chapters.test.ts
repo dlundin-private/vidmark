@@ -97,3 +97,14 @@ describe('more than one map', () => {
     expect(deserialize(serialize(s))).toEqual(s);
   });
 });
+
+describe('the people of Järnfors in old saves', () => {
+  it('adds them, unmet, to a save from before they existed', () => {
+    const old = JSON.parse(serialize(createNewGame(t.basePower)));
+    old.version = 6;
+    for (const id of ['edda', 'brita', 'halvar', 'gudmund', 'clerk', 'arn', 'knut']) delete old.state.npcs[id];
+    const s = deserialize(JSON.stringify(old));
+    expect(s.npcs.edda).toEqual({ offered: false, hollowed: false, faithLost: false });
+    expect(s.npcs.halvar.hollowed).toBe(true);
+  });
+});

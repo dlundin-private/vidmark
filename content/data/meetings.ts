@@ -12,4 +12,7 @@ export const MEETINGS: readonly { a: NpcId; b: NpcId; knot: string }[] = [
   { a: 'lilja', b: 'gerda', knot: 'meet_lilja_gerda' },
   { a: 'ebbe', b: 'torvald', knot: 'meet_ebbe_torvald' },
   { a: 'olle', b: 'torvald', knot: 'meet_olle_torvald' },
+  // Järnfors.
+  { a: 'edda', b: 'brita', knot: 'meet_edda_brita' },
+  { a: 'clerk', b: 'arn', knot: 'meet_clerk_arn' },
 ];
