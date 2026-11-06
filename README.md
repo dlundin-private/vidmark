@@ -109,7 +109,7 @@ Crossing by the hermit's route avoids the wolves altogether.
 
 ## Chapter 2: Järnfors (being built)
 
-After chapter 1, the road north leads to Järnfors: a builders' city in a gorge under Maren's Dam. Steps 1 and 2 of its build are done: travel, the district to walk and sketch, places with lore, and seven people to meet whose words follow what Signe did in Kallsjö. Kin, the quests, the dam crisis and the fight come next (docs/decisions.md). To jump straight there, use **Start chapter 2** in the debug panel.
+After chapter 1, the road north leads to Järnfors: a builders' city in a gorge under Maren's Dam. Steps 1–3 of its build are done: travel, the district to walk and sketch, places with lore, seven people whose words follow what Signe did in Kallsjö, and Kin: gain it from Edda (ask, bargain or take) and use Strengthen, Calm, Heal and Sense on the living. The quests, the dam crisis and the fight come next (docs/decisions.md). To jump straight there, use **Start chapter 2** in the debug panel.
 
 ## The beginning and the end
 

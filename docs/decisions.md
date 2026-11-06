@@ -83,6 +83,15 @@ Daniel: "Build" chapter 2, after deciding the ten Järnfors questions. Built a s
 | The district, laid out on purpose by scripts/generate-jarnfors-map.mjs (a Tiled map, editable in Tiled): the frozen reservoir, Maren's Dam with its statue, the gallery door in the dam face, the spillway and river, the city on both banks with three bridges, the Hollow-house, the apprentices' hall, the inn (rest), the Tithe-house, Gudmund's yard, the lower quarter, and Halvar's sealed relief cut hidden in the west wall, reached by one gap in the rock. A check refuses the map if any place is out of reach. | Daniel: one district, about 128 × 128, built by hand; the layout is Claude's draft |
 | Lore to find: the dam statue ("She held the water" / "with whose hands?"), the lintel's nine marks (the ninth reads JON if Signe saw the island doorpost or has Gerda's Maren), the fallen gallery, the plug marked H, the Hollow-house, the wiped slate at the Tithe-house. | Design and Daniel's decisions; text is Claude's draft |
 
+## Chapter 2, step 3: Kin, and the Keystone
+
+| Decision | Status |
+| --- | --- |
+| Kin has four abilities mirroring Craft (Daniel): Strengthen (a body), Calm, Heal (a wound), Sense. Craft works on made things, Kin on the living, Signe included. Each costs 1 Power (tuning values). Aimed by tapping Signe, someone within Craft's reach, or a wolf in a fight. | Daniel chose the four; what each does is Claude's draft |
+| Heal: closes one of Signe's wounds, or eases someone hurt or sick (Arn's cough, a villager hurt by trap ice). Calm: a person is quiet until the next rest; in a fight, a calmed enemy does nothing on its next turn and shows no run. Strengthen: on Signe, the next wound before she rests does not land. Sense: what someone holds closest, and whether they would ever give it (one Ink line per person; a Hollow is "a warm, breathing nothing"). | Claude's draft |
+| Only a Keystone gives a domain: Edda (Kin, with a Craft start). Her Offering, or hollowing her, gives Signe Kin. Nobody else's does. | Design and Daniel's Keystone rule |
+| Edda's trust follows Signe's deeds: carrying her water, listening to Brita, easing Arn, and (step 4) finishing a side quest; one less if the village knew. Two or more: she gives her memory of Halvar looking at her (ask). One, with Lilja's promise kept: she gives it on a condition, "if you ever can, you give him back", saved as a promise (bargain). Anyone can take. Not once Signe has emptied someone in Järnfors. | Chapter 2 design; the trust sources are Claude's draft until the side quests exist |
+
 ## Chapter 2, step 2: the people of Järnfors
 
 | Decision | Status |

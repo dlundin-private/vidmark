@@ -25,6 +25,8 @@ export interface Wolf {
   intent: Tile[];
   /** Whether that run ends beside Signe as she stands now (shown as a bite). */
   bites: boolean;
+  /** Calmed with Kin: it does nothing on the wolves' next turn. */
+  calmed: boolean;
 }
 
 /** What the fight needs from the world. */
@@ -55,7 +57,7 @@ export class WolfFight {
     starts: readonly Tile[],
     private readonly t: FightTuning,
   ) {
-    this.wolves = starts.map((at, id) => ({ id, at: { ...at }, hits: 0, state: 'hunting', intent: [], bites: false }));
+    this.wolves = starts.map((at, id) => ({ id, at: { ...at }, hits: 0, state: 'hunting', intent: [], bites: false, calmed: false }));
     this.actionsLeft = t.combatActions;
     this.planIntents();
   }
@@ -106,6 +108,15 @@ export class WolfFight {
     if (this.phase === 'signe') this.phase = 'wolves';
   }
 
+  /** Kin's Calm: the wolf stands still through the wolves' next turn, and shows no run or bite. */
+  calm(id: number): void {
+    const w = this.wolves[id];
+    if (!w || w.state !== 'hunting') return;
+    w.calmed = true;
+    w.intent = [];
+    this.refreshBites();
+  }
+
   /** A wolf was struck (a pushed crate). Hit often enough, it runs. */
   hit(id: number): FightEvent[] {
     const w = this.wolves[id];
@@ -136,6 +147,10 @@ export class WolfFight {
     if (this.phase === 'over') return [];
     const events: FightEvent[] = [];
     for (const w of this.hunting) {
+      if (w.calmed) {
+        w.calmed = false;
+        continue;
+      }
       const path: Tile[] = [];
       for (const step of w.intent) {
         const taken = (step.x === this.signe.x && step.y === this.signe.y) || this.wolves.some((o) => o !== w && o.state === 'hunting' && o.at.x === step.x && o.at.y === step.y);
@@ -165,6 +180,11 @@ export class WolfFight {
     const claimed: Tile[] = [];
     const planned = new Set<Wolf>();
     for (const w of this.hunting) {
+      if (w.calmed) {
+        claimed.push(w.at);
+        planned.add(w);
+        continue;
+      }
       // In the way: where earlier wolves will end up, where later ones stand now, and Signe.
       const others = (x: number, y: number) =>
         claimed.some((c) => c.x === x && c.y === y) ||
@@ -180,7 +200,7 @@ export class WolfFight {
   }
 
   private refreshBites(): void {
-    for (const w of this.wolves) w.bites = w.state === 'hunting' && isBeside(w.intent.at(-1) ?? w.at, this.signe);
+    for (const w of this.wolves) w.bites = w.state === 'hunting' && !w.calmed && isBeside(w.intent.at(-1) ?? w.at, this.signe);
   }
 
   /** Half the pack down: the rest give up and flee. */

@@ -121,3 +121,17 @@ describe('tracks', () => {
     expect(trackTiles('').size).toBe(0);
   });
 });
+
+describe('Kin in a fight', () => {
+  it('a calmed wolf does nothing on the next turn, then hunts again', () => {
+    const fight = new WolfFight(grid(open(12, 12)), { x: 5, y: 5 }, [{ x: 5, y: 2 }], t);
+    expect(fight.wolves[0]!.bites).toBe(true);
+    fight.calm(0);
+    expect(fight.wolves[0]!.bites).toBe(false);
+    expect(fight.wolves[0]!.intent).toEqual([]);
+    fight.endTurn();
+    expect(fight.wolvesAct().some((e) => e.kind === 'bite' || e.kind === 'ran')).toBe(false);
+    expect(fight.wolves[0]!.at).toEqual({ x: 5, y: 2 });
+    expect(fight.wolves[0]!.intent.length).toBeGreaterThan(0);
+  });
+});

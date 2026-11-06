@@ -85,6 +85,13 @@ export function recordOffering(state: GameState, npc: NpcId, t: Tuning): void {
   n.offered = true;
   state.power = Math.min(state.power + t.powerPerOffering, maxPower(state, t));
   teach(state, npc, 1);
+  gainKeystoneDomain(state, npc);
+}
+
+/** A Keystone's Offering or whole life gives Signe their domain. */
+function gainKeystoneDomain(state: GameState, npc: NpcId): void {
+  const def = NPCS.find((d) => d.id === npc);
+  if (def?.keystone && !state.domains.includes(def.domain)) state.domains.push(def.domain);
 }
 
 /**
@@ -98,6 +105,7 @@ export function recordHollowing(state: GameState, npc: NpcId, t: Tuning): void {
   state.reserve += t.hollowingReserve;
   clampPower(state, t);
   teach(state, npc, 2);
+  gainKeystoneDomain(state, npc);
   // She takes everything they knew, too: what she'd otherwise have had to find out.
   const knows = HOLLOWING_KNOWLEDGE[npc];
   for (const flag of knows?.flags ?? []) state.flags[flag] = true;
@@ -191,7 +199,14 @@ export function formKeepsake(state: GameState, id: KeepsakeId): void {
 
 // --- Wounds -----------------------------------------------------------------
 
+/** Kin: Signe has strengthened her own body; the next wound before she rests does not land. */
+export const FLAG_BOLSTERED = 'kin_bolstered';
+
 export function addWound(state: GameState, t: Tuning): void {
+  if (state.flags[FLAG_BOLSTERED]) {
+    delete state.flags[FLAG_BOLSTERED];
+    return;
+  }
   state.wounds = Math.min(t.maxWounds, state.wounds + 1);
 }
 
@@ -310,6 +325,9 @@ export function breakIce(state: GameState, x: number, y: number, rests: number):
  */
 export function restAtHome(state: GameState, t: Tuning): void {
   rest(state, t);
+  // What Kin did wears off: the calmed are themselves again, her body stops holding.
+  for (const key of Object.keys(state.flags)) if (key.startsWith('calmed_')) delete state.flags[key];
+  delete state.flags[FLAG_BOLSTERED];
   for (let i = 0; i < t.woundsHealedByRest; i++) healWound(state);
   const tick = (e: CraftEffect | undefined): CraftEffect | undefined => {
     if (!e || e.restsLeft === null) return e;

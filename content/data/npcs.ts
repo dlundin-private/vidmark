@@ -19,6 +19,11 @@ export interface NpcDef {
   teaches?: CraftAction;
   /** The memory they give Signe as an Offering, as her Hearth shows it. Drafts. Torvald and Olle give none (decided by Daniel: not everyone is willing). */
   offering?: string;
+  /**
+   * A Keystone (design): someone holding a domain Signe lacks. Their Offering,
+   * or hollowing them, gives Signe that domain. Edda, in Järnfors.
+   */
+  keystone?: boolean;
   /** The map they live on (src/systems/maps.ts); Kallsjö if not given. */
   map?: string;
   /** How they move around their spot on the map. Radius 0: they stay put, but others can walk over to them. */
@@ -53,7 +58,7 @@ export const NPCS: readonly NpcDef[] = [
   { id: 'torvald', name: 'Torvald', role: "Signe's father, a fisherman", domain: 'craft', wander: { radius: 0 } },
 
   // People in Järnfors (chapter 2). Drafts from docs/chapter-2-jarnfors.md; Daniel decided Brita is about 117.
-  { id: 'edda', map: 'jarnfors', name: 'Edda', role: "Runs the Hollow-house; Halvar and Brita's granddaughter", domain: 'kin', wander: { radius: 3 } },
+  { id: 'edda', map: 'jarnfors', name: 'Edda', role: "Runs the Hollow-house; Halvar and Brita's granddaughter", domain: 'kin', keystone: true, offering: 'Halvar, once, seeming to look at her when she was small', wander: { radius: 3 } },
   { id: 'brita', map: 'jarnfors', name: 'Brita', role: "Halvar's widow, about 117, nearly blind", domain: 'kin', offering: 'The morning Halvar refused, and what he said to her after', wander: { radius: 0 } },
   { id: 'halvar', map: 'jarnfors', name: 'Halvar', role: 'The master builder Maren hollowed, a century ago', domain: 'craft', startsHollow: true, wander: { radius: 0 } },
   { id: 'gudmund', map: 'jarnfors', name: 'Gudmund', role: 'The dam-master, who lost the keeping to the Tithe', domain: 'craft', teaches: 'mend', offering: 'His first stone: the day he learned to read one', wander: { radius: 4 } },

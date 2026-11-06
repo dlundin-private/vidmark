@@ -65,6 +65,13 @@ export const DEFAULT_TUNING = {
   skillLevel2At: 3,
   skillLevel3At: 7,
 
+  // --- Kin (chapter 2; drafts) ---
+  /** Power for each Kin ability: Strengthen (a body), Calm, Heal (a wound), Sense. */
+  kinBolsterCost: 1,
+  kinCalmCost: 1,
+  kinHealCost: 1,
+  kinSenseCost: 1,
+
   // --- Combat (design: "Combat: turn-based on the isometric grid") ---
   /** Actions Signe gets each turn: move, use an ability, or interact (design: two). */
   combatActions: 2,
@@ -119,6 +126,10 @@ export const TUNING_LABELS: Record<TuningKey, string> = {
   weaveSlots: 'Weaves carried at once',
   skillLevel2At: 'Uses to reach skill level 2',
   skillLevel3At: 'Uses to reach skill level 3',
+  kinBolsterCost: 'Kin: Strengthen (body) cost',
+  kinCalmCost: 'Kin: Calm cost',
+  kinHealCost: 'Kin: Heal cost',
+  kinSenseCost: 'Kin: Sense cost',
   combatActions: 'Fight: actions per turn',
   combatMoveTiles: 'Fight: tiles per move',
   wolfCount: 'Fight: wolves in the pack',

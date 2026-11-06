@@ -46,6 +46,8 @@ import { Cinematic, type Art, type Painter, type Tableau } from './Cinematic';
 import * as T from './tableaux';
 import { ARRIVALS, INTRO, chapterOneEnding, type Beat, type Picture } from '../../content/data/cinematics';
 import { chapterOneCanEnd, endChapterOne } from '../systems/chapters';
+import { kinDef, type KinAction } from '../../content/data/kin';
+import { castKin, planKin, type KinTarget } from '../systems/kin';
 
 const SIGNE_SPRITE = 'signe';
 /** The wolf fight is on (saved, so a reload brings the pack back), and it is over. */
@@ -449,6 +451,13 @@ export class WorldScene extends Phaser.Scene {
   onSelect(selection: Selection | null): void {
     this.pushing = null;
     this.pendingVisit = null;
+    this.kin = selection?.kind === 'kin' ? selection.action : null;
+    if (this.kin) {
+      this.spell = null;
+      hud.say(`${kinDef(this.kin).description} Tap yourself, or someone close. Tap the button again to cancel.`, 0);
+      this.lastViewKey = '';
+      return;
+    }
     this.spell = selection ? this.spellFor(selection) : null;
     if (this.spell) {
       this.pendingVisit = null;
@@ -461,9 +470,74 @@ export class WorldScene extends Phaser.Scene {
   }
 
   private spellFor(selection: Selection): Spell | null {
+    if (selection.kind === 'kin') return null;
     if (selection.kind === 'action') return plainSpell(selection.action, 'object');
     const w = store.state.weaves.find((x) => x.id === selection.id);
     return w ? weaveSpell(w) : null;
+  }
+
+  /** Kin chosen in the HUD, waiting for someone to use it on. */
+  private kin: KinAction | null = null;
+
+  /** A tap while a Kin ability is chosen: Signe herself, a person close by, or a wolf in a fight. */
+  private aimKin(worldX: number, worldY: number): void {
+    const action = this.kin!;
+    const tile = this.proj.pick({ x: worldX, y: worldY });
+    const t = tuning.values;
+    const here = this.walker.tile;
+    const wolf = this.fight?.logic.wolfAt(tile.x, tile.y);
+    const hit = this.spriteAt(worldX, worldY, (s) => !!s.obj?.npc);
+    const person = hit?.npc ? this.people.find((p) => p.id === hit.npc) : this.people.find((p) => { const pt = this.sim.tileOf(p.id); return pt.x === tile.x && pt.y === tile.y; });
+    // Her own tile first, then whoever was tapped; her tall picture only as a last resort (it covers the tile behind her).
+    const onOwnTile = tile.x === here.x && tile.y === here.y;
+    let target: KinTarget;
+    if (wolf) target = { kind: 'creature', id: wolf.id };
+    else if (onOwnTile) target = { kind: 'self' };
+    else if (person) target = { kind: 'person', id: person.id };
+    else if (this.signe.getBounds().contains(worldX, worldY)) target = { kind: 'self' };
+    else {
+      hud.say('Kin works on the living. Tap yourself, or someone close.');
+      return;
+    }
+    if (target.kind !== 'self') {
+      const at = target.kind === 'creature' ? wolf!.at : this.sim.tileOf((target as { id: NpcId }).id);
+      if (distance(here, at) > t.craftRange) {
+        hud.say(this.fight ? 'Too far. Kin needs you close; moving takes an action.' : 'Too far. Kin needs you close.');
+        return;
+      }
+    }
+    const plan = planKin(store.state, t, action, target);
+    if (!plan.ok) {
+      hud.say(plan.reason);
+      return;
+    }
+    if (A.availablePower(store.state) < plan.cost) return this.outOfPower(`That needs ${plan.cost} Power. You have ${A.availablePower(store.state)}.`);
+    const message = store.update((s) => castKin(s, plan));
+    store.save();
+    hud.select(null);
+    sound.play(action === 'sense' ? 'echo' : 'mend');
+    if (action === 'sense' && target.kind === 'person') {
+      const hollow = store.state.npcs[target.id].hollowed;
+      const lines = ambientDialogue.linesOf(hollow ? 'sense_hollow' : `sense_${target.id}`).map((l) => l.text);
+      hud.say(`${lines.join(' ')} (−${plan.cost} Power)`, 9000);
+    } else {
+      hud.say(`${message} (−${plan.cost} Power)`);
+    }
+    if (this.fight) {
+      if (action === 'calm' && target.kind === 'creature') this.fight.logic.calm(target.id);
+      this.fight.logic.spend();
+      this.playFight([]);
+    }
+  }
+
+  /** Not enough Power: offer what she can always spend (Keepsakes; in a fight, the wolf beside her). */
+  private outOfPower(text: string): void {
+    const options = [
+      ...(KEEPSAKES.some((k) => !k.hiddenUntilLate && A.hasKeepsake(store.state, k.id)) ? [{ label: 'Burn a Keepsake…', run: () => journal.open('keepsakes') }] : []),
+      ...(this.fight?.logic.wolfBeside() ? [{ label: 'Take everything from the wolf', run: () => this.askHollowWolf() }] : []),
+    ];
+    if (options.length > 0) hud.ask(text, options);
+    else hud.say(text);
   }
 
   /** A tap while a spell is chosen: aim it, check it, and cast it. */
@@ -510,13 +584,7 @@ export class WorldScene extends Phaser.Scene {
       const text = `That needs ${plan.cost} Power. You have ${A.availablePower(store.state)}.`;
       // Out of Power: the Keepsakes are the one thing she can always spend.
       // In a fight, taking everything from the wolf beside her is always offered too (design).
-      const options = [
-        ...(KEEPSAKES.some((k) => !k.hiddenUntilLate && A.hasKeepsake(store.state, k.id)) ? [{ label: 'Burn a Keepsake…', run: () => journal.open('keepsakes') }] : []),
-        ...(this.fight?.logic.wolfBeside() ? [{ label: 'Take everything from the wolf', run: () => this.askHollowWolf() }] : []),
-      ];
-      if (options.length > 0) hud.ask(text, options);
-      else hud.say(text);
-      return;
+      return this.outOfPower(text);
     }
     const done = plan;
     const message = store.update((s, tt) => cast(this.world, s, tt, done));
@@ -1167,6 +1235,7 @@ export class WorldScene extends Phaser.Scene {
     this.talkingWith = who.id;
     const knewBefore = store.state.impressions[who.id]?.length ?? 0;
     const wasHollow = store.state.npcs[who.id].hollowed;
+    const domainsBefore = store.state.domains.length;
     dialogueBox.open(who.id, () => {
       this.tapped = null;
       this.talkingWith = null;
@@ -1186,6 +1255,10 @@ export class WorldScene extends Phaser.Scene {
         }
       } else if ((store.state.impressions[who.id]?.length ?? 0) > knewBefore) {
         hud.say(`You'll remember this about ${name}. (Journal: People)`, 3500);
+      }
+      if (store.state.domains.length > domainsBefore) {
+        hud.announce('A new domain: Kin', 'You can feel the living now the way you feel the made: how they hold, and where they hurt. Kin is in your bar.');
+        sound.play('chime');
       }
       // Conversations change the game (Offerings, promises, flags): keep them.
       this.autosave();
@@ -1224,6 +1297,7 @@ export class WorldScene extends Phaser.Scene {
   private onPointerDown(pointer: Phaser.Input.Pointer): void {
     if (menuOpen()) return;
     if (this.fight && !this.canActInFight()) return;
+    if (this.kin) return this.aimKin(pointer.worldX, pointer.worldY);
     if (this.spell) return this.aimAt(pointer.worldX, pointer.worldY);
     if (this.fight) return this.fightTap(this.proj.pick({ x: pointer.worldX, y: pointer.worldY }));
     this.pendingVisit = null;

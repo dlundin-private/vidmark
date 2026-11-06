@@ -25,6 +25,37 @@
 
 = talk
 + {carries_echoes()} [Take everything] -> take_everything("edda", "Edda")
+* {not has_flag("helped_edda")} [Carry water for her] Signe: Where's the water?
+    ~ set_flag("helped_edda", true)
+    ~ remember("edda", "helped")
+    You carry pail after pail up from the river while she washes faces and changes sheets. Neither of you says much.
+    Edda: You can come again. If you like.
+    -> talk
+* {edda_can_ask()} [Ask what she holds that she gives nobody] Signe: You carry something you don't give anyone.
+    Edda: Everyone in this city carries something for somebody. That's what we do here.
+    Edda: There's one thing, though. My grandfather, once, when I was small. He turned his head and looked at me. Grandmother says he couldn't have. I know he did.
+    Edda: If you're going to stand where she stood, up on that crest, take something that remembers him.
+    ** [Take her memory] Signe: I'll carry it.
+        ~ offer("edda")
+        ~ remember("edda", "gave")
+        Edda closes her eyes. When she opens them she looks up at the window, where Brita is spooning broth.
+        Edda: Twice a day. I know why. I'm sure I know why.
+        -> END
+    ** [Not yet] Signe: Keep it a while longer.
+        -> talk
+* {edda_can_bargain()} [Tell her you keep what you promise] Signe: I made my sister a promise once, and I kept it. I keep what I promise.
+    Edda looks at you for a long time.
+    Edda: Then promise me this, and I'll believe you. If you ever can, you give him back. All of him. Whatever it takes.
+    ** [Promise] Signe: If I ever can, I'll give him back.
+        ~ make_promise("give_halvar_back", "edda")
+        ~ offer("edda")
+        ~ remember("edda", "bargain")
+        Edda gives you the moment her grandfather looked at her. It goes out of her face as it goes into you.
+        Edda: Remember you promised. I won't be able to.
+        -> END
+    ** [I can't promise that] Signe: I can't promise that.
+        Edda: No. Nobody can.
+        -> talk
 * {not remembers("edda", "house")} [Ask about the Hollow-house] Signe: Who are they?
     ~ remember("edda", "house")
     Edda: People the Tithe took everything from. A family can't pay, so it takes one of them whole.
@@ -260,6 +291,34 @@
     { who == "knut": Knut: There's a rumour down here. Someone walks about taking people whole. No sled, no ledger. }
 }
 ->->
+
+// --- Edda's trust follows what Signe does (chapter 2 design). The side quests (step 4)
+// add to it; until then: carrying her water, listening to Brita, easing Arn.
+=== function edda_trust() ===
+~ temp trust = 0
+{ has_flag("helped_edda"):
+    ~ trust = trust + 1
+}
+{ remembers("brita", "refused"):
+    ~ trust = trust + 1
+}
+{ has_flag("eased_arn"):
+    ~ trust = trust + 1
+}
+{ has_flag("quest_britas-bowl") or has_flag("quest_keeping") or has_flag("quest_tithe-house"):
+    ~ trust = trust + 1
+}
+{ has_flag("village_knows"):
+    ~ trust = trust - 1
+}
+~ return trust
+
+=== function edda_can_ask() ===
+~ return not has_offered("edda") and not emptied_here() and edda_trust() >= 2
+
+// Some trust, and a chapter 1 promise kept: she will give on a condition (chapter 2 design).
+=== function edda_can_bargain() ===
+~ return not has_offered("edda") and not emptied_here() and edda_trust() >= 1 and edda_trust() < 2 and promise_kept("lilja_ice")
 
 === function emptied_here() ===
 ~ return is_hollowed("edda") or is_hollowed("brita") or is_hollowed("gudmund") or is_hollowed("clerk") or is_hollowed("arn") or is_hollowed("knut")

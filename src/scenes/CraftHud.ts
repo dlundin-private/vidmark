@@ -1,10 +1,11 @@
 import { ACTIONS, type CraftAction } from '../../content/data/craft';
+import { KIN_ACTIONS, type KinAction } from '../../content/data/kin';
 import type { Tuning } from '../../content/data/tuning';
 import * as A from '../state/actions';
 import type { GameState, SavedWeave } from '../state/GameState';
 
 /** What the player picked to cast: a plain action, or a saved Weave by id. */
-export type Selection = { kind: 'action'; action: CraftAction } | { kind: 'weave'; id: string };
+export type Selection = { kind: 'action'; action: CraftAction } | { kind: 'kin'; action: KinAction } | { kind: 'weave'; id: string };
 
 export interface HudCallbacks {
   onSelect(selection: Selection | null): void;
@@ -113,6 +114,15 @@ export class CraftHud {
       const level = a.trainable ? ` ${roman(A.skillLevel(state, a.id, t))}` : '';
       return this.selectable(`${i + 1}`, a.name + level, { kind: 'action', action: a.id }, a.description);
     });
+    // Kin, once Signe has it (chapter 2): its own group, after Craft.
+    if (state.domains.includes('kin')) {
+      items.push(div('hud-divider'));
+      for (const k of KIN_ACTIONS) {
+        const b = this.selectable('', k.name, { kind: 'kin', action: k.id }, `Kin: ${k.description}`);
+        b.classList.add('hud-kin');
+        items.push(b);
+      }
+    }
     const held = A.heldWeaves(state);
     this.weaveIds = held.map((w) => w.id);
     if (held.length > 0) items.push(div('hud-divider'));
@@ -172,7 +182,8 @@ export function weaveTitle(w: SavedWeave): string {
 
 function sameSelection(a: Selection | null, b: Selection): boolean {
   if (!a || a.kind !== b.kind) return false;
-  return a.kind === 'action' ? a.action === (b as typeof a).action : a.id === (b as typeof a).id;
+  if (a.kind === 'weave') return a.id === (b as typeof a).id;
+  return a.action === (b as typeof a).action;
 }
 
 function roman(n: number): string {
@@ -226,6 +237,7 @@ const CSS = `
 .hud-menu { color: #b7c4d1; }
 .hud-divider { width: 2px; align-self: stretch; margin: 4px 4px; background: #3a4250; border-radius: 1px; }
 .hud-weave { border-color: #6b5a3c; background: rgba(34, 28, 20, 0.92); }
+.hud-kin { border-color: #5a6b4a; background: rgba(24, 32, 22, 0.92); }
 .hud-weave-mark { color: #d9b26a; }
 .hud-banner { position: absolute; top: max(56px, calc(env(safe-area-inset-top) + 48px)); left: 50%; transform: translateX(-50%);
   width: max-content; max-width: min(560px, calc(100vw - 24px)); padding: 10px 16px; background: rgba(22, 20, 17, 0.95);

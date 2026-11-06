@@ -410,3 +410,49 @@ describe('the people of Järnfors read what chapter 1 decided', () => {
     expect(text(play(runner, 'clerk'))).toContain('without a ledger');
   });
 });
+
+describe('Edda, the Keystone', () => {
+  it('gives her memory, and with it Kin, once she trusts Signe', () => {
+    const { store, runner } = setup();
+    expect(() => play(runner, 'edda', ['what she holds'])).toThrow(/No choice/);
+    play(runner, 'edda', ['Carry water']);
+    play(runner, 'brita', ['Ask about Halvar']);
+    play(runner, 'edda', ['what she holds', 'Take her memory']);
+    expect(store.state.domains).toContain('kin');
+    expect(A.hearth(store.state)).toContain('edda');
+  });
+
+  it('bargains with a little trust and a kept promise: give him back', () => {
+    const { store, runner } = setup();
+    store.update((s) => {
+      A.makePromise(s, 'lilja_ice', 'lilja');
+      A.keepPromise(s, 'lilja_ice');
+    });
+    play(runner, 'edda', ['Carry water']);
+    play(runner, 'edda', ['keep what you promise', 'Promise']);
+    expect(store.state.domains).toContain('kin');
+    expect(store.state.promises.find((p) => p.id === 'give_halvar_back')).toMatchObject({ to: 'edda', kept: null });
+  });
+
+  it('trusts less once she has heard what Signe does', () => {
+    const { store, runner } = setup();
+    store.update((s, t) => {
+      A.recordHollowing(s, 'olle', t);
+      A.seenHollowing(s, 'olle', 'gerda');
+    });
+    play(runner, 'edda', ['Carry water']);
+    play(runner, 'brita', ['Ask about Halvar']);
+    expect(() => play(runner, 'edda', ['what she holds'])).toThrow(/No choice/);
+  });
+
+  it('can always be emptied instead, and that gives Kin too', () => {
+    const { store, runner } = setup();
+    play(runner, 'edda', ['Take everything', 'Take everything']);
+    expect(store.state.domains).toContain('kin');
+  });
+
+  it('every person has something to Sense', () => {
+    const { runner } = setup();
+    for (const n of NPCS) expect(runner.linesOf(n.startsHollow ? 'sense_hollow' : `sense_${n.id}`).length).toBeGreaterThan(0);
+  });
+});
