@@ -33,9 +33,12 @@ export interface NpcDef {
 }
 
 /** Named spots on the map that people move to; the scene finds them from the map's numbers. */
-export type SpotName = 'village-fire' | 'ice-road-near' | 'ice-road-far' | 'brita-crest' | 'halvar-crest' | 'arn-safe';
+export type SpotName = 'village-fire' | 'ice-road-near' | 'ice-road-far' | 'brita-crest' | 'halvar-crest' | 'arn-safe' | 'refugees';
 
 const roadOpen = (v: QuestView) => !!v.flag('ice_road_open');
+/** The dam broke: everyone in Järnfors goes up above the flood. */
+const damBroke = (v: QuestView) => v.flag('dam_outcome') === 'broken';
+const fleeFlood = { when: damBroke, to: 'refugees' as const, radius: 3 };
 
 // People in the vertical slice (docs/design.md, "Vertical slice: content").
 export const NPCS: readonly NpcDef[] = [
@@ -58,18 +61,22 @@ export const NPCS: readonly NpcDef[] = [
   { id: 'torvald', name: 'Torvald', role: "Signe's father, a fisherman", domain: 'craft', wander: { radius: 0 } },
 
   // People in Järnfors (chapter 2). Drafts from docs/chapter-2-jarnfors.md; Daniel decided Brita is about 117.
-  { id: 'edda', map: 'jarnfors', name: 'Edda', role: "Runs the Hollow-house; Halvar and Brita's granddaughter", domain: 'kin', keystone: true, offering: 'Halvar, once, seeming to look at her when she was small', wander: { radius: 3 } },
+  { id: 'edda', map: 'jarnfors', name: 'Edda', role: "Runs the Hollow-house; Halvar and Brita's granddaughter", domain: 'kin', keystone: true, offering: 'Halvar, once, seeming to look at her when she was small', wander: { radius: 3 }, moves: [fleeFlood] },
   { id: 'brita', map: 'jarnfors', name: 'Brita', role: "Halvar's widow, about 117, nearly blind", domain: 'kin', offering: 'The morning Halvar refused, and what he said to her after', wander: { radius: 0 },
     // Told the truth, she has herself carried up to the crest with him (Brita's bowl).
-    moves: [{ when: (v) => v.flag('quest_britas-bowl') === 'truth', to: 'brita-crest', radius: 0 }] },
+    moves: [fleeFlood, { when: (v) => v.flag('quest_britas-bowl') === 'truth', to: 'brita-crest', radius: 0 }] },
   { id: 'halvar', map: 'jarnfors', name: 'Halvar', role: 'The master builder Maren hollowed, a century ago', domain: 'craft', startsHollow: true, wander: { radius: 0 },
-    moves: [{ when: (v) => v.flag('quest_britas-bowl') === 'truth', to: 'halvar-crest', radius: 0 }] },
-  { id: 'gudmund', map: 'jarnfors', name: 'Gudmund', role: 'The dam-master, who lost the keeping to the Tithe', domain: 'craft', teaches: 'mend', offering: 'His first stone: the day he learned to read one', wander: { radius: 4 } },
-  { id: 'clerk', map: 'jarnfors', name: 'The clerk', role: 'Keeps the Tithe-house and its ledger', domain: 'thought', offering: 'The first child he signed away to Kronvall', wander: { radius: 2 } },
+    moves: [fleeFlood, { when: (v) => v.flag('quest_britas-bowl') === 'truth', to: 'halvar-crest', radius: 0 }] },
+  { id: 'gudmund', map: 'jarnfors', name: 'Gudmund', role: 'The dam-master, who lost the keeping to the Tithe', domain: 'craft', teaches: 'mend', offering: 'His first stone: the day he learned to read one', wander: { radius: 4 }, moves: [fleeFlood] },
+  { id: 'clerk', map: 'jarnfors', name: 'The clerk', role: 'Keeps the Tithe-house and its ledger', domain: 'thought', offering: 'The first child he signed away to Kronvall', wander: { radius: 2 }, moves: [fleeFlood] },
   { id: 'arn', map: 'jarnfors', name: 'Arn', role: 'A sick boy left behind at the Tithe-house', domain: 'kin', wander: { radius: 1 },
     // Safe at the Hollow-house once carried there, struck from the list, or once the clerk is emptied.
-    moves: [{ when: (v) => !!v.flag('arn_safe') || v.hollowed('clerk'), to: 'arn-safe', radius: 1 }] },
-  { id: 'knut', map: 'jarnfors', name: 'Knut', role: 'A forge-hand in the lower quarter', domain: 'craft', wander: { radius: 4 } },
+    moves: [fleeFlood, { when: (v) => !!v.flag('arn_safe') || v.hollowed('clerk'), to: 'arn-safe', radius: 1 }] },
+  {
+    id: 'knut', map: 'jarnfors', name: 'Knut', role: 'A forge-hand in the lower quarter', domain: 'craft', wander: { radius: 4 },
+    // The lower quarter floods whichever way the water comes: the relief cut, or the break.
+    moves: [{ when: (v) => damBroke(v) || v.flag('dam_outcome') === 'relief', to: 'refugees', radius: 3 }],
+  },
 ];
 
 /** The people who live on a map. */

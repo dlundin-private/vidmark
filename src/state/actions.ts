@@ -146,7 +146,9 @@ export function setFaithLost(state: GameState, npc: NpcId, lost: boolean, t: Tun
 
 /** Hollowed people whose echo Signe carries (the boathouse Hollow was hollowed by someone else). */
 export function echoes(state: GameState): NpcId[] {
-  return NPCS.filter((n) => !n.startsHollow && state.npcs[n.id].hollowed).map((n) => n.id);
+  // An Echo anchored in a Weave lives there now, not in her (the dam's knitting).
+  const anchored = new Set(state.weaves.map((w) => (w.anchor?.kind === 'echo' ? w.anchor.npc : null)));
+  return NPCS.filter((n) => !n.startsHollow && state.npcs[n.id].hollowed && !anchored.has(n.id)).map((n) => n.id);
 }
 
 /** Someone saw Signe hollow a person: the village knows (Daniel: only by evidence). */

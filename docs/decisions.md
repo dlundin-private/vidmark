@@ -83,6 +83,18 @@ Daniel: "Build" chapter 2, after deciding the ten Järnfors questions. Built a s
 | The district, laid out on purpose by scripts/generate-jarnfors-map.mjs (a Tiled map, editable in Tiled): the frozen reservoir, Maren's Dam with its statue, the gallery door in the dam face, the spillway and river, the city on both banks with three bridges, the Hollow-house, the apprentices' hall, the inn (rest), the Tithe-house, Gudmund's yard, the lower quarter, and Halvar's sealed relief cut hidden in the west wall, reached by one gap in the rock. A check refuses the map if any place is out of reach. | Daniel: one district, about 128 × 128, built by hand; the layout is Claude's draft |
 | Lore to find: the dam statue ("She held the water" / "with whose hands?"), the lintel's nine marks (the ninth reads JON if Signe saw the island doorpost or has Gerda's Maren), the fallen gallery, the plug marked H, the Hollow-house, the wiped slate at the Tithe-house. | Design and Daniel's decisions; text is Claude's draft |
 
+## Chapter 2, step 5: the dam crisis
+
+| Decision | Status |
+| --- | --- |
+| The flood-bell rings at a rest in Järnfors once Signe holds Kin, or has finished two side quests, or on her third rest there. Then the city has three rests (Daniel); the HUD shows them, and each rest at the inn brings the break nearer. A crack opens on the crest. | Three rests: Daniel; the trigger is Claude's draft |
+| **Knit** (asking): Kin and Craft together at the crack, "stone that knits like bone", 6 Power less 1 for each Järnfors giver, who come up to stand with her (Daniel). Anchored in an Offering (that Power is gone for good), a Keepsake, or an Echo (it leaves her and lives in the dam). It becomes a permanent Weave she doesn't carry. | Design and Daniel; costs are tuning values |
+| **Taken**: with Gudmund's keeping in her (hollowing him), hold the crack for 4 Power. Hollowing Edda for Kin, then knitting, is the other taking route. | Design; costs are tuning values |
+| **Relief**: open Halvar's cut after weakening the plug, pushing both sluice carts clear and strengthening the two walls at its mouth. The dam holds; the lower quarter floods (nobody drowns) and Knut's people go up above it. | Design; the three tasks are Claude's draft |
+| **Held**: raw Craft, 8 Power: more than she has without burning Keepsakes (about two). | Design |
+| **Broken**: the third rest passes and the dam goes at dawn. Most of the city floods, the statue is gone, everyone climbs above the water. Nobody blames her. | Design ("failing is allowed") |
+| People heading for a shared spot (everyone fleeing to the same place) take the nearest free tile around it, and anyone whose way there is cut off gets there out of sight. | Claude |
+
 ## Chapter 2, step 4: the side quests
 
 From the chapter 2 design. Each finished quest counts toward Edda's trust. All steps, lines and lore are Claude's draft.

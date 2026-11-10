@@ -579,6 +579,27 @@ function generateQuestThings() {
   ]));
 }
 
+/** The dam crisis: the crack in the crest, the cut's carts and walls. */
+function generateDamCrisis() {
+  // The crack: a dark split across a flat patch of dam stone, water seeping.
+  const crack = new Canvas(TILE_W, 24);
+  for (let y = 8; y < 24; y++) for (let x = 0; x < TILE_W; x++) {
+    const ty = y - 8;
+    if (!inDiamond(x, ty)) continue;
+    const split = Math.abs(ty - 8 - (x - 16) * 0.35 + Math.sin(x * 0.9) * 1.2) < 1.1;
+    const wet = Math.abs(ty - 9 - (x - 16) * 0.35) < 2.6;
+    if (split) crack.set(x, y, '#121418');
+    else if (wet) crack.set(x, y, '#3b5568', 140);
+  }
+  save('dam-crack.png', crack);
+  save('sluice-cart.png', drawBoxes(1, 1, 14, [
+    { u: 0.15, v: 0.2, du: 0.7, dv: 0.6, z: 3, dz: 7, top: '#6e5238', left: '#5e4533', right: '#4a3628' },
+    { u: 0.15, v: 0.15, du: 0.1, dv: 0.1, z: 0, dz: 4, top: '#3a3a3a', left: '#2e2e2e', right: '#222' },
+    { u: 0.75, v: 0.75, du: 0.1, dv: 0.1, z: 0, dz: 4, top: '#3a3a3a', left: '#2e2e2e', right: '#222' },
+  ]));
+  save('cut-wall.png', drawBoxes(1, 1, 18, [{ u: 0.05, v: 0.3, du: 0.9, dv: 0.4, z: 0, dz: 16, top: '#8a857c', left: '#77726a', right: '#625e57' }]));
+}
+
 function generateDamParts() {
   save('gallery-door.png', drawBoxes(1, 1, 28, [
     { u: 0, v: 0, du: 1, dv: 1, z: 0, dz: 26, top: '#7d8189', left: '#6a6e76', right: '#5a5d64' },
@@ -613,6 +634,7 @@ generateWolf();
 generateVillageMarks();
 generateDamParts();
 generateQuestThings();
+generateDamCrisis();
 generateFightMarks();
 generateFlakes();
 generateBoathouse();

@@ -190,10 +190,15 @@ export function cast(world: WorldModel, state: GameState, t: Tuning, plan: Extra
     switch (spell.action) {
       case 'strengthen':
         A.setObjectEffect(state, o.id, effect('strengthened'));
+        // The relief cut's walls: both strengthened once is enough, before the water comes.
+        if (o.type === 'cut-wall' && world.objects.filter((x) => x.type === 'cut-wall').every((x) => x.id === o.id || world.objectEffect(x)?.kind === 'strengthened')) {
+          A.setFlag(state, 'cut_walls_strengthened', true);
+        }
         message = `The ${label(o)} grows hard and sure.`;
         break;
       case 'weaken':
         A.setObjectEffect(state, o.id, effect('weakened'));
+        if (o.type === 'relief-plug') A.setFlag(state, 'plug_weakened', true);
         message = `The ${label(o)} turns brittle. A push would break it.`;
         break;
       case 'mend':
@@ -214,6 +219,10 @@ export function cast(world: WorldModel, state: GameState, t: Tuning, plan: Extra
       case 'push': {
         const brittle = world.objectEffect(o)?.kind === 'weakened';
         A.moveObject(state, o.id, plan.pushTo!);
+        // The relief cut's sluice carts: once each has been pushed, the channel is clear.
+        if (o.type === 'sluice-cart' && world.objects.filter((x) => x.type === 'sluice-cart').every((x) => state.world.objects[x.id]?.at)) {
+          A.setFlag(state, 'cut_carts_cleared', true);
+        }
         if (plan.hits) {
           if (brittle) {
             A.setObjectBroken(state, o.id, true);

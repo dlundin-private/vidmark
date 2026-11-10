@@ -93,4 +93,8 @@ export const CRAFTABLES: Record<string, CraftableDef> = {
   'drawing-table': { mendLevel: 1 },
   'gallery-door': { mendLevel: 2 },
   cot: { mendLevel: 1 },
+  // The dam crisis: preparing the relief cut.
+  'relief-plug': { mendLevel: 3 },
+  'sluice-cart': { pushable: true, mendLevel: 1 },
+  'cut-wall': { mendLevel: 2 },
 };

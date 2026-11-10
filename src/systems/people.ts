@@ -136,12 +136,32 @@ export class PeopleSim {
     p.mode = p.route.length > 0 ? 'home' : 'idle';
     // No way to walk there (across the lake, say), or a Hollow, who is carried: they are simply there.
     const at = p.walker.tile;
-    if ((p.route.length === 0 || p.hollow) && (at.x !== home.x || at.y !== home.y) && !this.world.isBlocked(home.x, home.y)) {
-      p.route = [];
-      p.mode = 'idle';
-      p.walker.teleport(home);
-      this.world.placePerson(id, home);
+    if ((p.route.length === 0 || p.hollow) && distance(at, home) > p.radius) this.placeNear(p);
+  }
+
+  /** Puts someone on the free tile nearest their spot, out of sight of how they got there. */
+  private placeNear(p: Person): boolean {
+    const spot = this.freeNear(p.home, p.radius + 3);
+    if (!spot) return false;
+    p.route = [];
+    p.mode = 'idle';
+    p.walker.teleport(spot);
+    this.world.placePerson(p.id, spot);
+    return true;
+  }
+
+  /** The free tile nearest a spot: several people may share one (everyone fleeing to the same place). */
+  private freeNear(spot: Tile, within: number): Tile | null {
+    for (let r = 0; r <= within; r++) {
+      for (let dy = -r; dy <= r; dy++) {
+        for (let dx = -r; dx <= r; dx++) {
+          if (Math.abs(dx) + Math.abs(dy) !== r) continue;
+          const t = { x: spot.x + dx, y: spot.y + dy };
+          if (!this.world.isBlocked(t.x, t.y)) return t;
+        }
+      }
     }
+    return null;
   }
 
   /** Where someone's spot is now. */
@@ -215,6 +235,8 @@ export class PeopleSim {
           p.mode = 'home';
           if (p.route.length > 0) return;
           p.mode = 'idle';
+          // No way back on foot (the water came up around them): they get there somehow, out of sight.
+          if (this.placeNear(p)) return;
         }
         if (p.radius > 0) this.wander(p);
         else p.until = this.now + this.between(this.timing.idleMs);
@@ -320,8 +342,10 @@ export class PeopleSim {
 
   private routeHome(p: Person): Tile[] {
     const at = p.walker.tile;
-    if (at.x === p.home.x && at.y === p.home.y) return [];
-    return this.routeTo(p, p.home) ?? [];
+    if (distance(at, p.home) <= p.radius) return [];
+    // Their spot may be taken (others went there too): the nearest free tile around it will do.
+    const goal = this.world.isBlocked(p.home.x, p.home.y) ? this.freeNear(p.home, p.radius + 3) : p.home;
+    return goal ? this.routeTo(p, goal) ?? [] : [];
   }
 
   private person(id: NpcId): Person {
@@ -333,4 +357,8 @@ export class PeopleSim {
   private between([min, max]: readonly [number, number]): number {
     return min + this.random() * (max - min);
   }
+}
+
+function distance(a: Tile, b: Tile): number {
+  return Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
 }

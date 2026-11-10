@@ -72,6 +72,16 @@ export const DEFAULT_TUNING = {
   kinHealCost: 1,
   kinSenseCost: 1,
 
+  // --- The dam crisis (chapter 2) ---
+  /** Rests between the flood-bell and the break (Daniel: three). */
+  damRests: 3,
+  /** Power to knit the dam with Kin and Craft, before Järnfors givers lend theirs. */
+  damKnitCost: 6,
+  /** Power to hold it with the keeping taken from Gudmund. */
+  damHoldCost: 4,
+  /** Power to hold it with raw Craft: more than she has without burning something. */
+  damRawCost: 8,
+
   // --- Combat (design: "Combat: turn-based on the isometric grid") ---
   /** Actions Signe gets each turn: move, use an ability, or interact (design: two). */
   combatActions: 2,
@@ -130,6 +140,10 @@ export const TUNING_LABELS: Record<TuningKey, string> = {
   kinCalmCost: 'Kin: Calm cost',
   kinHealCost: 'Kin: Heal cost',
   kinSenseCost: 'Kin: Sense cost',
+  damRests: 'Dam: rests between bell and break',
+  damKnitCost: 'Dam: Power to knit it (Kin + Craft)',
+  damHoldCost: "Dam: Power to hold it with Gudmund's keeping",
+  damRawCost: 'Dam: Power to hold it with raw Craft',
   combatActions: 'Fight: actions per turn',
   combatMoveTiles: 'Fight: tiles per move',
   wolfCount: 'Fight: wolves in the pack',

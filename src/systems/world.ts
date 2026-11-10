@@ -194,6 +194,8 @@ export class WorldModel implements WalkGrid {
 /** Reads a map object's show condition against the world flags (see MapObject.show). */
 export function showing(condition: string | null, flags: Readonly<Record<string, unknown>>): boolean {
   if (!condition) return true;
+  // "!flag": only while the flag is not set (the dam statue, until the dam breaks).
+  if (condition.startsWith('!')) return !showing(condition.slice(1), flags);
   const [flag, values] = condition.split('=');
   const v = flags[flag!];
   if (values === undefined) return v !== undefined && v !== false && v !== 0 && v !== '';

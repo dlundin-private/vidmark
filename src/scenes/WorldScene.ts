@@ -48,6 +48,7 @@ import { ARRIVALS, INTRO, chapterOneEnding, type Beat, type Picture } from '../.
 import { chapterOneCanEnd, endChapterOne } from '../systems/chapters';
 import { kinDef, type KinAction } from '../../content/data/kin';
 import { castKin, planKin, type KinTarget } from '../systems/kin';
+import { damOutcome, flood, restInJarnfors, restsLeft, type DamOutcome } from '../systems/dam';
 
 const SIGNE_SPRITE = 'signe';
 /** The wolf fight is on (saved, so a reload brings the pack back), and it is over. */
@@ -1037,9 +1038,12 @@ export class WorldScene extends Phaser.Scene {
         label: 'Rest',
         run: () => {
           store.update(A.restAtHome);
+          // In Järnfors, a night brings the bell, or the break, nearer.
+          const night = store.update((s, tt) => restInJarnfors(s, tt));
           this.autosave();
           store.saveRestPoint(); // where death returns to
           if (ending) return this.endChapter();
+          if (night) return this.damNight(night);
           hud.say(A.echoCount(store.state) > 0
             ? `You rest by the fire, but other lives crowd in around it. Power refills to ${store.state.power}. You will remember this.`
             : 'You rest by the fire. Power restored. You will remember this.');
@@ -1275,10 +1279,53 @@ export class WorldScene extends Phaser.Scene {
   /** Looks closely at a place (its Ink knot); what she learns goes into the journal map. */
   private lookAt(thing: MapObject): void {
     this.tapped = null;
+    const damBefore = damOutcome(store.state);
     dialogueBox.open(thing.inspect!, () => {
       this.tapped = null;
+      const dam = damOutcome(store.state);
+      if (dam && dam !== damBefore) this.damDecided(dam);
       this.autosave();
     });
+  }
+
+  // --- The dam crisis (chapter 2, step 5) ---------------------------------------
+
+  /** A rest in Järnfors: the bell rings, ticks, or the dam breaks in the night. */
+  private damNight(night: 'rang' | 'ticked' | 'broke'): void {
+    if (night === 'rang') {
+      sound.play('fall');
+      hud.announce('The flood-bell', 'You wake to it: the bell on the dam, ringing and ringing. A crack has opened across the crest. The masons give it three nights.');
+    } else if (night === 'ticked') {
+      sound.play('fall');
+      const left = restsLeft(store.state);
+      hud.say(`The bell rang all night. ${left === 1 ? 'One more night, the masons say.' : `${left} more nights, the masons say.`}`, 6000);
+    } else {
+      this.damDecided('broken');
+    }
+  }
+
+  /** The dam is saved one way, or lost: the water goes where it goes. */
+  private damDecided(outcome: DamOutcome): void {
+    const n = this.world.map.numbers;
+    const rect = (p: string): Tile[] => {
+      const [x0, y0, x1, y1] = [n[`${p}X0`], n[`${p}Y0`], n[`${p}X1`], n[`${p}Y1`]];
+      if (x0 === undefined || y0 === undefined || x1 === undefined || y1 === undefined) return [];
+      const tiles: Tile[] = [];
+      // Open ground floods; the buildings stand in it, rooftops in brown water.
+      for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) if (!this.world.isBlocked(x, y)) tiles.push({ x, y });
+      return tiles;
+    };
+    const here = this.walker.tile;
+    if (outcome === 'relief') store.update((s) => flood(s, rect('floodLower').filter((t) => t.x !== here.x || t.y !== here.y)));
+    if (outcome === 'broken') {
+      store.update((s) => flood(s, rect('floodCity').filter((t) => t.x !== here.x || t.y !== here.y)));
+      sound.play('splash');
+      hud.announce('The dam went at dawn', 'The city is rooftops in brown water. The people climbed above it in the night. Nobody blames you. They just say: when the dam went.');
+    } else {
+      sound.play('chime');
+    }
+    store.save();
+    this.lastViewKey = '';
   }
 
   private talkToSomeoneBeside(): void {

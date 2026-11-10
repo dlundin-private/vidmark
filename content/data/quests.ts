@@ -201,4 +201,26 @@ export const QUESTS: readonly QuestDef[] = [
       { id: 'struck', when: (v) => v.flag('arn_safe') === 'struck' && !!v.flag('read_edda_debt'), text: "The clerk struck Arn's name. He belongs to nobody now, and Edda took him in." },
     ],
   },
+
+  {
+    id: 'flood-bell',
+    chapter: 2,
+    title: 'The flood-bell',
+    giver: 'gudmund',
+    summary: 'A crack has opened in the crest of the dam. The bell is ringing, and the masons give it three nights.',
+    starts: (v) => !!v.flag('flood_bell'),
+    steps: [
+      { text: (v) => `Save the dam before it breaks (${Number(v.flag('dam_rests_left') ?? 0)} rests left)`, done: (v) => !!v.flag('dam_outcome') && v.flag('dam_outcome') !== 'broken' },
+      { text: () => 'Knit the stone at the crack, with Kin and Craft together, anchored in something of yours', done: (v) => v.flag('dam_outcome') === 'knit', alternative: true },
+      { text: () => "Or open Halvar's relief cut: weaken the plug, clear the carts, strengthen the walls at its mouth", done: (v) => v.flag('dam_outcome') === 'relief', alternative: true },
+      { text: () => 'Or hold the crack with everything you have', done: (v) => v.flag('dam_outcome') === 'held' || v.flag('dam_outcome') === 'taken', alternative: true },
+    ],
+    outcomes: [
+      { id: 'knit', when: (v) => v.flag('dam_outcome') === 'knit', text: 'You knit the stone like bone. It holds, and the pale scar on the crest will outlast you.' },
+      { id: 'taken', when: (v) => v.flag('dam_outcome') === 'taken', text: "You held it with Gudmund's keeping, the way Maren held it with Halvar's. It holds." },
+      { id: 'relief', when: (v) => v.flag('dam_outcome') === 'relief', text: 'You let the lake out down Halvar\'s cut. The dam holds. The lower quarter is under water; nobody drowned, but the poor lost everything.' },
+      { id: 'held', when: (v) => v.flag('dam_outcome') === 'held', text: 'You held it with everything you had, and what you burned to have it. It holds.' },
+      { id: 'broken', when: (v) => v.flag('dam_outcome') === 'broken', text: 'The dam went at dawn. The city is rooftops in brown water. Nobody blames you. People just say: when the dam went.' },
+    ],
+  },
 ];

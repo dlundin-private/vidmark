@@ -184,3 +184,40 @@ describe('PeopleSim meetings', () => {
     expect(sim.tileOf('hermit')).toEqual({ x: 9, y: 0 });
   });
 });
+
+describe('PeopleSim when the way home is cut off', () => {
+  it('gets someone to their spot even if the way there floods behind them', () => {
+    const rows = open(20, 3);
+    const w = world(rows);
+    const setups: PersonSetup[] = [{ id: 'knut', home: { x: 2, y: 1 }, radius: 1 }];
+    place(w, setups);
+    const sim = new PeopleSim(w, setups, [], timing, seeded(11));
+    sim.moveTo('knut', { x: 17, y: 1 }, 1, false);
+    // The water comes up across the middle: nothing can walk through any more.
+    const flooded = new Set(['9,0', '9,1', '9,2', '10,0', '10,1', '10,2']);
+    const isBlocked = w.isBlocked;
+    w.isBlocked = (x, y) => flooded.has(`${x},${y}`) || isBlocked(x, y);
+    run(sim, 20000, ctx());
+    const t = sim.tileOf('knut');
+    expect(Math.abs(t.x - 17) + Math.abs(t.y - 1)).toBeLessThanOrEqual(1);
+  });
+});
+
+describe('PeopleSim when many go to one place', () => {
+  it('gathers several people around a shared spot instead of all on one tile', () => {
+    const w = world(open(20, 9));
+    const setups: PersonSetup[] = [
+      { id: 'edda', home: { x: 2, y: 2 }, radius: 1 },
+      { id: 'gudmund', home: { x: 17, y: 2 }, radius: 1 },
+      { id: 'clerk', home: { x: 17, y: 6 }, radius: 1 },
+    ];
+    place(w, setups);
+    const sim = new PeopleSim(w, setups, [], timing, seeded(12));
+    for (const s of setups) sim.moveTo(s.id, { x: 9, y: 4 }, 3, false);
+    run(sim, 20000, ctx());
+    for (const s of setups) {
+      const t = sim.tileOf(s.id);
+      expect(Math.abs(t.x - 9) + Math.abs(t.y - 4)).toBeLessThanOrEqual(4);
+    }
+  });
+});

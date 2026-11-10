@@ -106,6 +106,7 @@ export class CraftHud {
       span('hud-pips', pips || '—'),
       // The one-time reserve (hollowing, burned Keepsakes) never refills: say so, not just a number.
       state.reserve > 0 ? span('hud-reserve', ` +${state.reserve} once`) : '',
+      ...(state.flags.flood_bell && !state.flags.dam_outcome ? [span('hud-bell', `   Dam: ${Number(state.flags.dam_rests_left ?? 0)} rest${Number(state.flags.dam_rests_left ?? 0) === 1 ? '' : 's'}`)] : []),
       span('hud-label', '   Wounds '),
       span('hud-wounds', '✕'.repeat(state.wounds) + '·'.repeat(Math.max(0, t.maxWounds - state.wounds))),
     );
@@ -238,6 +239,7 @@ const CSS = `
 .hud-divider { width: 2px; align-self: stretch; margin: 4px 4px; background: #3a4250; border-radius: 1px; }
 .hud-weave { border-color: #6b5a3c; background: rgba(34, 28, 20, 0.92); }
 .hud-kin { border-color: #5a6b4a; background: rgba(24, 32, 22, 0.92); }
+.hud-bell { color: #e07a5f; font-weight: 600; }
 .hud-weave-mark { color: #d9b26a; }
 .hud-banner { position: absolute; top: max(56px, calc(env(safe-area-inset-top) + 48px)); left: 50%; transform: translateX(-50%);
   width: max-content; max-width: min(560px, calc(100vw - 24px)); padding: 10px 16px; background: rgba(22, 20, 17, 0.95);

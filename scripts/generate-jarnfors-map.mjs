@@ -128,7 +128,7 @@ function place(name, x, y, w = 1, h = 1, extra = {}) {
 }
 
 // On the crest: Saint Maren, one hand flat on the stone.
-place('statue', 56, CREST.y0, 1, 1, { inspect: 'place_dam_statue' });
+place('statue', 56, CREST.y0, 1, 1, { inspect: 'place_dam_statue', show: '!dam_outcome=broken' });
 // The gallery's door in the dam face, its approach on the street below.
 place('gallery-door', 46, CREST.y1 + 4, 1, 1, { inspect: 'place_gallery', broken: true });
 // The plug that seals the relief cut, at its top against the dam.
@@ -199,6 +199,16 @@ place('lantern', 47, CREST.y1 + 5, 1, 1, { show: 'quest_keeping=mended|tally' })
 // The Tithe-house: a broken cot by the door, mendable into something to carry Arn on.
 place('cot', 93, 46, 1, 1, { broken: true });
 
+// The dam crisis (chapter 2, step 5). Appended, so earlier objects keep their ids.
+// The crack that opens in the crest when the flood-bell rings; gone once the dam is saved or lost.
+place('dam-crack', 63, CREST.y0 + 1, 1, 1, { inspect: 'place_dam_crack', show: 'dam_rests_left=1|2|3' });
+// Preparing the relief cut: two sluice carts left in the channel, to push clear...
+place('sluice-cart', CUT.x, 60);
+place('sluice-cart', CUT.x + 1, 80);
+// ...and two walls at its mouth, to strengthen before the water comes through.
+place('cut-wall', 27, CUT.y1 - 3);
+place('cut-wall', 27, CUT.y1 + 2);
+
 // Where Signe arrives: the south gate, from the Tithe road.
 const spawn = { x: 45, y: 124 };
 
@@ -251,7 +261,7 @@ const besideReached = (o) => {
 for (const [id, , x, y] of PLACES) if (!reached[idx(x, y)] && !besideReached({ x, y, w: 1, h: 1 })) problems.push(`place ${id} at ${x},${y} can't be reached`);
 for (const o of objects) if ((o.inspect || o.rest || o.npc) && !besideReached(o)) problems.push(`${o.name} at ${o.x},${o.y} can't be reached`);
 if (!walkable(spawn.x, spawn.y)) problems.push('the spawn is blocked');
-for (const [sx, sy, what] of [[55, CREST.y0 + 1, "Brita's spot on the crest"], [54, CREST.y0 + 1, "Halvar's spot on the crest"], [29, 46, "Arn's spot at the Hollow-house"]]) {
+for (const [sx, sy, what] of [[55, CREST.y0 + 1, "Brita's spot on the crest"], [54, CREST.y0 + 1, "Halvar's spot on the crest"], [29, 46, "Arn's spot at the Hollow-house"], [40, 58, 'The refugees above the flood']]) {
   if (!walkable(sx, sy) || !reached[idx(sx, sy)]) problems.push(`${what} at ${sx},${sy} can't be reached`);
 }
 if (problems.length > 0) {
@@ -319,6 +329,18 @@ const map = {
     { name: 'halvarCrestY', type: 'int', value: CREST.y0 + 1 },
     { name: 'arnSafeX', type: 'int', value: 29 },
     { name: 'arnSafeY', type: 'int', value: 46 },
+    // Where the city goes when the water comes, above the flood.
+    { name: 'refugeesX', type: 'int', value: 40 },
+    { name: 'refugeesY', type: 'int', value: 58 },
+    // What floods: the lower quarter when the relief cut is opened; most of the city if the dam breaks.
+    { name: 'floodLowerX0', type: 'int', value: 28 },
+    { name: 'floodLowerY0', type: 'int', value: 98 },
+    { name: 'floodLowerX1', type: 'int', value: 64 },
+    { name: 'floodLowerY1', type: 'int', value: 122 },
+    { name: 'floodCityX0', type: 'int', value: 24 },
+    { name: 'floodCityY0', type: 'int', value: 64 },
+    { name: 'floodCityX1', type: 'int', value: 104 },
+    { name: 'floodCityY1', type: 'int', value: 127 },
   ],
   tilesets: [{
     firstgid: 1, name: 'tiles', image: '../sprites/tiles.png', imagewidth: TILE_W * 18, imageheight: TILE_H,

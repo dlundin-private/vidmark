@@ -2,6 +2,7 @@ import { Story } from 'inkjs';
 import { KEEPSAKES, type KeepsakeId } from '../../content/data/keepsakes';
 import { NPCS, type NpcId } from '../../content/data/npcs';
 import * as A from '../state/actions';
+import { knitCost, restsLeft, saveDam, type DamRoute } from './dam';
 import type { GameStore } from '../state/store';
 
 /** One step of a conversation, for the dialogue box to show. */
@@ -104,6 +105,12 @@ export class DialogueRunner {
     }, true);
     story.BindExternalFunction('promise_made', (id: unknown) => s().promises.some((p) => p.id === id), true);
     story.BindExternalFunction('carries_echoes', () => A.carriesEchoes(s()), true);
+    story.BindExternalFunction('has_domain', (d: unknown) => s().domains.includes(String(d) as never), true);
+    story.BindExternalFunction('dam_rests', () => restsLeft(s()), true);
+    story.BindExternalFunction('dam_cost', (route: unknown) => {
+      const t = this.store.tuningValues;
+      return route === 'knit' ? knitCost(s(), t) : route === 'taken' ? t.damHoldCost : t.damRawCost;
+    }, true);
     story.BindExternalFunction('promise_kept', (id: unknown) => A.promiseKept(s(), String(id)), true);
     story.BindExternalFunction('power', () => A.availablePower(s()), true);
     story.BindExternalFunction('remembers', (who: unknown, key: unknown) => A.remembers(s(), npc(who), String(key)), true);
@@ -123,6 +130,13 @@ export class DialogueRunner {
     }, false);
     story.BindExternalFunction('hollow_person', (who: unknown) => {
       this.store.update((st, t) => A.recordHollowing(st, npc(who), t));
+    }, false);
+    story.BindExternalFunction('dam_save', (route: unknown, kind: unknown, id: unknown) => {
+      return this.store.update((st, t) => {
+        // An anchor named by kind; with no id, the first of that kind she still has.
+        const anchor = A.availableAnchors(st).find((a) => a.kind === kind && (!id || ('id' in a ? a.id : a.npc) === id));
+        return saveDam(st, t, route as DamRoute, anchor).ok;
+      });
     }, false);
     story.BindExternalFunction('keep_promise', (id: unknown) => {
       this.store.update((st) => A.keepPromise(st, String(id)));

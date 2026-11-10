@@ -42,6 +42,23 @@ The ninth has been scratched out, hard, until only the shape of the cut is left.
 Hidden in the rock of the west wall, a channel as wide as a cart runs down from the dam, lined in the same grey stone.
 At its head it is sealed: a plug of great blocks, mortared tight, with a single letter cut into the top one. H.
 Somebody built a way to let the lake out slowly. Somebody else made sure it could never be used.
+{ dam_rests() > 0:
+    { has_flag("plug_weakened") and has_flag("cut_walls_strengthened") and has_flag("cut_carts_cleared"):
+        The plug is brittle now, the carts are clear of the channel, and the walls at its mouth are hard as the dam itself.
+        One push, and the lake goes out this way instead of through the city. The lower quarter is at the bottom of the cut.
+        * [Open the cut] You put your hand to the H and push.
+            ~ dam_save("relief", "", "")
+            The plug goes all at once. The lake comes down the cut like a held breath let out, roaring, and does not stop.
+            Far below, in the lower quarter, someone starts shouting, and then everyone.
+            -> END
+        * [Not yet] -> END
+    - else:
+        To let the lake out this way: weaken the plug, clear the carts left in the channel, and strengthen the walls at its mouth.
+        { has_flag("plug_weakened"): The plug is weak. }
+        { has_flag("cut_carts_cleared"): The carts are clear. }
+        { has_flag("cut_walls_strengthened"): The walls are strengthened. }
+    }
+}
 -> END
 
 === place_hollow_house ===
@@ -67,6 +84,69 @@ In the chest, bundles of notched sticks, each one tied with a scrap of cloth and
 Every drain in the dam, every spring for a hundred years, notched by hand. Most stop a few years ago, when the Tithe took the keeping.
 One is cut deeper than the rest, with an H on it, and a word: SEALED. BY ORDER.
 -> END
+
+=== place_dam_crack ===
+A crack has opened across the crest, wide enough for a hand. Water breathes up through it, black and cold, and the whole wall hums.
+The flood-bell is ringing down in the city. {dam_rests() == 1: One more night. That's all it has. | {dam_rests()} more nights, the masons say. Maybe.}
+{ has_domain("kin"):
+    You can feel it the way you feel a hurt body: where it is tearing, where it still holds.
+}
+* {has_domain("kin") and power() >= dam_cost("knit")} [Knit the stone: Kin and Craft together ({dam_cost("knit")} Power)] -> knit
+* {has_domain("kin") and power() < dam_cost("knit")} [Knit the stone (you need {dam_cost("knit")} Power)] -> crack_short
+* {has_flag("keeping_in_signe") and power() >= dam_cost("taken")} [Hold it with what you took from Gudmund ({dam_cost("taken")} Power)] -> taken
+* {power() >= dam_cost("held")} [Hold it with everything you have ({dam_cost("held")} Power)] -> held
+* {power() < dam_cost("held")} [Hold it with everything you have (you need {dam_cost("held")} Power)] -> crack_short
+* [Leave it] -> END
+
+= crack_short
+You don't have that much in you. Not yet. You could burn something. You could take something.
+-> END
+
+= knit
+{ helpers_line() }
+To mend stone the way you would mend a body, it has to be anchored in something of yours, or it will not last the winter.
+* {has_offered("edda")} [Anchor it in what Edda gave you] -> do_knit("offering", "edda")
+* {has_offered("brita")} [Anchor it in what Brita gave you] -> do_knit("offering", "brita")
+* {has_offered("gudmund")} [Anchor it in what Gudmund gave you] -> do_knit("offering", "gudmund")
+* {has_keepsake("swim")} [Anchor it in the swim] -> do_knit("keepsake", "swim")
+* {has_keepsake("coat")} [Anchor it in the coat] -> do_knit("keepsake", "coat")
+* {has_keepsake("story")} [Anchor it in the story] -> do_knit("keepsake", "story")
+* {has_keepsake("shame")} [Anchor it in the shame] -> do_knit("keepsake", "shame")
+* {has_keepsake("whyYouLeft")} [Anchor it in why you left] -> do_knit("keepsake", "whyYouLeft")
+* {carries_echoes()} [Anchor it in an Echo you carry] -> do_knit("echo", "")
+* [Not yet] -> END
+
+= do_knit(kind, id)
+{ dam_save("knit", kind, id):
+    You lay both hands on the stone and feel it the way Edda feels a sleeper: where it hurts, where it holds. Then you mend it as you would mend a sheet. Stitch by stitch.
+    The crack closes. The stone around it is a shade paler, like a scar.
+    The bell stops ringing.
+- else:
+    It slips away from you. Not enough.
+}
+-> END
+
+= taken
+{ dam_save("taken", "", ""):
+    Gudmund's keeping knows this wall better than you know your own hands. You let it tell you where to press, and how hard, and for how long.
+    The crack groans shut. In the gallery below, someone shouts that the drains are running again.
+    The bell stops ringing.
+}
+-> END
+
+= held
+{ dam_save("held", "", ""):
+    You put everything you have into the stone, raw, the way you first held the ice at home. It isn't skill. It's weight.
+    The crack shuts, slowly, grinding. When it's done you can't feel your hands.
+    The bell stops ringing.
+}
+-> END
+
+=== function helpers_line() ===
+{ has_offered("edda") or has_offered("brita") or has_offered("gudmund") or has_offered("clerk"):
+    ~ return "The people who gave you something here come up the stairs one by one and stand with you on the crest. It is easier, with them."
+}
+~ return "You are alone on the crest."
 
 === place_tithe_house ===
 ~ set_flag("seen_tithe_house", true)
