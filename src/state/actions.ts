@@ -120,6 +120,8 @@ const HOLLOWING_KNOWLEDGE: Partial<Record<NpcId, { flags?: string[]; memories?: 
   hermit: { flags: ['knows_safe_route'] },
   olle: { flags: ['knows_tithe_takes_people'] },
   gerda: { memories: ['statue', 'grandmother'] },
+  gudmund: { flags: ['knows_relief_cut', 'keeping_in_signe'] },
+  clerk: { flags: ['knows_tithe_road'] },
 };
 
 function teach(state: GameState, npc: NpcId, levels: number): void {

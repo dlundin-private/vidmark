@@ -561,6 +561,24 @@ function generateFightMarks() {
 }
 
 /** Järnfors: the gallery's door in the dam face, and the old plug that seals the relief cut. */
+/** Chapter 2 side quests: Halvar's drawing table, the tally chest, the lanterns, the cot. */
+function generateQuestThings() {
+  const wood = { top: '#8a6a4c', left: '#7a5c42', right: '#5e4533' };
+  const legs = [[0.15, 0.15], [0.75, 0.15], [0.15, 0.75], [0.75, 0.75]].map(([u, v]) => ({ u, v, du: 0.1, dv: 0.1, z: 0, dz: 10, ...wood }));
+  save('drawing-table.png', drawBoxes(1, 1, 16, [...legs, { u: 0.1, v: 0.1, du: 0.8, dv: 0.8, z: 10, dz: 2, top: '#a8865f', left: '#8a6a4c', right: '#6e5238' }]));
+  save('drawing-table-broken.png', drawBoxes(1, 1, 16, [...legs.slice(0, 3), { u: 0.1, v: 0.1, du: 0.8, dv: 0.38, z: 10, dz: 2, top: '#a8865f', left: '#8a6a4c', right: '#6e5238' }, { u: 0.1, v: 0.55, du: 0.8, dv: 0.35, z: 2, dz: 2, top: '#9a7a56', left: '#7a5c42', right: '#5e4533' }]));
+  save('tally-chest.png', drawBoxes(1, 1, 12, [{ u: 0.2, v: 0.25, du: 0.6, dv: 0.5, z: 0, dz: 8, top: '#6e5238', left: '#5e4533', right: '#4a3628' }, { u: 0.3, v: 0.3, du: 0.5, dv: 0.06, z: 8, dz: 3, top: '#d8c9a8', left: '#c2b28e', right: '#a89a78' }]));
+  save('lantern.png', drawBoxes(1, 1, 22, [{ u: 0.45, v: 0.45, du: 0.08, dv: 0.08, z: 0, dz: 16, top: '#3a3a3a', left: '#2e2e2e', right: '#222' }, { u: 0.4, v: 0.4, du: 0.2, dv: 0.2, z: 16, dz: 5, top: '#f2c25a', left: '#f7d77a', right: '#d9a03a' }]));
+  save('cot.png', drawBoxes(1, 1, 8, [{ u: 0.1, v: 0.25, du: 0.8, dv: 0.5, z: 0, dz: 4, top: '#8a7a62', left: '#6e5e48', right: '#5a4c3a' }, { u: 0.15, v: 0.3, du: 0.7, dv: 0.4, z: 4, dz: 1, top: '#b8a888', left: '#9a8a6a', right: '#8a7a5a' }]));
+  save('cot-broken.png', drawBoxes(1, 1, 8, [{ u: 0.1, v: 0.25, du: 0.35, dv: 0.5, z: 0, dz: 3, top: '#8a7a62', left: '#6e5e48', right: '#5a4c3a' }, { u: 0.55, v: 0.25, du: 0.35, dv: 0.5, z: 0, dz: 2, top: '#7a6a52', left: '#5e4e38', right: '#4a3c2a' }]));
+  // The gallery door, fallen in: rubble across the doorway.
+  save('gallery-door-broken.png', drawBoxes(1, 1, 28, [
+    { u: 0, v: 0, du: 1, dv: 1, z: 0, dz: 26, top: '#7d8189', left: '#6a6e76', right: '#5a5d64' },
+    { u: 0.3, v: 0.95, du: 0.4, dv: 0.06, z: 0, dz: 16, top: '#141518', left: '#141518', right: '#141518' },
+    { u: 0.2, v: 0.92, du: 0.6, dv: 0.08, z: 0, dz: 9, top: '#5a5d64', left: '#4c4f56', right: '#3e4046' },
+  ]));
+}
+
 function generateDamParts() {
   save('gallery-door.png', drawBoxes(1, 1, 28, [
     { u: 0, v: 0, du: 1, dv: 1, z: 0, dz: 26, top: '#7d8189', left: '#6a6e76', right: '#5a5d64' },
@@ -594,6 +612,7 @@ generateTileset();
 generateWolf();
 generateVillageMarks();
 generateDamParts();
+generateQuestThings();
 generateFightMarks();
 generateFlakes();
 generateBoathouse();

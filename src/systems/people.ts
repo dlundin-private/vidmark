@@ -134,9 +134,11 @@ export class PeopleSim {
     p.onIce = onIce;
     p.route = this.routeHome(p);
     p.mode = p.route.length > 0 ? 'home' : 'idle';
-    // No way to walk there (across the lake, say): they are simply there next time she looks.
+    // No way to walk there (across the lake, say), or a Hollow, who is carried: they are simply there.
     const at = p.walker.tile;
-    if (p.route.length === 0 && (at.x !== home.x || at.y !== home.y) && !this.world.isBlocked(home.x, home.y)) {
+    if ((p.route.length === 0 || p.hollow) && (at.x !== home.x || at.y !== home.y) && !this.world.isBlocked(home.x, home.y)) {
+      p.route = [];
+      p.mode = 'idle';
       p.walker.teleport(home);
       this.world.placePerson(id, home);
     }

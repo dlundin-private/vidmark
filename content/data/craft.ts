@@ -89,4 +89,8 @@ export const CRAFTABLES: Record<string, CraftableDef> = {
   'ice-marker': { pushable: true, mendLevel: 1 },
   shelter: { mendLevel: 1 },
   'tithe-sled': { mendLevel: 1 },
+  // Järnfors (chapter 2 side quests).
+  'drawing-table': { mendLevel: 1 },
+  'gallery-door': { mendLevel: 2 },
+  cot: { mendLevel: 1 },
 };

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { updateQuests } from './quests';
 import jarnforsJson from '../../assets/maps/jarnfors.json';
 import { parseTiledMap, type TiledJson } from './tiledMap';
 import storyJson from '../../content/ink/main.ink';
@@ -454,5 +455,75 @@ describe('Edda, the Keystone', () => {
   it('every person has something to Sense', () => {
     const { runner } = setup();
     for (const n of NPCS) expect(runner.linesOf(n.startsHollow ? 'sense_hollow' : `sense_${n.id}`).length).toBeGreaterThan(0);
+  });
+});
+
+describe('the side quests of Järnfors', () => {
+  const outcome = (store: ReturnType<typeof setup>['store'], id: string) => {
+    store.update((st) => {
+      st.chapter = 2; // these are chapter 2's quests
+    });
+    store.update(updateQuests);
+    return store.state.flags[`quest_${id}`];
+  };
+
+  it("Brita's bowl: the drawing table tells the truth, and Brita chooses the crest", () => {
+    const { store, runner } = setup();
+    play(runner, 'brita', ['Ask about Halvar']);
+    expect(text(play(runner, 'place_drawing_table'))).toContain('wedged');
+    store.update((s) => A.setFlag(s, 'drawing_table_mended', true));
+    expect(text(play(runner, 'place_drawing_table'))).toContain('TOO HIGH');
+    play(runner, 'place_dam_statue');
+    play(runner, 'place_apprentices_hall');
+    play(runner, 'brita', ['Tell her what you found', 'The truth']);
+    expect(outcome(store, 'britas-bowl')).toBe('truth');
+    expect(text(play(runner, 'place_dam_statue'))).toContain('HALVAR');
+    play(runner, 'brita', ['put down', 'Take her memory']);
+    expect(A.hearth(store.state)).toContain('brita');
+  });
+
+  it('The keeping: the tally-sticks are enough, and Gudmund learns of the relief cut', () => {
+    const { store, runner } = setup();
+    play(runner, 'gudmund', ['dam is safe']);
+    play(runner, 'place_gallery');
+    play(runner, 'place_tally_sticks');
+    expect(text(play(runner, 'gudmund', ['what the dam is saying']))).toContain('relief cut');
+    expect(store.state.flags.knows_relief_cut).toBe(true);
+    expect(outcome(store, 'keeping')).toBe('tally');
+  });
+
+  it("Gudmund's first stone teaches Mend: enough for the gallery's Mend II", () => {
+    const { store, runner } = setup();
+    play(runner, 'gudmund', ['dam is safe']);
+    play(runner, 'gudmund', ['another way', 'Take his memory']);
+    expect(A.skillLevel(store.state, 'mend', DEFAULT_TUNING)).toBe(2);
+  });
+
+  it('The Tithe-house: carry Arn on the mended cot, then see what Edda pays', () => {
+    const { store, runner } = setup();
+    play(runner, 'arn', ['Ask why']);
+    expect(() => play(runner, 'arn', ['Carry him'])).toThrow(/No choice/);
+    store.update((s) => A.setFlag(s, 'cot_mended', true));
+    play(runner, 'arn', ['Carry him']);
+    expect(text(play(runner, 'place_tithe_house'))).toContain('EDDA');
+    expect(outcome(store, 'tithe-house')).toBe('carried');
+  });
+
+  it('the clerk strikes the name only when Kin has calmed him', () => {
+    const { store, runner } = setup();
+    play(runner, 'arn', ['Ask why']);
+    play(runner, 'clerk', ["strike Arn's name"]);
+    expect(store.state.flags.arn_safe).toBeUndefined();
+    store.update((s) => A.setFlag(s, 'calmed_clerk', true));
+    play(runner, 'clerk', ["strike Arn's name"]);
+    expect(store.state.flags.arn_safe).toBe('struck');
+  });
+
+  it('a finished side quest counts toward Edda\'s trust', () => {
+    const { store, runner } = setup();
+    play(runner, 'edda', ['Carry water']);
+    expect(() => play(runner, 'edda', ['what she holds'])).toThrow(/No choice/);
+    store.update((s) => A.setFlag(s, 'quest_keeping', 'tally'));
+    play(runner, 'edda', ['what she holds', 'Not yet']);
   });
 });

@@ -124,13 +124,13 @@ const free = (x, y, w, h) => {
 function place(name, x, y, w = 1, h = 1, extra = {}) {
   if (!free(x, y, w, h)) throw new Error(`Can't place ${name} at ${x},${y}: occupied`);
   for (let ty = y; ty < y + h; ty++) for (let tx = x; tx < x + w; tx++) occupied[idx(tx, ty)] = 1;
-  objects.push({ name, sprite: extra.sprite ?? name, x, y, w, h, rest: extra.rest, inspect: extra.inspect, type: extra.type, npc: extra.npc });
+  objects.push({ name, sprite: extra.sprite ?? name, x, y, w, h, rest: extra.rest, inspect: extra.inspect, type: extra.type, npc: extra.npc, broken: extra.broken, show: extra.show });
 }
 
 // On the crest: Saint Maren, one hand flat on the stone.
 place('statue', 56, CREST.y0, 1, 1, { inspect: 'place_dam_statue' });
 // The gallery's door in the dam face, its approach on the street below.
-place('gallery-door', 46, CREST.y1 + 4, 1, 1, { inspect: 'place_gallery' });
+place('gallery-door', 46, CREST.y1 + 4, 1, 1, { inspect: 'place_gallery', broken: true });
 // The plug that seals the relief cut, at its top against the dam.
 place('relief-plug', CUT.x, CUT.y0 - 2, 2, 2, { inspect: 'place_relief_cut' });
 
@@ -188,6 +188,17 @@ function nearStone(x, y) {
 // People (chapter 2, step 2): placed last, so earlier objects keep their ids; listed in PEOPLE (above).
 for (const [name, npc, x, y] of PEOPLE) place(name, x, y, 1, 1, { npc, sprite: `npc-${npc}` });
 
+// Side quests (chapter 2, step 4). Appended, so earlier objects keep their ids.
+// Brita's bowl: Halvar's drawing table by the apprentices' hall, split and wedged shut.
+place('drawing-table', 51, 45, 1, 1, { inspect: 'place_drawing_table', broken: true });
+// The keeping: the apprentices' tally-sticks, every drain in the dam, in a chest behind the hall.
+place('tally-chest', 46, 47, 1, 1, { inspect: 'place_tally_sticks' });
+// The keeping, once done: lanterns at the gallery door, for the masons going in at dawn.
+place('lantern', 45, CREST.y1 + 5, 1, 1, { show: 'quest_keeping=mended|tally' });
+place('lantern', 47, CREST.y1 + 5, 1, 1, { show: 'quest_keeping=mended|tally' });
+// The Tithe-house: a broken cot by the door, mendable into something to carry Arn on.
+place('cot', 93, 46, 1, 1, { broken: true });
+
 // Where Signe arrives: the south gate, from the Tithe road.
 const spawn = { x: 45, y: 124 };
 
@@ -240,6 +251,9 @@ const besideReached = (o) => {
 for (const [id, , x, y] of PLACES) if (!reached[idx(x, y)] && !besideReached({ x, y, w: 1, h: 1 })) problems.push(`place ${id} at ${x},${y} can't be reached`);
 for (const o of objects) if ((o.inspect || o.rest || o.npc) && !besideReached(o)) problems.push(`${o.name} at ${o.x},${o.y} can't be reached`);
 if (!walkable(spawn.x, spawn.y)) problems.push('the spawn is blocked');
+for (const [sx, sy, what] of [[55, CREST.y0 + 1, "Brita's spot on the crest"], [54, CREST.y0 + 1, "Halvar's spot on the crest"], [29, 46, "Arn's spot at the Hollow-house"]]) {
+  if (!walkable(sx, sy) || !reached[idx(sx, sy)]) problems.push(`${what} at ${sx},${sy} can't be reached`);
+}
 if (problems.length > 0) {
   console.error('The Järnfors map has problems:\n  ' + problems.join('\n  '));
   process.exit(1);
@@ -284,6 +298,8 @@ const tiledObjects = objects.map((o, i) => ({
     ...(o.npc ? [{ name: 'npc', type: 'string', value: o.npc }] : []),
     ...(o.rest ? [{ name: 'rest', type: 'bool', value: true }] : []),
     ...(o.inspect ? [{ name: 'inspect', type: 'string', value: o.inspect }] : []),
+    ...(o.broken ? [{ name: 'broken', type: 'bool', value: true }] : []),
+    ...(o.show ? [{ name: 'show', type: 'string', value: o.show }] : []),
   ],
 }));
 
@@ -296,6 +312,13 @@ const map = {
     { name: 'spawnY', type: 'int', value: spawn.y },
     { name: 'crestY0', type: 'int', value: CREST.y0 },
     { name: 'crestY1', type: 'int', value: CREST.y1 },
+    // Where people go when a side quest ends (src/scenes/WorldScene.ts, spot()).
+    { name: 'britaCrestX', type: 'int', value: 55 },
+    { name: 'britaCrestY', type: 'int', value: CREST.y0 + 1 },
+    { name: 'halvarCrestX', type: 'int', value: 54 },
+    { name: 'halvarCrestY', type: 'int', value: CREST.y0 + 1 },
+    { name: 'arnSafeX', type: 'int', value: 29 },
+    { name: 'arnSafeY', type: 'int', value: 46 },
   ],
   tilesets: [{
     firstgid: 1, name: 'tiles', image: '../sprites/tiles.png', imagewidth: TILE_W * 18, imageheight: TILE_H,

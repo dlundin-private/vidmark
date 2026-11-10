@@ -7,6 +7,9 @@
 Saint Maren stands on the crest of the dam, one hand laid flat on the stone, as if she were holding it shut.
 Cut into the plinth: SHE HELD THE WATER.
 Below it, scratched long ago by someone with a mason's chisel and no hurry: with whose hands?
+{ flag("quest_britas-bowl") == "truth":
+    And beside her name, fresh, the chisel marks still pale: HALVAR. HE SAID IT WAS TOO HIGH.
+}
 -> END
 
 === place_apprentices_hall ===
@@ -24,9 +27,14 @@ The ninth has been scratched out, hard, until only the shape of the cut is left.
 
 === place_gallery ===
 ~ set_flag("seen_gallery", true)
-An iron door in the face of the dam, rusted half open. Beyond it a passage runs into the wall, and stops.
-The roof has come down a few paces in. Water drips somewhere behind the stones, steady, patient.
-Somebody has chalked on the door: KEEP OUT. And beneath, in another hand: WHY? NOBODY REMEMBERS WHAT'S IN THERE.
+{ has_flag("gallery_mended"):
+    The gallery runs into the wall, its roof whole again. Inside, the dam talks: water in the drains, running here, choked there, a slow tick of seepage.
+    Anyone who knew how to listen could read the whole wall from in here.
+- else:
+    An iron door in the face of the dam, rusted half open. Beyond it a passage runs into the wall, and stops.
+    The roof has come down a few paces in. Water drips somewhere behind the stones, steady, patient.
+    Somebody has chalked on the door: KEEP OUT. And beneath, in another hand: WHY? NOBODY REMEMBERS WHAT'S IN THERE.
+}
 -> END
 
 === place_relief_cut ===
@@ -42,11 +50,35 @@ Through the open door: two long rows of cots, and on them people who look at not
 Up above, at a narrow window, an old woman's hands hold a bowl and a spoon.
 -> END
 
+=== place_drawing_table ===
+{ has_flag("drawing_table_mended"):
+    ~ set_flag("read_drawing_table", true)
+    Halvar's drawing table, whole again. Under the top, where only someone lying on the floor would see it, he cut letters into the wood:
+    TOO HIGH. I TOLD THEM TOO HIGH. THE ICE WILL FIND IT. — H.
+    Below, smaller, in a hand that shook: they will need someone. it will not be me.
+- else:
+    A builder's drawing table, left out by the hall, its top split and wedged down hard. Something is cut into the underside; the boards won't let you see.
+}
+-> END
+
+=== place_tally_sticks ===
+~ set_flag("read_tally", true)
+In the chest, bundles of notched sticks, each one tied with a scrap of cloth and a name: the apprentices' tallies.
+Every drain in the dam, every spring for a hundred years, notched by hand. Most stop a few years ago, when the Tithe took the keeping.
+One is cut deeper than the rest, with an H on it, and a word: SEALED. BY ORDER.
+-> END
+
 === place_tithe_house ===
 ~ set_flag("seen_tithe_house", true)
 The Tithe-house has bars on the lower windows and a slate by the door: the names of those who wait for the next sled north.
 It has been wiped clean, recently. You can still see where the chalk was.
 { has_flag("why_you_left_for"):
     Somewhere under the smears there might have been a name you know.
+}
+{ has_flag("arn_safe") or is_hollowed("clerk"):
+    ~ set_flag("read_edda_debt", true)
+    With nobody in the door, you see the ledger open on its stand. One page has a name you know: EDDA, THE HOLLOW-HOUSE.
+    Twenty winters of entries. Her household's Tithe, paid each year in her own memories, because a Hollow can't pay.
+    She has less left to give than anyone in this city.
 }
 -> END

@@ -142,4 +142,63 @@ export const QUESTS: readonly QuestDef[] = [
       { id: 'played', when: (v) => !!v.flag('played_maren'), text: 'You played young Maren. The village clapped. It was only a play.' },
     ],
   },
+
+  // --- Järnfors (chapter 2): the three side quests (docs/chapter-2-jarnfors.md). Drafts.
+  {
+    id: 'britas-bowl',
+    chapter: 2,
+    title: "Brita's bowl",
+    giver: 'brita',
+    summary: 'Brita feeds a man who looks past her, twice a day. She asks one thing: was he a coward?',
+    starts: (v) => v.remembers('brita', 'refused'),
+    steps: [
+      { text: () => 'Read what the city says, on the statue on the crest', done: (v) => !!v.flag('read_dam_statue') },
+      { text: () => "Read the marks on the apprentices' hall", done: (v) => !!v.flag('read_lintel') },
+      { text: () => 'Find what Halvar left at his drawing table', done: (v) => !!v.flag('read_drawing_table') },
+      { text: () => 'Tell Brita what you found', done: (v) => !!v.flag('brita_told') },
+    ],
+    outcomes: [
+      { id: 'hollowed', when: (v) => v.hollowed('brita'), text: 'Two Hollows at the window now. Nobody asks the question any more.' },
+      { id: 'truth', when: (v) => v.flag('brita_told') === 'truth', text: "He said no because the dam was built too high. Brita had herself carried up to the crest with him, and someone scratched HALVAR beside Maren's name." },
+      { id: 'lie', when: (v) => v.flag('brita_told') === 'lie', text: 'You told her he was brave, and nothing else. She thanked you, and fed him.' },
+      { id: 'nothing', when: (v) => v.flag('brita_told') === 'nothing', text: 'You told her you found nothing. She nodded as if she had expected that, and fed him.' },
+    ],
+  },
+  {
+    id: 'keeping',
+    chapter: 2,
+    title: 'The keeping',
+    giver: 'gudmund',
+    summary: "Gudmund's masons patch cracks they no longer understand. The gallery inside the dam has fallen in.",
+    starts: (v) => v.remembers('gudmund', 'forgot'),
+    steps: [
+      { text: () => 'Look into the gallery in the dam face', done: (v) => !!v.flag('seen_gallery') },
+      { text: () => 'Learn the dam again: mend the fallen gallery (Mend II)', done: (v) => !!v.flag('gallery_mended') },
+      { text: () => "Or find the apprentices' tally-sticks", done: (v) => !!v.flag('read_tally'), alternative: true },
+      { text: () => 'Tell Gudmund what the dam is saying', done: (v) => !!v.flag('keeping_restored') },
+    ],
+    outcomes: [
+      { id: 'hollowed', when: (v) => v.hollowed('gudmund'), text: 'The whole keeping is in you now, every drain. The masons have nobody to tell them.' },
+      { id: 'mended', when: (v) => !!v.flag('keeping_restored') && !!v.flag('gallery_mended'), text: 'The gallery is open again. Lanterns at the door; the masons go in at dawn and listen to the wall.' },
+      { id: 'tally', when: (v) => !!v.flag('keeping_restored'), text: "From the apprentices' sticks, Gudmund reads the drains again. Lanterns at the gallery door, and masons at dawn." },
+    ],
+  },
+  {
+    id: 'tithe-house',
+    chapter: 2,
+    title: 'The Tithe-house',
+    giver: 'arn',
+    summary: 'A sick boy, Arn, was left on the Tithe-house step when the last sled went north.',
+    starts: (v) => v.remembers('arn', 'left'),
+    steps: [
+      { text: () => 'Get Arn out of the cold: mend the broken cot by the door and carry him to the Hollow-house', done: (v) => v.flag('arn_safe') === 'carried' },
+      { text: () => 'Or get the clerk to strike his name', done: (v) => v.flag('arn_safe') === 'struck', alternative: true },
+      { text: () => 'See what the Tithe-house keeps', done: (v) => !!v.flag('read_edda_debt') },
+    ],
+    outcomes: [
+      { id: 'hollowed', when: (v) => v.hollowed('clerk'), text: 'The clerk sits blank in his own doorway. Arn walked to the Hollow-house on his own.' },
+      { id: 'carried', when: (v) => v.flag('arn_safe') === 'carried' && !!v.flag('read_edda_debt'), text: 'You carried Arn to the Hollow-house. Edda put him in the warm, and you found what she pays.' },
+      { id: 'struck', when: (v) => v.flag('arn_safe') === 'struck' && !!v.flag('read_edda_debt'), text: "The clerk struck Arn's name. He belongs to nobody now, and Edda took him in." },
+    ],
+  },
 ];

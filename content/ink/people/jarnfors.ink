@@ -104,6 +104,38 @@
     Signe: Was he?
     Brita: He said no to her. That's all he did. Said no, and then she took him in front of his boys.
     -> talk
+* {has_flag("read_drawing_table") and not has_flag("brita_told")} [Tell her what you found] Signe: I went looking. For whether he was a coward.
+    Brita: And?
+    ** [The truth] Signe: He wasn't. He carved it under his drawing table: too high. He told them it was built too high, and he wouldn't build it.
+        ~ set_flag("brita_told", "truth")
+        ~ remember("brita", "truth")
+        Brita is quiet for a long time. The spoon stays in the bowl.
+        Brita: Too high. He said that. He said it at breakfast, the morning she came.
+        Brita: Take us up there. Both of us. I want to sit where they can see him.
+        -> talk
+    ** [A kind lie] Signe: He was brave. That's all I found. He was brave.
+        ~ set_flag("brita_told", "lie")
+        ~ remember("brita", "lie")
+        Brita: Brave. Yes. Thank you, child.
+        She goes back to the bowl. You can't tell if she believed you.
+        -> talk
+    ** [Nothing] Signe: I didn't find anything.
+        ~ set_flag("brita_told", "nothing")
+        ~ remember("brita", "nothing")
+        Brita: No. Nobody ever does.
+        -> talk
+* {has_flag("brita_told") and not has_offered("brita") and not has_flag("village_knows")} [Ask if there is anything she wants to put down] Signe: You've carried him a long time.
+    Brita: The morning he refused. What he said to me after, with his hands still white from the mortar.
+    Brita: I have carried it long enough. Somebody younger should.
+    ** [Take her memory] Signe: I'll carry it.
+        ~ offer("brita")
+        ~ remember("brita", "gave")
+        Brita's hands go on feeding him. Her face has gone quiet, like a room after someone leaves it.
+        Brita: There. Now. Open wide, love.
+        -> END
+    ** [Leave it with her] Signe: It's yours. Keep it.
+        Brita: Stubborn. He'd have liked you.
+        -> talk
 * {has_keepsake("coat") and not remembers("brita", "why")} [Ask why she still feeds him] Signe: He doesn't know you. Why do you still feed him?
     ~ remember("brita", "why")
     Brita: Because he would do it for me.
@@ -164,6 +196,24 @@
     Gudmund: The gallery. We used to walk the whole wall from the inside, every spring. Listen to it.
     Gudmund: The roof came down in the autumn. Nobody's been in since. Nobody remembers how to shore it.
     -> talk
+* {(has_flag("gallery_mended") or has_flag("read_tally")) and not has_flag("keeping_restored")} [Tell him what the dam is saying] Signe: {has_flag("gallery_mended"): I opened the gallery. You can hear it in there: every drain, running or choked. | The apprentices kept tally-sticks. Every drain in the wall, notched.}
+    ~ set_flag("keeping_restored", true)
+    ~ set_flag("knows_relief_cut", true)
+    ~ remember("gudmund", "keeping")
+    Gudmund turns it over in his hands for a long time. Then he starts to talk, faster and faster, the way water finds its way once it starts.
+    Gudmund: There's a drain on the west side nobody's opened in a hundred years. The relief cut. Halvar's. It was sealed the year the dam was finished.
+    Gudmund: Edda says the dam takes someone every generation, since him. She isn't wrong. Lot of us have thought it.
+    -> talk
+* {remembers("gudmund", "forgot") and not has_offered("gudmund") and not has_flag("village_knows")} [Ask if there's another way] Signe: Is there anything that would help?
+    Gudmund: One thing they didn't take. My first stone. The day my father put my hand on a block and I felt where it would split.
+    Gudmund: If it's any use to you. Better it's in someone who can still use it.
+    ** [Take his memory] Signe: I'll use it well.
+        ~ offer("gudmund")
+        ~ remember("gudmund", "gave")
+        He looks at the block in front of him, and frowns, as if it had never been anything but a block.
+        -> END
+    ** [Refuse] Signe: Keep it. The wall needs you more than me.
+        -> talk
 * {not remembers("gudmund", "saint")} [Ask about the statue on the crest] Signe: They say she held the water with her hands.
     ~ remember("gudmund", "saint")
     Gudmund: So they say. I'd settle for a mason who remembered his mortar.
@@ -191,6 +241,28 @@
 
 = talk
 + {carries_echoes()} [Take everything] -> take_everything("clerk", "The clerk")
+* {not has_flag("arn_safe") and remembers("arn", "left")} [Ask him to strike Arn's name] Signe: The boy on your step. Strike his name. He's no use to Kronvall.
+    { has_flag("calmed_clerk"):
+        ~ set_flag("arn_safe", "struck")
+        ~ remember("clerk", "struck")
+        The clerk looks at the ledger, and then at the boy, and for once his hands are still.
+        The clerk: No. He isn't, is he. There. Struck. He belongs to nobody now.
+        -> talk
+    - else:
+        The clerk: The ledger is not mine to change. I only keep it.
+        -> talk
+    }
+* {remembers("clerk", "struck") and not has_offered("clerk") and not has_flag("village_knows")} [Ask what the ledger costs him] Signe: You remember every one of them, don't you.
+    The clerk: The first one. A girl from the forges, the first year. She let go of my sleeve when they lifted her into the sled.
+    The clerk: Take it, if you can. I've written it down too many times.
+    ** [Take his memory] Signe: Give it to me.
+        ~ offer("clerk")
+        ~ remember("clerk", "gave")
+        The clerk straightens his ledger, and looks at it as if it were only a book.
+        -> END
+    ** [Refuse] Signe: It's yours to carry.
+        The clerk: Yes. I suppose it is.
+        -> talk
 * {not remembers("clerk", "tithe")} [Ask what happens to the people here] Signe: What happens to the people who wait here?
     ~ remember("clerk", "tithe")
     The clerk: They wait for the sled. Then Kronvall. Then they are Kronvall's concern, and not mine.
@@ -219,6 +291,16 @@
 
 = talk
 + {carries_echoes()} [Take everything] -> take_everything("arn", "Arn")
+* {has_flag("cot_mended") and not has_flag("arn_safe")} [Carry him to the Hollow-house] Signe: Come on. I've a bed for you, and somewhere warm to put it.
+    ~ set_flag("arn_safe", "carried")
+    ~ remember("arn", "carried")
+    You carry him across the bridge on the mended cot, all the way to Edda's door. He is lighter than he should be.
+    Edda takes one look and makes room by the stove.
+    -> END
+* {has_flag("eased_arn") and not remembers("arn", "breathing")} [Ask how his chest is] Signe: How's the cough?
+    ~ remember("arn", "breathing")
+    Arn: Gone. I can breathe all the way down. Is that you? Did you do that?
+    -> talk
 * {not remembers("arn", "left")} [Ask why he's out here] Signe: Why are you sitting out in the cold?
     ~ remember("arn", "left")
     Arn: They said I'd die on the road, and Kronvall doesn't pay for dead ones. So they left me.

@@ -201,6 +201,9 @@ export function cast(world: WorldModel, state: GameState, t: Tuning, plan: Extra
         A.setObjectEffect(state, o.id, undefined);
         if (o.type === 'tithe-sled') A.setFlag(state, 'tithe_sled_mended', true);
         if (o.type === 'shelter') A.setFlag(state, 'shelter_mended', true);
+        if (o.type === 'drawing-table') A.setFlag(state, 'drawing_table_mended', true);
+        if (o.type === 'gallery-door') A.setFlag(state, 'gallery_mended', true);
+        if (o.type === 'cot') A.setFlag(state, 'cot_mended', true);
         if (o.type === 'net-rack') {
           const racks = world.objects.filter((x) => x.type === 'net-rack' && x.broken);
           A.setFlag(state, 'nets_total', racks.length);

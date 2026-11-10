@@ -83,6 +83,16 @@ Daniel: "Build" chapter 2, after deciding the ten Järnfors questions. Built a s
 | The district, laid out on purpose by scripts/generate-jarnfors-map.mjs (a Tiled map, editable in Tiled): the frozen reservoir, Maren's Dam with its statue, the gallery door in the dam face, the spillway and river, the city on both banks with three bridges, the Hollow-house, the apprentices' hall, the inn (rest), the Tithe-house, Gudmund's yard, the lower quarter, and Halvar's sealed relief cut hidden in the west wall, reached by one gap in the rock. A check refuses the map if any place is out of reach. | Daniel: one district, about 128 × 128, built by hand; the layout is Claude's draft |
 | Lore to find: the dam statue ("She held the water" / "with whose hands?"), the lintel's nine marks (the ninth reads JON if Signe saw the island doorpost or has Gerda's Maren), the fallen gallery, the plug marked H, the Hollow-house, the wiped slate at the Tithe-house. | Design and Daniel's decisions; text is Claude's draft |
 
+## Chapter 2, step 4: the side quests
+
+From the chapter 2 design. Each finished quest counts toward Edda's trust. All steps, lines and lore are Claude's draft.
+
+| Quest | How it goes |
+| --- | --- |
+| **Brita's bowl** (Brita) | Starts when Brita asks whether Halvar was a coward. Read the statue on the crest and the nine marks on the apprentices' hall, then Mend Halvar's split drawing table: underneath he cut TOO HIGH. I TOLD THEM. Tell Brita the truth, a kind lie, or nothing. With the truth she and Halvar move to the crest beside the statue, and HALVAR is scratched beside Maren's name. Once told, she can give her memory of the morning he refused. Hollowing her ends it too. |
+| **The keeping** (Gudmund) | Starts when he admits the Tithe took the keeping. Look into the fallen gallery, then learn the dam again: Mend the gallery door (Mend II: train Mend, or take Gudmund's first stone as an Offering, which teaches it) or find the apprentices' tally-sticks behind their hall. Tell Gudmund: he learns again, and tells of Halvar's sealed relief cut and Edda's fear. Lanterns then hang at the gallery door. Hollowing him puts the whole keeping, and the relief cut, in Signe. |
+| **The Tithe-house** (Arn) | Starts when Arn says why he was left. Mend the broken cot by the door and carry him to the Hollow-house, or Calm the clerk (Kin) until he strikes Arn's name, or hollow the clerk. Then the Tithe-house ledger shows Edda's page: her household's Tithe paid in her own memories for twenty winters. Once he has struck the name, the clerk can give his memory of the first child he signed away. Arn lives at the Hollow-house afterwards. |
+
 ## Chapter 2, step 3: Kin, and the Keystone
 
 | Decision | Status |

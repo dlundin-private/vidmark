@@ -973,6 +973,13 @@ export class WorldScene extends Phaser.Scene {
         return roadX !== undefined && band ? { x: roadX, y: band.y1 + 6 } : null;
       case 'ice-road-far':
         return roadX !== undefined && band ? { x: roadX, y: band.y0 - 6 } : null;
+      default: {
+        // Other spots are map numbers: "brita-crest" -> britaCrestX, britaCrestY.
+        const key = name.replace(/-(\w)/g, (_, c: string) => c.toUpperCase());
+        const x = n[`${key}X`];
+        const y = n[`${key}Y`];
+        return x !== undefined && y !== undefined ? { x, y } : null;
+      }
     }
   }
 
