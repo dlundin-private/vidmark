@@ -83,6 +83,16 @@ Daniel: "Build" chapter 2, after deciding the ten Järnfors questions. Built a s
 | The district, laid out on purpose by scripts/generate-jarnfors-map.mjs (a Tiled map, editable in Tiled): the frozen reservoir, Maren's Dam with its statue, the gallery door in the dam face, the spillway and river, the city on both banks with three bridges, the Hollow-house, the apprentices' hall, the inn (rest), the Tithe-house, Gudmund's yard, the lower quarter, and Halvar's sealed relief cut hidden in the west wall, reached by one gap in the rock. A check refuses the map if any place is out of reach. | Daniel: one district, about 128 × 128, built by hand; the layout is Claude's draft |
 | Lore to find: the dam statue ("She held the water" / "with whose hands?"), the lintel's nine marks (the ninth reads JON if Signe saw the island doorpost or has Gerda's Maren), the fallen gallery, the plug marked H, the Hollow-house, the wiped slate at the Tithe-house. | Design and Daniel's decisions; text is Claude's draft |
 
+## Chapter 2, step 6: the cramp-thieves
+
+| Decision | Status |
+| --- | --- |
+| While the flood-bell rings, on a night at the inn, iron screams on the crest: Knut and two others from the lower quarter are prying out the cramps. Go up, or let them. Letting them costs a night off the clock, and Knut and his family are gone before the water; on the last night, that breaks the dam. | Design; when it happens is Claude's draft |
+| The fight is the wolf fight's rules on the crest at night (two actions, runs shown before they act, three wounds). Weaken a plank under a thief and he drops to the ledge below, hurt and out (nobody drowns). Push a crate or the windlass cart into one: two hits and he gives up. Two down and the last runs; Knut, who leads them, yields instead of running. Planks (here and on Kallsjö's jetty) can now be weakened and strengthened like ice. | Design; the plank rule is Claude's |
+| Stopping them slows the crack: a night back on the clock. Then Knut, on his knees: spare him, ask for something (he gives the morning the forge first answered to him), or take everything, which the masons on the towers see. Only Knut can be emptied in the fight. | Design; Knut's memory is Claude's draft |
+| Avoided: tell Knut the dam can hold (once Gudmund has the keeping back); promise his family a place on the relief route (saved as a promise); ask Gudmund to post masons (once he has the keeping back); or Strengthen all three cramps by day. | Design; conditions are Claude's draft |
+| Every memory the dialogue forms now has words in the journal; a test checks it. | Claude |
+
 ## Chapter 2, step 5: the dam crisis
 
 | Decision | Status |

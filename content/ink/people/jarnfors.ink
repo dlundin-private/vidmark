@@ -214,6 +214,11 @@
         -> END
     ** [Refuse] Signe: Keep it. The wall needs you more than me.
         -> talk
+* {has_flag("keeping_restored") and dam_rests() > 0 and not has_flag("masons_posted") and not has_flag("thieves")} [Ask him to post masons on the crest at night] Signe: Somebody's prying the cramps out at night. Put masons up there.
+    ~ set_flag("masons_posted", true)
+    ~ remember("gudmund", "masons")
+    Gudmund: The lower quarter. I know. I'd do it too, in their boots. But not now. I'll put men on the towers.
+    -> talk
 * {not remembers("gudmund", "saint")} [Ask about the statue on the crest] Signe: They say she held the water with her hands.
     ~ remember("gudmund", "saint")
     Gudmund: So they say. I'd settle for a mason who remembered his mortar.
@@ -349,6 +354,19 @@
     ~ remember("knut", "cramps")
     Knut: Cramps. The iron that ties the dam stones together. Fetches a good price downriver.
     Knut: Don't look at me like that. Everyone down here knows it's going. Might as well be paid before it does.
+    -> talk
+* {remembers("knut", "cramps") and has_flag("keeping_restored") and not has_flag("knut_persuaded") and not has_flag("thieves")} [Tell him the dam can hold] Signe: Gudmund can read the wall again. It can hold, if nobody robs it.
+    ~ set_flag("knut_persuaded", true)
+    ~ remember("knut", "persuaded")
+    Knut turns the bar over in his hands.
+    Knut: If it holds, it's worth more whole than in pieces. Fine. The cramps stay where they are.
+    -> talk
+* {remembers("knut", "cramps") and (has_flag("found_relief_cut") or has_flag("knows_relief_cut")) and not has_flag("knut_persuaded") and not has_flag("thieves")} [Promise his family a place on the relief route] Signe: If the water comes, there's a way out up the west wall. I'll get your family onto it. I promise.
+    ~ make_promise("knut_family", "knut")
+    ~ set_flag("knut_persuaded", true)
+    ~ remember("knut", "promised")
+    Knut: You'd do that. For us.
+    Knut: Then I've no need to sell the dam to get them out. Don't make me sorry.
     -> talk
 * {not remembers("knut", "quarter")} [Ask about the lower quarter] Signe: You live right under it.
     ~ remember("knut", "quarter")

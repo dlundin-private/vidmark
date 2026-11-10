@@ -74,6 +74,7 @@ export const NPCS: readonly NpcDef[] = [
     moves: [fleeFlood, { when: (v) => !!v.flag('arn_safe') || v.hollowed('clerk'), to: 'arn-safe', radius: 1 }] },
   {
     id: 'knut', map: 'jarnfors', name: 'Knut', role: 'A forge-hand in the lower quarter', domain: 'craft', wander: { radius: 4 },
+    offering: 'The morning the forge first answered to him',
     // The lower quarter floods whichever way the water comes: the relief cut, or the break.
     moves: [{ when: (v) => damBroke(v) || v.flag('dam_outcome') === 'relief', to: 'refugees', radius: 3 }],
   },

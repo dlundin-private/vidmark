@@ -378,8 +378,10 @@ function generatePeople() {
     clerk: { coat: '#2a2a33', coatDark: '#1c1c22', hood: '#2a2a33' },
     arn: { coat: '#7a6a4a', coatDark: '#5a4e36', hood: '#a89878', scale: 0.72 },
     knut: { coat: '#5a3a2a', coatDark: '#3f281d', hood: '#3a2a20' },
+    // The cramp-thieves who come up with Knut at night: dark, hooded.
+    thief: { coat: '#33302d', coatDark: '#24221f', hood: '#1f1d1b' },
   };
-  for (const [id, colours] of Object.entries(people)) save(`npc-${id}.png`, figure(colours));
+  for (const [id, colours] of Object.entries(people)) save(id === 'thief' ? 'thief.png' : `npc-${id}.png`, figure(colours));
 }
 
 // --- The wider world (Kallsjö) ---------------------------------------------
@@ -581,6 +583,8 @@ function generateQuestThings() {
 
 /** The dam crisis: the crack in the crest, the cut's carts and walls. */
 function generateDamCrisis() {
+  // An iron cramp: a flat dark bar tying two crest stones together.
+  save('cramp.png', drawBoxes(1, 1, 4, [{ u: 0.2, v: 0.42, du: 0.6, dv: 0.16, z: 0, dz: 2, top: '#4a4d52', left: '#3a3d42', right: '#2e3034' }]));
   // The crack: a dark split across a flat patch of dam stone, water seeping.
   const crack = new Canvas(TILE_W, 24);
   for (let y = 8; y < 24; y++) for (let x = 0; x < TILE_W; x++) {

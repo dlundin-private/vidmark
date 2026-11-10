@@ -104,6 +104,9 @@ export const MEMORIES: Record<NpcId, PersonMemory> = {
       { key: 'grandfather', text: 'Halvar is her grandfather. The city calls him a coward. Her grandmother doesn\'t.' },
       { key: 'dam', text: '"Everyone here asks the dam for something. It always takes someone." She is afraid of being needed.', cold: 'She is afraid of being needed. That is a lever.' },
       { key: 'lilja', text: 'Every sled stops at the Tithe-house. Ask the clerk, or the boy on the step.' },
+      { key: 'helped', text: 'You carried water for her, pail after pail. Neither of you said much. "You can come again."' },
+      { key: 'gave', text: 'She gave you Halvar looking at her, once, when she was small. Now she feeds him and isn\'t sure why it felt like more than duty.', cold: 'She gave you the only warm thing she had. It opened Kin in you.' },
+      { key: 'bargain', text: 'She gave it on a condition: if you ever can, you give him back. You promised.' },
     ],
   },
   brita: {
@@ -112,6 +115,10 @@ export const MEMORIES: Record<NpcId, PersonMemory> = {
       { key: 'reeve', text: '"You look at people like a reeve. Weighing them."' },
       { key: 'refused', text: 'Halvar said no to Maren. That is all he did. She took him in front of his apprentices.' },
       { key: 'why', text: '"Because he would do it for me. Because somebody has to remember he was a man, not a story."', tiedTo: 'coat' },
+      { key: 'truth', text: 'You told her the truth: too high, and he wouldn\'t build it. She had them carry her up to the crest with him.' },
+      { key: 'lie', text: 'You told her he was brave, and nothing more. She thanked you.' },
+      { key: 'nothing', text: 'You told her you had found nothing. "No. Nobody ever does."' },
+      { key: 'gave', text: 'She gave you the morning he refused. Her hands still feed him; her face has gone quiet.' },
     ],
   },
   halvar: {
@@ -128,6 +135,9 @@ export const MEMORIES: Record<NpcId, PersonMemory> = {
       { key: 'forgot', text: 'He knew every drain in the dam, like his father. The Tithe took it. "Now it\'s just a wall."', cold: 'The keeping is mostly gone from him. Mostly.' },
       { key: 'gallery', text: 'The gallery runs through the inside of the dam. The roof fell in the autumn; nobody remembers how to shore it.' },
       { key: 'saint', text: '"I\'d settle for a mason who remembered his mortar."' },
+      { key: 'keeping', text: 'Once you told him what the dam was saying, it all came back to him: the drains, and Halvar\'s sealed cut.' },
+      { key: 'masons', text: 'He put masons on the towers at night, against the cramp-thieves.' },
+      { key: 'gave', text: 'He gave you his first stone. Now a block is only a block to him.', cold: 'He gave you the feel of stone. He did not need it as much as you do.' },
     ],
   },
   clerk: {
@@ -136,6 +146,8 @@ export const MEMORIES: Record<NpcId, PersonMemory> = {
       { key: 'heard', text: 'The Reeve\'s report reached him: "takes without a ledger".' },
       { key: 'tithe', text: 'They wait for the sled, then Kronvall. "Then they are Kronvall\'s concern, and not mine."' },
       { key: 'wiped', text: 'The names are wiped when the sled leaves. He won\'t talk about her.' },
+      { key: 'struck', text: 'Calmed, he struck Arn\'s name. "He belongs to nobody now."' },
+      { key: 'gave', text: 'He gave you the first child he signed away, the girl who let go of his sleeve. Now the ledger is only a book to him.' },
     ],
   },
   arn: {
@@ -143,6 +155,8 @@ export const MEMORIES: Record<NpcId, PersonMemory> = {
       { key: 'met', text: 'Arn, a boy on the Tithe-house step. Left behind because Kronvall doesn\'t pay for the dying.' },
       { key: 'left', text: '"I\'m not dead, though. I keep checking."' },
       { key: 'girl', text: 'He waited with a girl from Kallsjö who said there is a whole other sky under the ice. It was Lilja.', blurred: 'He waited with a girl from Kallsjö who talked about swimming.', tiedTo: 'swim' },
+      { key: 'carried', text: 'You carried him on the mended cot all the way to Edda\'s door. He was lighter than he should be.' },
+      { key: 'breathing', text: '"I can breathe all the way down." He wanted to know if it was you.' },
     ],
   },
   knut: {
@@ -150,6 +164,8 @@ export const MEMORIES: Record<NpcId, PersonMemory> = {
       { key: 'met', text: 'Knut, a forge-hand from the lower quarter, sharpening a pry-bar.' },
       { key: 'cramps', text: 'He prises the iron cramps out of the dam at night and sells them downriver. "Everyone down here knows it\'s going."' },
       { key: 'quarter', text: 'When the dam goes, the upper city gets wet feet. The lower quarter drowns.' },
+      { key: 'persuaded', text: 'You told him the dam could hold. "If it holds, it\'s worth more whole." The cramps stay.' },
+      { key: 'promised', text: 'You promised his family a place on the relief route. "Don\'t make me sorry."' },
     ],
   },
   torvald: {
@@ -163,6 +179,7 @@ export const MEMORIES: Record<NpcId, PersonMemory> = {
       },
       { key: 'ice_road', text: 'Rotten ice halfway over, he says. "Don\'t you go trying it."' },
       { key: 'fishing', text: 'Thin catch. Nobody remembers how to salt fish any more, so half of it spoils.' },
+      { key: 'told_promise', text: "You told him your promise to Lilja. \"Then you'd better keep it.\"" },
       { key: 'nets_out', text: "Ebbe's nets are out by the hole. First proper haul since autumn: we'll eat this winter.", cold: 'The nets are out. The village will eat, and stay here, within reach.' },
     ],
   },

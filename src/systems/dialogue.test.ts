@@ -527,3 +527,30 @@ describe('the side quests of Järnfors', () => {
     play(runner, 'edda', ['what she holds', 'Not yet']);
   });
 });
+
+describe('keeping the thieves off the crest', () => {
+  it('Knut leaves the cramps alone if told the dam can hold, or promised a way out', () => {
+    const { store, runner } = setup();
+    play(runner, 'knut', ['what the bar is for']);
+    store.update((s) => A.setFlag(s, 'keeping_restored', true));
+    play(runner, 'knut', ['dam can hold']);
+    expect(store.state.flags.knut_persuaded).toBe(true);
+
+    const other = setup();
+    play(other.runner, 'knut', ['what the bar is for']);
+    other.store.update((s) => A.setFlag(s, 'found_relief_cut', true));
+    play(other.runner, 'knut', ['relief route']);
+    expect(other.store.state.promises.find((p) => p.id === 'knut_family')).toMatchObject({ to: 'knut' });
+  });
+
+  it('Gudmund posts masons once he has the keeping back, while the bell rings', () => {
+    const { store, runner } = setup();
+    store.update((s) => {
+      A.setFlag(s, 'keeping_restored', true);
+      A.setFlag(s, 'flood_bell', true);
+      A.setFlag(s, 'dam_rests_left', 2);
+    });
+    play(runner, 'gudmund', ['post masons']);
+    expect(store.state.flags.masons_posted).toBe(true);
+  });
+});

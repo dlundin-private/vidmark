@@ -97,4 +97,7 @@ export const CRAFTABLES: Record<string, CraftableDef> = {
   'relief-plug': { mendLevel: 3 },
   'sluice-cart': { pushable: true, mendLevel: 1 },
   'cut-wall': { mendLevel: 2 },
+  // The cramp-thieves: the iron ties in the crest, and what lies about up there to push.
+  cramp: { mendLevel: 1 },
+  'windlass-cart': { pushable: true, mendLevel: 1 },
 };

@@ -209,6 +209,14 @@ place('sluice-cart', CUT.x + 1, 80);
 place('cut-wall', 27, CUT.y1 - 3);
 place('cut-wall', 27, CUT.y1 + 2);
 
+// The cramp-thieves (chapter 2, step 6). Appended, so earlier objects keep their ids.
+// The iron cramps tying the crest stones, east of the spillway: what the thieves come for.
+for (const [x, y] of [[76, CREST.y0], [84, CREST.y0], [88, CREST.y1]]) place('cramp', x, y);
+// What lies about on the crest to push: cramp crates and the masons' windlass cart.
+place('crate', 75, CREST.y1);
+place('crate', 82, CREST.y0 + 1);
+place('windlass-cart', 86, CREST.y0 + 1, 1, 1, { sprite: 'sluice-cart' });
+
 // Where Signe arrives: the south gate, from the Tithe road.
 const spawn = { x: 45, y: 124 };
 
@@ -261,7 +269,7 @@ const besideReached = (o) => {
 for (const [id, , x, y] of PLACES) if (!reached[idx(x, y)] && !besideReached({ x, y, w: 1, h: 1 })) problems.push(`place ${id} at ${x},${y} can't be reached`);
 for (const o of objects) if ((o.inspect || o.rest || o.npc) && !besideReached(o)) problems.push(`${o.name} at ${o.x},${o.y} can't be reached`);
 if (!walkable(spawn.x, spawn.y)) problems.push('the spawn is blocked');
-for (const [sx, sy, what] of [[55, CREST.y0 + 1, "Brita's spot on the crest"], [54, CREST.y0 + 1, "Halvar's spot on the crest"], [29, 46, "Arn's spot at the Hollow-house"], [40, 58, 'The refugees above the flood']]) {
+for (const [sx, sy, what] of [[55, CREST.y0 + 1, "Brita's spot on the crest"], [54, CREST.y0 + 1, "Halvar's spot on the crest"], [29, 46, "Arn's spot at the Hollow-house"], [40, 58, 'The refugees above the flood'], [67, CREST.y0 + 1, 'Where Signe meets the thieves'], [78, CREST.y0 + 1, 'Knut on the crest'], [80, CREST.y0, 'A thief on the crest'], [80, CREST.y1, 'A thief on the crest']]) {
   if (!walkable(sx, sy) || !reached[idx(sx, sy)]) problems.push(`${what} at ${sx},${sy} can't be reached`);
 }
 if (problems.length > 0) {
@@ -330,6 +338,15 @@ const map = {
     { name: 'arnSafeX', type: 'int', value: 29 },
     { name: 'arnSafeY', type: 'int', value: 46 },
     // Where the city goes when the water comes, above the flood.
+    // The cramp-thieves: where Signe comes up onto the crest, and where the three of them are prying.
+    { name: 'thievesSigneX', type: 'int', value: 67 },
+    { name: 'thievesSigneY', type: 'int', value: CREST.y0 + 1 },
+    { name: 'thief0X', type: 'int', value: 78 },
+    { name: 'thief0Y', type: 'int', value: CREST.y0 + 1 },
+    { name: 'thief1X', type: 'int', value: 80 },
+    { name: 'thief1Y', type: 'int', value: CREST.y0 },
+    { name: 'thief2X', type: 'int', value: 80 },
+    { name: 'thief2Y', type: 'int', value: CREST.y1 },
     { name: 'refugeesX', type: 'int', value: 40 },
     { name: 'refugeesY', type: 'int', value: 58 },
     // What floods: the lower quarter when the relief cut is opened; most of the city if the dam breaks.

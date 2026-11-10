@@ -8,6 +8,8 @@ const ICE_ROAD_FRAME = 10;
 export const THIN_ICE_FRAME = 13;
 /** Ice: ice, ice-2, ice road, cracked ice. */
 const ICE_FRAMES = new Set([4, 5, ICE_ROAD_FRAME, THIN_ICE_FRAME]);
+/** Timber planks. */
+const PLANK_FRAME = 11;
 /** Ground frame shown where the ice has been broken open. */
 export const WATER_FRAME = 6;
 
@@ -125,6 +127,16 @@ export class WorldModel implements WalkGrid {
     const frame = this.map.ground[y * this.width + x] ?? -1;
     if (frame === THIN_ICE_FRAME && this.isReopenedRoad(x)) return ICE_ROAD_FRAME;
     return frame;
+  }
+
+  /** Timber planking (the jetty, the spillway walkway): Craft can work it like a surface. */
+  isPlank(x: number, y: number): boolean {
+    return this.inMap(x, y) && this.map.ground[y * this.width + x] === PLANK_FRAME && !this.isBrokenIce(x, y);
+  }
+
+  /** A surface Craft can strengthen or weaken: whole ice, or planks. */
+  isWorkable(x: number, y: number): boolean {
+    return this.isIce(x, y) || this.isPlank(x, y);
   }
 
   /** Cracked ice, whole but unsafe unless something makes it safe. */

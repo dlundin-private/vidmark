@@ -53,3 +53,19 @@ describe("Signe's memories of people", () => {
     expect(rememberedPeople(s)[0]!.standing).toBe('Lost faith in you.');
   });
 });
+
+describe('every memory the dialogue forms', () => {
+  it('has words in the journal', () => {
+    // The Ink sources as text (not compiled), through Vite like the game's build.
+    const files = Object.values(import.meta.glob<string>('../../content/ink/**/*.ink', { query: '?raw', import: 'default', eager: true }));
+    expect(files.length).toBeGreaterThan(5);
+    const missing: string[] = [];
+    for (const text of files) {
+      for (const m of text.matchAll(/remember\("(\w+)", "(\w+)"\)/g)) {
+        const person = MEMORIES[m[1] as keyof typeof MEMORIES];
+        if (!person?.impressions.some((i) => i.key === m[2])) missing.push(`${m[1]}:${m[2]}`);
+      }
+    }
+    expect(missing).toEqual([]);
+  });
+});

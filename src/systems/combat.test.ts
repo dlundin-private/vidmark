@@ -135,3 +135,15 @@ describe('Kin in a fight', () => {
     expect(fight.wolves[0]!.intent.length).toBeGreaterThan(0);
   });
 });
+
+describe('a holdout', () => {
+  it('yields where it stands instead of running, and still counts as down', () => {
+    const fight = new WolfFight(grid(open(12, 12)), { x: 5, y: 10 }, [{ x: 1, y: 1 }, { x: 5, y: 1 }, { x: 9, y: 1 }], t, new Set([0]));
+    fight.hit(1);
+    fight.hit(1);
+    const events = fight.remove(2, 'drowned');
+    expect(events.map((e) => e.kind)).toEqual(['drowned', 'yielded', 'packFled']);
+    expect(fight.wolves[0]!.state).toBe('yielded');
+    expect(fight.isOver).toBe(true);
+  });
+});

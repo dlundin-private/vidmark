@@ -14,7 +14,7 @@ import { findPath, type WalkGrid } from './pathfinding';
 //   - No running: it ends with the wolves gone, or with Signe fallen.
 // Pure logic: the scene draws it and feeds it Craft results.
 
-export type WolfState = 'hunting' | 'fled' | 'drowned' | 'hollowed';
+export type WolfState = 'hunting' | 'fled' | 'yielded' | 'drowned' | 'hollowed';
 
 export interface Wolf {
   id: number;
@@ -41,6 +41,7 @@ export type FightEvent =
   | { kind: 'bite'; wolf: number }
   | { kind: 'hit'; wolf: number }
   | { kind: 'fled'; wolf: number }
+  | { kind: 'yielded'; wolf: number }
   | { kind: 'packFled' };
 
 type FightTuning = Pick<Tuning, 'combatActions' | 'combatMoveTiles' | 'wolfMoveTiles' | 'wolfHitsToFlee'>;
@@ -56,6 +57,8 @@ export class WolfFight {
     public signe: Tile,
     starts: readonly Tile[],
     private readonly t: FightTuning,
+    /** Units that give up instead of running (Knut, who leads the thieves). */
+    private readonly holdouts: ReadonlySet<number> = new Set(),
   ) {
     this.wolves = starts.map((at, id) => ({ id, at: { ...at }, hits: 0, state: 'hunting', intent: [], bites: false, calmed: false }));
     this.actionsLeft = t.combatActions;
@@ -123,10 +126,7 @@ export class WolfFight {
     if (!w || w.state !== 'hunting') return [];
     w.hits++;
     const events: FightEvent[] = [{ kind: 'hit', wolf: id }];
-    if (w.hits >= this.t.wolfHitsToFlee) {
-      w.state = 'fled';
-      events.push({ kind: 'fled', wolf: id });
-    }
+    if (w.hits >= this.t.wolfHitsToFlee) events.push(this.giveUp(w));
     return [...events, ...this.checkPack()];
   }
 
@@ -208,12 +208,15 @@ export class WolfFight {
     const down = this.wolves.filter((w) => w.state !== 'hunting').length;
     if (this.phase === 'over' || down < Math.ceil(this.wolves.length / 2)) return [];
     const events: FightEvent[] = [];
-    for (const w of this.hunting) {
-      w.state = 'fled';
-      events.push({ kind: 'fled', wolf: w.id });
-    }
+    for (const w of this.hunting) events.push(this.giveUp(w));
     this.phase = 'over';
     return [...events, { kind: 'packFled' }];
+  }
+
+  /** Out of the fight on its feet: a holdout yields where it stands, anyone else runs. */
+  private giveUp(w: Wolf): FightEvent {
+    w.state = this.holdouts.has(w.id) ? 'yielded' : 'fled';
+    return { kind: w.state === 'yielded' ? 'yielded' : 'fled', wolf: w.id };
   }
 
   private gridWithout(blocked: (x: number, y: number) => boolean): WalkGrid {

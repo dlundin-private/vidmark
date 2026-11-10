@@ -145,13 +145,13 @@ export function planCast(world: WorldModel, state: GameState, t: Tuning, spell: 
   // Surfaces and areas: ice.
   if (spell.action === 'push' || spell.action === 'mend') return fail('That works on objects only.');
   if (aim.kind !== 'tile') return fail('Aim at the ice.');
-  if (!world.isIce(aim.x, aim.y)) return fail('Only ice can be worked as a surface.');
+  if (!world.isWorkable(aim.x, aim.y)) return fail('Only ice and planks can be worked as a surface.');
   if (Math.abs(aim.x - signe.x) + Math.abs(aim.y - signe.y) > reach) return tooFar;
   const radius = (spell.target === 'area' ? 1 : 0) + (spell.modifier === 'size' ? 1 : 0);
   const tiles: Tile[] = [];
   for (let y = aim.y - radius; y <= aim.y + radius; y++) {
     for (let x = aim.x - radius; x <= aim.x + radius; x++) {
-      if (!world.isIce(x, y)) continue;
+      if (!world.isWorkable(x, y)) continue;
       if (spell.action === 'weaken') {
         if (world.tileEffect(x, y)?.kind === 'strengthened') continue; // strengthened ice holds
         const here = world.objectAt(x, y);
@@ -193,6 +193,10 @@ export function cast(world: WorldModel, state: GameState, t: Tuning, plan: Extra
         // The relief cut's walls: both strengthened once is enough, before the water comes.
         if (o.type === 'cut-wall' && world.objects.filter((x) => x.type === 'cut-wall').every((x) => x.id === o.id || world.objectEffect(x)?.kind === 'strengthened')) {
           A.setFlag(state, 'cut_walls_strengthened', true);
+        }
+        // The crest's cramps: all strengthened, there is nothing for the thieves to pry out.
+        if (o.type === 'cramp' && world.objects.filter((x) => x.type === 'cramp').every((x) => x.id === o.id || world.objectEffect(x)?.kind === 'strengthened')) {
+          A.setFlag(state, 'cramps_strengthened', true);
         }
         message = `The ${label(o)} grows hard and sure.`;
         break;

@@ -49,10 +49,17 @@ import { chapterOneCanEnd, endChapterOne } from '../systems/chapters';
 import { kinDef, type KinAction } from '../../content/data/kin';
 import { castKin, planKin, type KinTarget } from '../systems/kin';
 import { damOutcome, flood, restInJarnfors, restsLeft, type DamOutcome } from '../systems/dam';
+import { FLAG_THIEVES, afterKnut, letThievesGo, thievesDue, thievesStopped } from '../systems/thieves';
+
+type FightKind = 'wolves' | 'thieves';
+/** Knut is the first of the three thieves. */
+const KNUT_UNIT = 0;
 
 const SIGNE_SPRITE = 'signe';
 /** The wolf fight is on (saved, so a reload brings the pack back), and it is over. */
 const FLAG_WOLVES_HUNTING = 'wolves_hunting';
+/** The cramp-thieves fight is on (chapter 2): a reload brings Signe back up onto the crest. */
+const FLAG_THIEVES_FIGHTING = 'thieves_fighting';
 const FLAG_WOLVES_GONE = 'wolves_gone';
 /** Where the fled wolves turned; their tracks run north from there. */
 const FLAG_WOLF_TRACKS = 'wolf_tracks';
@@ -178,7 +185,7 @@ export class WorldScene extends Phaser.Scene {
   /** Push: the object chosen, waiting for where it should stop. */
   private pushing: MapObject | null = null;
   /** The wolf fight on the ice road, while it lasts (build step 6). */
-  private fight: { logic: WolfFight; view: FightView; sortables: Sortable[] } | null = null;
+  private fight: { kind: FightKind; logic: WolfFight; view: FightView; sortables: Sortable[] } | null = null;
   private overlayLayer!: Phaser.GameObjects.Layer;
 
   constructor() {
@@ -370,6 +377,7 @@ export class WorldScene extends Phaser.Scene {
     }
     // Reloaded in the middle of the wolf fight: the pack is still out there.
     if (store.state.flags[FLAG_WOLVES_HUNTING] && !store.state.flags[FLAG_WOLVES_GONE]) this.startFight();
+    if (store.state.flags[FLAG_THIEVES_FIGHTING] && !store.state.flags[FLAG_THIEVES]) this.startFight('thieves');
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.fight?.view.destroy());
 
     // How many nets are torn is a fact of the map; quests and dialogue count against it.
@@ -535,7 +543,9 @@ export class WorldScene extends Phaser.Scene {
   private outOfPower(text: string): void {
     const options = [
       ...(KEEPSAKES.some((k) => !k.hiddenUntilLate && A.hasKeepsake(store.state, k.id)) ? [{ label: 'Burn a Keepsake…', run: () => journal.open('keepsakes') }] : []),
-      ...(this.fight?.logic.wolfBeside() ? [{ label: 'Take everything from the wolf', run: () => this.askHollowWolf() }] : []),
+      ...(this.fight?.logic.wolfBeside() && (this.fight.kind !== 'thieves' || this.fight.logic.wolfBeside()!.id === KNUT_UNIT)
+        ? [{ label: this.fight.kind === 'thieves' ? 'Take everything from Knut' : 'Take everything from the wolf', run: () => this.askHollowWolf() }]
+        : []),
     ];
     if (options.length > 0) hud.ask(text, options);
     else hud.say(text);
@@ -607,10 +617,18 @@ export class WorldScene extends Phaser.Scene {
     return from.y === band.y0 && to.y === band.y0 - 1 && to.x !== this.world.map.numbers.safeRouteX;
   }
 
-  private startFight(): void {
+  private startFight(kind: FightKind = 'wolves'): void {
     const t = tuning.values;
-    const free = (x: number, y: number) => this.world.isIce(x, y) && !this.world.isBlocked(x, y) && !this.world.isThinIce(x, y);
-    const starts = wolfStarts(this.walker.tile, t.wolfCount, free);
+    const n = this.world.map.numbers;
+    let starts: Tile[];
+    if (kind === 'thieves') {
+      // Up onto the crest at night, west of the spillway; the three of them east of it, prying.
+      this.walker.teleport({ x: n.thievesSigneX!, y: n.thievesSigneY! });
+      starts = [0, 1, 2].map((i) => ({ x: n[`thief${i}X`]!, y: n[`thief${i}Y`]! }));
+    } else {
+      const free = (x: number, y: number) => this.world.isIce(x, y) && !this.world.isBlocked(x, y) && !this.world.isThinIce(x, y);
+      starts = wolfStarts(this.walker.tile, t.wolfCount, free);
+    }
     const logic = new WolfFight(
       {
         width: this.world.width,
@@ -624,25 +642,86 @@ export class WorldScene extends Phaser.Scene {
       this.walker.tile,
       starts,
       t,
+      // Knut leads the thieves: he yields, he doesn't run.
+      kind === 'thieves' ? new Set([KNUT_UNIT]) : new Set(),
     );
-    const view = new FightView(this, this.proj, logic, this.entityLayer, this.overlayLayer, () => {
-      if (!this.canActInFight()) return;
-      logic.endTurn();
-      view.refresh();
-    });
+    const view = new FightView(
+      this,
+      this.proj,
+      logic,
+      this.entityLayer,
+      this.overlayLayer,
+      () => {
+        if (!this.canActInFight()) return;
+        logic.endTurn();
+        view.refresh();
+      },
+      kind === 'thieves' ? (id) => (id === KNUT_UNIT ? 'npc-knut' : 'thief') : undefined,
+      kind === 'thieves' ? 'Thieves' : 'Wolves',
+    );
     const sortables: Sortable[] = view.sortables().map((s) => ({ sprite: s.sprite, footprint: s.footprint, obj: null, bounds: null }));
-    this.fight = { logic, view, sortables };
+    this.fight = { kind, logic, view, sortables };
     this.spell = null;
     hud.select(null);
-    const resumed = !!store.state.flags[FLAG_WOLVES_HUNTING];
-    sound.play('howl');
-    store.update((s) => A.setFlag(s, FLAG_WOLVES_HUNTING, true));
-    store.save(); // a reload in the middle of the fight brings the pack back
-    hud.announce(
-      resumed ? 'The wolves are still out there' : 'Starving wolves',
-      'They come out of the snow along the road, ribs like fence rails. Red marks show where each will run, and where it will bite.',
-    );
+    const flag = kind === 'thieves' ? FLAG_THIEVES_FIGHTING : FLAG_WOLVES_HUNTING;
+    const resumed = !!store.state.flags[flag];
+    store.update((s) => A.setFlag(s, flag, true));
+    store.save(); // a reload in the middle of the fight brings it back
+    if (kind === 'thieves') {
+      sound.play('hit');
+      hud.announce(
+        resumed ? 'Knut is still on the crest' : 'The cramp-thieves',
+        'Knut and two others from the lower quarter, pry-bars and a lantern, working the iron out of the stone. Weaken a plank under one and he drops to the ledge below.',
+      );
+    } else {
+      sound.play('howl');
+      hud.announce(
+        resumed ? 'The wolves are still out there' : 'Starving wolves',
+        'They come out of the snow along the road, ribs like fence rails. Red marks show where each will run, and where it will bite.',
+      );
+    }
     this.lastViewKey = '';
+  }
+
+  /** A night while the bell rings: the thieves are on the crest. Go up, or let them. */
+  private thievesAtNight(): void {
+    hud.ask('In the night, iron is screaming up on the crest: someone is prying the cramps out of the dam.', [
+      { label: 'Go up to the crest', run: () => this.startFight('thieves') },
+      {
+        label: 'Let them',
+        run: () => {
+          const result = store.update((s) => letThievesGo(s));
+          store.save();
+          if (result === 'broke') return this.damDecided('broken');
+          hud.say("By morning they're gone, and their families with them. The crack is wider: a night less.", 6000);
+        },
+      },
+    ]);
+  }
+
+  /** After the thieves: Knut on his knees. Spare him, ask him for something, or take everything (design). */
+  private afterThieves(): void {
+    if (store.state.npcs.knut.hollowed) return;
+    hud.ask('Knut is on his knees on the stone, his bar thrown down. "Go on, then."', [
+      { label: 'Spare him', run: () => { store.update((s, t) => afterKnut(s, t, 'spare')); store.save(); hud.say('You let him go. He looks back once from the stairs.', 4000); } },
+      {
+        label: 'Ask him for something',
+        run: () => {
+          store.update((s, t) => afterKnut(s, t, 'offer'));
+          store.save();
+          hud.say('He gives you the morning the forge first answered to him. To buy his family a way out of the water.', 6000);
+        },
+      },
+      {
+        label: 'Take everything',
+        run: () => {
+          store.update((s, t) => afterKnut(s, t, 'hollow'));
+          sound.play('hollow');
+          store.save();
+          hud.say(`The masons on the towers see it. +${tuning.values.hollowingReserve} Power, once. Your Hearth will refill less from now on.`, 7000);
+        },
+      },
+    ]);
   }
 
   /** Taps in a fight: move (one action, a few tiles), or reach for the wolf beside her. */
@@ -650,8 +729,9 @@ export class WorldScene extends Phaser.Scene {
     const { logic } = this.fight!;
     const wolf = logic.wolfAt(tile.x, tile.y);
     if (wolf) {
-      if (logic.wolfBeside() === wolf) return this.askHollowWolf();
-      hud.say('It keeps just out of reach. Craft works from here; your hands do not.');
+      const thieves = this.fight!.kind === 'thieves';
+      if (logic.wolfBeside() === wolf && (!thieves || wolf.id === KNUT_UNIT)) return this.askHollowWolf();
+      hud.say(thieves ? 'He keeps his bar between you. Craft works from here; your hands do not.' : 'It keeps just out of reach. Craft works from here; your hands do not.');
       return;
     }
     const path = logic.movePath(tile);
@@ -691,6 +771,25 @@ export class WorldScene extends Phaser.Scene {
     const { logic, view } = this.fight!;
     const wolf = logic.wolfBeside();
     if (!wolf || !this.canActInFight()) return;
+    if (this.fight!.kind === 'thieves') {
+      if (wolf.id !== KNUT_UNIT) return;
+      hud.ask('Knut is right beside you, bar raised. You could take everything he is.', [
+        {
+          label: 'Take everything',
+          run: () => {
+            if (!this.fight || logic.wolfBeside() !== wolf) return;
+            store.update((s, t) => afterKnut(s, t, 'hollow'));
+            sound.play('hollow');
+            const events = logic.remove(wolf.id, 'hollowed');
+            logic.spend();
+            hud.say(`His whole life, forge and children and all. The masons on the towers see it. +${tuning.values.hollowingReserve} Power, once.`, 6000);
+            view.hollowed(wolf.id, () => this.playFight(events));
+          },
+        },
+        { label: 'Let it be', run: () => undefined },
+      ]);
+      return;
+    }
     hud.ask('The wolf is right beside you, all ribs and teeth. You could take everything it is.', [
       {
         label: 'Take everything',
@@ -720,6 +819,7 @@ export class WorldScene extends Phaser.Scene {
 
   private fightEvent(e: FightEvent): void {
     const t = tuning.values;
+    if (this.fight?.kind === 'thieves') return this.thiefEvent(e);
     if (e.kind === 'hit') sound.play('hit');
     if (e.kind === 'bite') {
       sound.play('bite');
@@ -738,6 +838,23 @@ export class WorldScene extends Phaser.Scene {
     if (e.kind === 'fled') hud.say('A wolf turns tail and runs for the far shore.', 2500);
   }
 
+  /** The thieves: bars instead of teeth, planks instead of ice, and nobody drowns (design). */
+  private thiefEvent(e: FightEvent): void {
+    if (e.kind === 'hit') sound.play('hit');
+    if (e.kind === 'bite') {
+      sound.play('hit');
+      store.update((s, tt) => A.addWound(s, tt));
+      if (!deathScreen.isOpen) hud.say('A pry-bar catches your shoulder.', 2500);
+    }
+    if (e.kind === 'drowned') {
+      sound.play('crack');
+      store.update((s) => A.breakIce(s, e.at.x, e.at.y, Number.MAX_SAFE_INTEGER));
+      hud.say(e.wolf === KNUT_UNIT ? 'The plank goes under Knut. He drops to the ledge below, hurt, and stays there.' : 'The plank goes under him. He drops to the ledge below, hurt, and stays there.', 3500);
+    }
+    if (e.kind === 'fled') hud.say('A thief throws down his bar and runs for the stairs.', 2500);
+    if (e.kind === 'yielded') hud.say('Knut throws down his bar.', 2500);
+  }
+
   private updateFight(delta: number): void {
     const fight = this.fight!;
     fight.view.update(delta);
@@ -750,6 +867,18 @@ export class WorldScene extends Phaser.Scene {
 
   private endFight(): void {
     const fight = this.fight!;
+    if (fight.kind === 'thieves') {
+      store.update((s) => {
+        A.setFlag(s, FLAG_THIEVES_FIGHTING, false);
+        thievesStopped(s);
+      });
+      store.save();
+      hud.announce('The thieves are gone', 'The cramps stay in the stone tonight. The crack slows: the masons give it one more night.');
+      fight.view.destroy();
+      this.fight = null;
+      this.lastViewKey = '';
+      return this.afterThieves();
+    }
     const fled = fight.logic.wolves.filter((w) => w.state === 'fled').map((w) => w.at);
     store.update((s) => {
       A.setFlag(s, FLAG_WOLVES_HUNTING, false);
@@ -1129,7 +1258,8 @@ export class WorldScene extends Phaser.Scene {
       (s) =>
         (!s.bounds || rectsOverlap(s.bounds, view)) &&
         (!s.obj || this.world.isShown(s.obj)) &&
-        !(s.obj?.npc && store.state.npcs[s.obj.npc as NpcId]?.gone),
+        !(s.obj?.npc && store.state.npcs[s.obj.npc as NpcId]?.gone) &&
+        !(this.fight?.kind === 'thieves' && s.obj?.npc === 'knut'),
     );
     for (const s of this.onScreen) s.sprite.setVisible(true);
     this.lastSortKey = '';
@@ -1297,6 +1427,7 @@ export class WorldScene extends Phaser.Scene {
       hud.announce('The flood-bell', 'You wake to it: the bell on the dam, ringing and ringing. A crack has opened across the crest. The masons give it three nights.');
     } else if (night === 'ticked') {
       sound.play('fall');
+      if (thievesDue(store.state)) return this.thievesAtNight();
       const left = restsLeft(store.state);
       hud.say(`The bell rang all night. ${left === 1 ? 'One more night, the masons say.' : `${left} more nights, the masons say.`}`, 6000);
     } else {

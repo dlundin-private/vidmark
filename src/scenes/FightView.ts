@@ -40,9 +40,13 @@ export class FightView {
     entityLayer: Phaser.GameObjects.Layer,
     private readonly overlayLayer: Phaser.GameObjects.Layer,
     onEndTurn: () => void,
+    /** Sprite per unit, by its id (wolves by default; Knut and his thieves on the crest). */
+    spriteFor: (id: number) => string = () => WOLF_SPRITE,
+    /** What the bar calls the enemy. */
+    private readonly enemies = 'Wolves',
   ) {
     for (const w of fight.wolves) {
-      const sprite = scene.add.image(0, 0, WOLF_SPRITE).setOrigin(0.5, 1);
+      const sprite = scene.add.image(0, 0, spriteFor(w.id)).setOrigin(0.5, 1);
       entityLayer.add(sprite);
       this.sprites.set(w.id, sprite);
       this.visual.set(w.id, { ...w.at });
@@ -104,7 +108,7 @@ export class FightView {
       this.fight.phase === 'over'
         ? 'The wolves are gone.'
         : this.fight.phase === 'signe' && !this.animating
-          ? `Wolves: ${this.fight.hunting.length}. Your turn: ${left} action${left === 1 ? '' : 's'} left.`
+          ? `${this.enemies}: ${this.fight.hunting.length}. Your turn: ${left} action${left === 1 ? '' : 's'} left.`
           : 'The wolves move…';
     this.endButton.hidden = !(this.fight.phase === 'signe' && !this.animating);
     this.placeSprites();
@@ -196,6 +200,9 @@ export class FightView {
         return [{ kind: 'pause', wolf: e.wolf, ms: 520, fade: true, event: e }];
       case 'fled':
         return [{ kind: 'pause', wolf: e.wolf, ms: 700, fade: true, away: this.awayFrom(e.wolf, 6), event: e }];
+      case 'yielded':
+        // Down where he stands: greyed, not gone.
+        return [{ kind: 'pause', wolf: e.wolf, ms: 600, tint: 0xa8a8b0, event: e }];
       case 'packFled':
         return [{ kind: 'pause', wolf: 0, ms: 1, event: e }];
     }
