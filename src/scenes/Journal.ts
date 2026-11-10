@@ -3,7 +3,7 @@ import { NPCS } from '../../content/data/npcs';
 import * as A from '../state/actions';
 import { sound } from '../audio/sound';
 import { whyYouLeft } from '../../content/data/cinematics';
-import type { ChapterRecord } from '../state/GameState';
+import type { ChapterOneRecord } from '../state/GameState';
 import type { GameStore } from '../state/store';
 import { questStatuses } from '../systems/quests';
 import { rememberedPeople } from '../systems/impressions';
@@ -218,7 +218,7 @@ export class Journal {
       const status = s.keepsakes[k.id].status;
       // "Why you left" reads the way it formed at the end of chapter 1.
       const formedFor = s.flags.why_you_left_for;
-      const memory = k.id === 'whyYouLeft' && typeof formedFor === 'string' ? capitalise(whyYouLeft(formedFor as ChapterRecord['lilja'])) : k.memory;
+      const memory = k.id === 'whyYouLeft' && typeof formedFor === 'string' ? capitalise(whyYouLeft(formedFor as ChapterOneRecord['lilja'])) : k.memory;
       if (status === 'kept') return el('div', 'keepsake', [el('div', 'keepsake-title', k.title), el('p', 'keepsake-memory', memory), this.burnControls(k.id)]);
       return el('div', 'keepsake gone', [
         el('div', 'keepsake-title', k.title),

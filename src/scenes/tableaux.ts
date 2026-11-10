@@ -325,3 +325,76 @@ export const gorgeDam: Painter = (g, t) => {
     }
   }
 };
+
+// --- The end of chapter 2 ----------------------------------------------------------------
+
+/** The gorge's walls, close on both sides (shared by the Järnfors pictures). */
+function gorgeWalls(g: G, colour: string): void {
+  g.fillStyle = colour;
+  for (let y = 0; y < H; y++) {
+    const w = 40 + Math.round(Math.sin(y / 9) * 4) + Math.round((H - y) * 0.15);
+    g.fillRect(0, y, w, 1);
+    g.fillRect(W - w, y, w, 1);
+  }
+}
+
+/** Morning, and the dam still standing; the bell is quiet. */
+export const damHolds: Painter = (g, t) => {
+  sky(g, [84, 96, 124], [214, 196, 186], 70);
+  // The city below, in morning snow: rooftops on the terraces.
+  g.fillStyle = '#cfd6de';
+  g.fillRect(0, 66, W, H - 66);
+  const r = rand(53);
+  for (let i = 0; i < 22; i++) {
+    const x = 48 + Math.floor(r() * 144);
+    const y = 78 + Math.floor(r() * 64);
+    if (x > 112 && x < 140) continue;
+    g.fillStyle = '#eef2f6';
+    g.fillRect(x - 5, y - 3, 10, 3);
+    g.fillStyle = '#6e6a62';
+    g.fillRect(x - 4, y, 8, 3);
+  }
+  gorgeWalls(g, '#3c4250');
+  g.fillStyle = '#7a7e88';
+  g.fillRect(40, 44, 160, 22);
+  g.fillStyle = '#8d919b';
+  g.fillRect(40, 44, 160, 3);
+  // The mended place: a pale scar across the crest.
+  g.fillStyle = '#b8bcc4';
+  g.fillRect(132, 44, 14, 2);
+  g.fillRect(136, 46, 6, 1);
+  g.fillStyle = '#3a3d44';
+  g.fillRect(118, 38, 3, 6);
+  // The spillway running clean, and smoke from the city's chimneys.
+  for (let y = 66; y < H; y++) {
+    g.fillStyle = Math.floor(t / 140 + y) % 3 === 0 ? '#a9c2d1' : '#3a5568';
+    g.fillRect(122 - Math.floor((y - 66) * 0.1), y, 6 + Math.floor((y - 66) * 0.2), 1);
+  }
+  smoke(g, t, 80, 96);
+  smoke(g, t + 700, 166, 104);
+};
+
+/** Dawn after the break: no dam, and the city's roofs in brown water. */
+export const damGone: Painter = (g, t) => {
+  sky(g, [70, 74, 90], [178, 160, 150], 70);
+  gorgeWalls(g, '#34383f');
+  // Where the dam was: two broken stubs on the walls.
+  g.fillStyle = '#6a6e78';
+  g.fillRect(40, 48, 22, 18);
+  g.fillRect(178, 52, 22, 14);
+  // The water, everywhere below, moving.
+  for (let y = 66; y < H; y++) {
+    g.fillStyle = (Math.floor(t / 300) + y) % 4 === 0 ? '#6e5a40' : '#5a4a36';
+    g.fillRect(40, y, 160, 1);
+  }
+  // Rooftops standing out of it.
+  const r = rand(91);
+  for (let i = 0; i < 16; i++) {
+    const x = 52 + Math.floor(r() * 136);
+    const y = 84 + Math.floor(r() * 56);
+    g.fillStyle = '#d8dde4';
+    g.fillRect(x - 5, y - 2, 10, 2);
+    g.fillStyle = '#4a3a2c';
+    g.fillRect(x - 4, y, 8, 2);
+  }
+};

@@ -83,6 +83,15 @@ Daniel: "Build" chapter 2, after deciding the ten Järnfors questions. Built a s
 | The district, laid out on purpose by scripts/generate-jarnfors-map.mjs (a Tiled map, editable in Tiled): the frozen reservoir, Maren's Dam with its statue, the gallery door in the dam face, the spillway and river, the city on both banks with three bridges, the Hollow-house, the apprentices' hall, the inn (rest), the Tithe-house, Gudmund's yard, the lower quarter, and Halvar's sealed relief cut hidden in the west wall, reached by one gap in the rock. A check refuses the map if any place is out of reach. | Daniel: one district, about 128 × 128, built by hand; the layout is Claude's draft |
 | Lore to find: the dam statue ("She held the water" / "with whose hands?"), the lintel's nine marks (the ninth reads JON if Signe saw the island doorpost or has Gerda's Maren), the fallen gallery, the plug marked H, the Hollow-house, the wiped slate at the Tithe-house. | Design and Daniel's decisions; text is Claude's draft |
 
+## Chapter 2, step 7: the chapter's end
+
+| Decision | Status |
+| --- | --- |
+| The world changes the chapter 2 design lists were built in earlier steps: Halvar's name on the statue (Brita's bowl), lanterns at the gallery (The keeping), the flooded lower quarter (the relief cut), the drowned city (the dam breaks). | Design |
+| Chapter 2 ends once the dam is decided, any of the five ways: the next rest at the inn warns that nothing here needs Signe any more, then plays the ending film. | Claude's draft (the design says what the chapter holds, not how it closes) |
+| The ending film: the dam as she left it (standing at dawn, or gone and the city under brown water); her page (how she came by Kin, what she told Brita, Arn, Knut, who gave and who she emptied here, whether word went ahead of her, and what the boy remembered of Lilja); then the road north to chapter 3, Runhem of the storytellers, which is not written. A record of chapter 2 is kept in the save beside chapter 1's. | Claude's draft; Runhem as chapter 3 is the design's order |
+| Found in the playthrough check: with only Edda's gift, knitting the dam costs 5 Power and Signe has 3. That's the design working (gather more givers here, or burn something), but worth watching in playtesting. | For Daniel to judge |
+
 ## Chapter 2, step 6: the cramp-thieves
 
 | Decision | Status |

@@ -87,8 +87,11 @@ export interface MapMemory {
 }
 
 /** What a finished chapter decided, kept for the chapters after it (src/systems/chapters.ts). */
-export interface ChapterRecord {
-  chapter: number;
+export type ChapterRecord = ChapterOneRecord | ChapterTwoRecord;
+
+/** Kallsjö. */
+export interface ChapterOneRecord {
+  chapter: 1;
   /** Gave Signe an Offering. */
   gave: NpcId[];
   /** Hollowed by Signe (not the Hollow who started that way). */
@@ -104,6 +107,27 @@ export interface ChapterRecord {
   liljaTakenBy: 'olle' | 'kronvall';
   /** How Signe knew her when she was taken. */
   lilja: 'sister' | 'stranger' | 'hollow';
+}
+
+/** Järnfors. */
+export interface ChapterTwoRecord {
+  chapter: 2;
+  /** How the dam crisis ended. */
+  dam: 'knit' | 'taken' | 'relief' | 'held' | 'broken';
+  /** How Signe came by Kin, if she did. */
+  kin: 'asked' | 'bargain' | 'taken' | 'none';
+  gave: NpcId[];
+  hollowed: NpcId[];
+  quests: Record<string, string>;
+  /** What she told Brita about Halvar, if anything. */
+  brita: 'truth' | 'lie' | 'nothing' | null;
+  /** What became of Knut and the cramp-thieves. */
+  knut: 'spared' | 'gave' | 'hollowed' | 'let' | 'avoided' | 'never';
+  /** Arn got out of the cold. */
+  arnSafe: boolean;
+  /** The boy remembered Lilja, and Signe knew it was her. */
+  liljaTrace: boolean;
+  villageKnew: boolean;
 }
 
 /** Everything that persists. Saving = serialising this object. */

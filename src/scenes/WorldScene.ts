@@ -44,8 +44,8 @@ import { mapJson } from '../systems/maps';
 import { sound, type Surface } from '../audio/sound';
 import { Cinematic, type Art, type Painter, type Tableau } from './Cinematic';
 import * as T from './tableaux';
-import { ARRIVALS, INTRO, chapterOneEnding, type Beat, type Picture } from '../../content/data/cinematics';
-import { chapterOneCanEnd, endChapterOne } from '../systems/chapters';
+import { ARRIVALS, INTRO, chapterOneEnding, chapterTwoEnding, type Beat, type Picture } from '../../content/data/cinematics';
+import { chapterOneCanEnd, chapterTwoCanEnd, endChapterOne, endChapterTwo } from '../systems/chapters';
 import { kinDef, type KinAction } from '../../content/data/kin';
 import { castKin, planKin, type KinTarget } from '../systems/kin';
 import { damOutcome, flood, restInJarnfors, restsLeft, type DamOutcome } from '../systems/dam';
@@ -129,6 +129,8 @@ const PICTURES: Record<Picture, { paint: Painter; snow: boolean }> = {
   warmPoint: { paint: T.warmPoint, snow: false },
   northPass: { paint: T.northPass, snow: true },
   gorgeDam: { paint: T.gorgeDam, snow: true },
+  damHolds: { paint: T.damHolds, snow: true },
+  damGone: { paint: T.damGone, snow: false },
 };
 const tableaux = (beats: readonly Beat[]): Tableau[] => beats.map((b) => ({ ...PICTURES[b.picture], lines: b.lines, ...(b.title ? { title: b.title } : {}) }));
 const bubbles = new SpeechBubbles(BUBBLE_MS_PER_LINE);
@@ -1122,6 +1124,19 @@ export class WorldScene extends Phaser.Scene {
     store.save();
   }
 
+  /** The morning after the dam was decided: chapter 2's ending film, then the road north (not yet written). */
+  private endChapterTwo(): void {
+    const record = store.update((s) => endChapterTwo(s));
+    store.save();
+    store.saveRestPoint();
+    film.play(tableaux(chapterTwoEnding(record)), this.art(), () => {
+      hud.ask('Chapter 2 is over.', [
+        { label: 'Stay in Järnfors a while', run: () => hud.say('The city goes on around you. Chapter 3 is not written yet; everything you did is kept.', 6000) },
+        { label: 'Start over', run: () => store.newGame() },
+      ]);
+    });
+  }
+
   /** The game's loaded sprites, for the films to paint with. */
   private art(): Art {
     return (key) => (this.textures.exists(key) ? (this.textures.get(key).getSourceImage() as CanvasImageSource) : null);
@@ -1158,9 +1173,16 @@ export class WorldScene extends Phaser.Scene {
   private offerRest(): void {
     const weavesTaught = !!store.state.flags[WEAVES_TAUGHT_FLAG];
     const ending = chapterOneCanEnd(store.state);
+    const endingTwo = chapterTwoCanEnd(store.state);
     // Chapter 1 is over and she is still in Kallsjö: home is where the road north starts.
     const northbound = store.state.chapter >= 2 && store.state.map === 'kallsjo';
-    hud.ask(ending ? 'Rest at home? The road across the ice is open now. Anything could come over it by morning.' : 'Rest at home? Power refills, a wound heals, and Craft effects fade.', [
+    hud.ask(
+      ending
+        ? 'Rest at home? The road across the ice is open now. Anything could come over it by morning.'
+        : endingTwo
+          ? 'Rest at the inn? Whatever the dam is now, there is nothing left here that needs you. In the morning the road north is open.'
+          : `Rest ${store.state.map === 'kallsjo' ? 'at home' : 'at the inn'}? Power refills, a wound heals, and Craft effects fade.`,
+      [
       ...(northbound ? [{ label: 'Go north to Järnfors', run: () => this.goTo('jarnfors') }] : []),
       ...(weavesTaught ? [{ label: 'Refocus Weaves', run: () => weaveScreen.open() }] : []),
       {
@@ -1172,6 +1194,7 @@ export class WorldScene extends Phaser.Scene {
           this.autosave();
           store.saveRestPoint(); // where death returns to
           if (ending) return this.endChapter();
+          if (endingTwo) return this.endChapterTwo();
           if (night) return this.damNight(night);
           hud.say(A.echoCount(store.state) > 0
             ? `You rest by the fire, but other lives crowd in around it. Power refills to ${store.state.power}. You will remember this.`

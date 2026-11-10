@@ -1,4 +1,4 @@
-import type { ChapterRecord } from '../../src/state/GameState';
+import type { ChapterOneRecord, ChapterRecord, ChapterTwoRecord } from '../../src/state/GameState';
 import { KEEPSAKES } from './keepsakes';
 import { NPCS, type NpcId } from './npcs';
 
@@ -7,7 +7,7 @@ import { NPCS, type NpcId } from './npcs';
 // the magic away (Daniel); the end reflects what she did in chapter 1.
 // ALL TEXT IS A FIRST DRAFT by Claude, for Daniel to rewrite.
 
-export type Picture = 'nightLake' | 'village' | 'girlOnIce' | 'coatByDoor' | 'waking' | 'dawnRoad' | 'emptyBed' | 'ledger' | 'warmPoint' | 'northPass' | 'gorgeDam';
+export type Picture = 'nightLake' | 'village' | 'girlOnIce' | 'coatByDoor' | 'waking' | 'dawnRoad' | 'emptyBed' | 'ledger' | 'warmPoint' | 'northPass' | 'gorgeDam' | 'damHolds' | 'damGone';
 
 export interface Beat {
   picture: Picture;
@@ -31,7 +31,7 @@ export interface EndingContext {
 const name = (id: NpcId) => NPCS.find((n) => n.id === id)!.name;
 const list = (items: string[]) => (items.length <= 1 ? items.join('') : `${items.slice(0, -1).join(', ')} and ${items.at(-1)}`);
 
-export function chapterOneEnding(r: ChapterRecord, ctx: EndingContext): Beat[] {
+export function chapterOneEnding(r: ChapterOneRecord, ctx: EndingContext): Beat[] {
   const beats: Beat[] = [];
 
   // Who came for her.
@@ -101,15 +101,69 @@ export const ARRIVALS: Record<string, (last: ChapterRecord | undefined) => Beat[
       lines: [
         'Four days north on the Tithe road, the valley closes into a gorge.',
         'At its head a wall of stone holds back a frozen lake. Below it, a city of stairs and forges.',
-        ...(last?.lilja === 'sister' ? ['The sled tracks you have followed all the way go in at the south gate.'] : last?.lilja === 'stranger' ? ['Torvald said they would have taken the girl this way.'] : []),
+        ...(last?.chapter === 1 && last.lilja === 'sister'
+          ? ['The sled tracks you have followed all the way go in at the south gate.']
+          : last?.chapter === 1 && last.lilja === 'stranger'
+            ? ['Torvald said they would have taken the girl this way.']
+            : []),
       ],
     },
   ],
 };
 
 /** "Why you left", as it forms (Daniel: she goes for a stranger if the swim is gone). */
-export function whyYouLeft(lilja: ChapterRecord['lilja']): string {
+export function whyYouLeft(lilja: ChapterOneRecord['lilja']): string {
   if (lilja === 'stranger') return 'to bring home the girl they took.';
   if (lilja === 'hollow') return 'to bring Lilja home, even if nobody is in there to bring.';
   return 'to bring Lilja home.';
+}
+
+/** The end of chapter 2: the dam as Signe left it, her page, and the road north (Claude's draft). */
+export function chapterTwoEnding(r: ChapterTwoRecord): Beat[] {
+  const beats: Beat[] = [];
+  const dam: Record<ChapterTwoRecord['dam'], string[]> = {
+    knit: ['The bell is quiet.', 'A pale scar runs across the crest like a mended bone. It will outlast you, and everyone who watched you make it.'],
+    taken: ['The bell is quiet.', "The dam holds the way it held a hundred years ago: with a builder's whole life. Gudmund sits at the window now, beside Halvar."],
+    relief: ['The bell is quiet.', "The lower quarter is under brown water. The people who lived there sleep in the apprentices' hall, and say your name, or don't."],
+    held: ['The bell is quiet.', 'You held it with what you had, and with what you burned to have it. Your hands still remember the weight.'],
+    broken: ['The dam went at dawn.', 'Järnfors is rooftops in brown water. Nobody blames you. People just say: when the dam went.'],
+  };
+  beats.push({ picture: r.dam === 'broken' ? 'damGone' : 'damHolds', lines: dam[r.dam] });
+
+  const page: string[] = [];
+  page.push(
+    {
+      asked: 'Edda gave you the moment her grandfather looked at her, and with it, Kin.',
+      bargain: 'Edda gave you Kin on one condition: if you ever can, you give him back. You promised.',
+      taken: 'You took Kin from Edda, and everything else she was. Brita feeds two at the window now.',
+      none: 'You leave without Kin. Edda kept what she had.',
+    }[r.kin],
+  );
+  if (r.brita === 'truth') page.push("Halvar's name stands beside Maren's on the statue, where everyone can read it.");
+  if (r.brita === 'lie') page.push('You told Brita he was brave. Only that.');
+  if (r.arnSafe) page.push("Arn sleeps in the warm at the Hollow-house. He isn't dead. He checks.");
+  const knut: Record<ChapterTwoRecord['knut'], string | null> = {
+    spared: 'Knut went back down to the lower quarter with nothing in his hands.',
+    gave: 'Knut bought his family a way out with the morning his forge first answered to him.',
+    hollowed: 'Knut sits blank by a cold forge. The masons saw.',
+    let: "You let the thieves take the iron. Knut's family was gone before the water.",
+    avoided: 'The cramps stayed in the stone. Nobody had to stop anyone.',
+    never: null,
+  };
+  if (knut[r.knut]) page.push(knut[r.knut]!);
+  const name = (id: string) => (id === 'clerk' ? 'the clerk' : id.charAt(0).toUpperCase() + id.slice(1));
+  // Edda's gift is already told above, as how Signe came by Kin.
+  const others = r.gave.filter((id) => id !== 'edda');
+  if (others.length) page.push(`Here, ${others.map(name).join(', ')} gave you something they could not get back.`);
+  if (r.hollowed.length) page.push(`Here, you emptied ${r.hollowed.map(name).join(', ')}.`);
+  if (r.villageKnew) page.push('Word of what you are goes up the road ahead of you.');
+  page.push(r.liljaTrace ? 'A boy remembered her: a whole other sky, under the ice. She came this way.' : 'Somewhere ahead, on the same road, is the girl they took.');
+  beats.push({ picture: 'ledger', lines: page });
+
+  beats.push({
+    picture: 'northPass',
+    title: 'Chapter 3: Runhem',
+    lines: ['North of the gorge the Tithe road climbs on, toward Runhem of the storytellers, and Kronvall beyond.', 'Not yet written. Everything you did is kept.'],
+  });
+  return beats;
 }

@@ -3,7 +3,8 @@ import { DEFAULT_TUNING } from '../../content/data/tuning';
 import * as A from '../state/actions';
 import { createNewGame } from '../state/GameState';
 import { deserialize, serialize } from '../state/save';
-import { chapterOneCanEnd, endChapterOne, startChapterTwo, summariseChapterOne } from './chapters';
+import { chapterOneCanEnd, chapterTwoCanEnd, endChapterOne, endChapterTwo, startChapterTwo, summariseChapterOne, summariseChapterTwo } from './chapters';
+import { chapterTwoEnding } from '../../content/data/cinematics';
 import { updateQuests } from './quests';
 
 const t = DEFAULT_TUNING;
@@ -106,5 +107,47 @@ describe('the people of Järnfors in old saves', () => {
     const s = deserialize(JSON.stringify(old));
     expect(s.npcs.edda).toEqual({ offered: false, hollowed: false, faithLost: false });
     expect(s.npcs.halvar.hollowed).toBe(true);
+  });
+});
+
+describe('the end of chapter 2', () => {
+  const decided = () => {
+    const s = createNewGame(t.basePower);
+    startChapterTwo(s);
+    return s;
+  };
+
+  it('comes once the dam is decided, any way at all', () => {
+    const s = decided();
+    expect(chapterTwoCanEnd(s)).toBe(false);
+    A.setFlag(s, 'dam_outcome', 'broken');
+    expect(chapterTwoCanEnd(s)).toBe(true);
+  });
+
+  it('keeps what Järnfors decided, and opens the road north', () => {
+    const s = decided();
+    A.recordOffering(s, 'edda', t);
+    A.makePromise(s, 'give_halvar_back', 'edda');
+    A.recordHollowing(s, 'clerk', t);
+    A.setFlag(s, 'brita_told', 'truth');
+    A.setFlag(s, 'thieves', 'stopped');
+    A.setFlag(s, 'knut_after_fight', 'offer');
+    A.setFlag(s, 'lilja_trace_known', true);
+    A.setFlag(s, 'dam_outcome', 'knit');
+    const r = endChapterTwo(s);
+    expect(r).toMatchObject({ chapter: 2, dam: 'knit', kin: 'bargain', hollowed: ['clerk'], brita: 'truth', knut: 'gave', arnSafe: true, liljaTrace: true });
+    expect(s.chapter).toBe(3);
+    expect(s.chapters.map((c) => c.chapter)).toEqual([1, 2]);
+    expect(deserialize(serialize(s))).toEqual(s);
+  });
+
+  it('has an ending film for every way the dam can end', () => {
+    for (const dam of ['knit', 'taken', 'relief', 'held', 'broken'] as const) {
+      const s = decided();
+      A.setFlag(s, 'dam_outcome', dam);
+      const beats = chapterTwoEnding(summariseChapterTwo(s));
+      expect(beats.at(-1)?.title).toBe('Chapter 3: Runhem');
+      expect(beats[0]!.picture).toBe(dam === 'broken' ? 'damGone' : 'damHolds');
+    }
   });
 });

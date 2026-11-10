@@ -18,6 +18,7 @@ export interface ChapterDef {
 export const CHAPTERS: readonly ChapterDef[] = [
   { number: 1, id: 'kallsjo', title: 'Kallsjö', region: 'Kallsjö', playable: true, map: 'kallsjo', card: 'A frozen lake, a hungry village, and the Tithe.' },
   { number: 2, id: 'jarnfors', title: 'Järnfors', region: 'Järnfors', playable: true, map: 'jarnfors', card: 'The road north goes to Järnfors, and the great dam.' },
+  { number: 3, id: 'runhem', title: 'Runhem', region: 'Runhem', playable: false, map: 'jarnfors', card: 'Runhem, the region of storytellers and keepers of thought.' },
 ];
 
 export function chapterDef(n: number): ChapterDef {
